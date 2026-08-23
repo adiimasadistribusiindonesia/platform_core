@@ -761,289 +761,89 @@ tbody tr:hover{
 
 
 <script>
-/* =========================================================
-   KONFIGURASI SUPABASE
-========================================================= */
-
-const SUPABASE_URL =
-  "https://fysaxpqpqexjnlpkbwap.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_DWRaEaZTcNMjhglwN3nqCOw_pua8rsjD";
-
-
-/* =========================================================
-   REDIRECT GOOGLE LOGIN
-========================================================= */
+const SUPABASE_URL = "https://fysaxpqpqexjnlpkbwap.supabase.co";
+const SUPABASE_KEY = "sb_publishable_DWRaEaZTcNMjhglwN3nqCOw_pua8rsjD";
 
 const REDIRECT =
-  location.hostname === "adiimasadistribusiindonesia.github.io"
-    ? "https://adiimasadistribusiindonesia.github.io/platform_core/"
-    : location.origin + "/core_adiimasa.html";
+  "https://adiimasadistribusiindonesia.github.io/platform_core/";
 
+const { createClient } = window.supabase;
 
-/* =========================================================
-   VARIABLE
-========================================================= */
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: "pkce"
+    }
+  }
+);
 
-let accessToken = null;
-let refreshToken = null;
 let currentUser = null;
 let data = [];
 
-
-/* =========================================================
-   HELPER
-========================================================= */
-
 const $ = id => document.getElementById(id);
 
-
-function headers(){
-
-  const h = {
-    apikey: SUPABASE_KEY,
-    "Content-Type": "application/json",
-    Accept: "application/json"
-  };
-
-  if(accessToken){
-    h.Authorization = "Bearer " + accessToken;
-  }
-
-  return h;
-}
-
-
-/* =========================================================
-   PESAN LOGIN
-========================================================= */
-
-function setMsg(text, error = false){
-
+function setMsg(text, error = false) {
   const el = $("loginMsg");
-
-  if(!el) return;
+  if (!el) return;
 
   el.textContent = text;
   el.className = "msg " + (error ? "err" : "ok");
 }
 
+async function loginGoogle() {
+  setMsg("Membuka login Google...");
 
-/* =========================================================
-   SESSION
-========================================================= */
-
-function saveSession(session){
-
-  accessToken = session?.access_token || null;
-  refreshToken = session?.refresh_token || null;
-
-  if(accessToken){
-    localStorage.setItem(
-      "core_access_token",
-      accessToken
-    );
-  }
-
-  if(refreshToken){
-    localStorage.setItem(
-      "core_refresh_token",
-      refreshToken
-    );
-  }
-}
-
-
-function clearSession(){
-
-  accessToken = null;
-  refreshToken = null;
-  currentUser = null;
-
-  localStorage.removeItem("core_access_token");
-  localStorage.removeItem("core_refresh_token");
-  localStorage.removeItem("core_login_intent");
-}
-
-
-/* =========================================================
-   GOOGLE LOGIN
-========================================================= */
-
-function loginGoogle(){
-
-  localStorage.setItem(
-    "core_login_intent",
-    "1"
-  );
-
-  const url =
-    SUPABASE_URL +
-    "/auth/v1/authorize?provider=google&redirect_to=" +
-    encodeURIComponent(REDIRECT);
-
-  location.href = url;
-}
-
-
-/* =========================================================
-   BACA CALLBACK GOOGLE
-========================================================= */
-
-function parseOAuth(){
-
-  const hash =
-    new URLSearchParams(
-      location.hash.replace(/^#/, "")
-    );
-
-  const access =
-    hash.get("access_token");
-
-  const refresh =
-    hash.get("refresh_token");
-
-  if(access){
-
-    saveSession({
-      access_token: access,
-      refresh_token: refresh
-    });
-
-    history.replaceState(
-      {},
-      document.title,
-      location.pathname + location.search
-    );
-
-    return true;
-  }
-
-  return false;
-}
-
-
-/* =========================================================
-   GET USER
-========================================================= */
-
-async function getUser(){
-
-  if(!accessToken){
-    throw new Error("Tidak ada sesi login.");
-  }
-
-  const response =
-    await fetch(
-      SUPABASE_URL + "/auth/v1/user",
-      {
-        headers: headers()
-      }
-    );
-
-  if(!response.ok){
-
-    if(
-      response.status === 401 ||
-      response.status === 403
-    ){
-      throw new Error(
-        "Sesi login sudah tidak valid."
-      );
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: REDIRECT
     }
+  });
 
-    throw new Error(
-      "Gagal memeriksa sesi login."
-    );
-  }
-
-  return await response.json();
-}
-
-
-/* =========================================================
-   REFRESH SESSION
-========================================================= */
-
-async function refreshSession(){
-
-  const rt =
-    refreshToken ||
-    localStorage.getItem(
-      "core_refresh_token"
-    );
-
-  if(!rt){
-    return false;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        SUPABASE_URL +
-        "/auth/v1/token?grant_type=refresh_token",
-        {
-          method:"POST",
-
-          headers:{
-            apikey:SUPABASE_KEY,
-            "Content-Type":"application/json"
-          },
-
-          body:JSON.stringify({
-            refresh_token:rt
-          })
-        }
-      );
-
-    if(!response.ok){
-      clearSession();
-      return false;
-    }
-
-    const session =
-      await response.json();
-
-    saveSession(session);
-
-    return true;
-
-  }catch(error){
-
-    clearSession();
-    return false;
+  if (error) {
+    console.error(error);
+    setMsg("Gagal membuka login Google: " + error.message, true);
   }
 }
 
+async function getUser() {
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
 
-/* =========================================================
-   CEK CORE ADMIN
-========================================================= */
+  if (error || !user) {
+    throw new Error("Sesi login tidak valid.");
+  }
 
-async function isCoreAdmin(email){
+  return user;
+}
 
+async function isCoreAdmin(email) {
   const url =
     SUPABASE_URL +
     "/rest/v1/core_adiimasa_admins" +
     "?select=email,name,is_active" +
     "&email=eq." +
-    encodeURIComponent(
-      email.toLowerCase()
-    ) +
+    encodeURIComponent(email.toLowerCase()) +
     "&is_active=eq.true";
 
-  const response =
-    await fetch(
-      url,
-      {
-        headers:headers()
-      }
-    );
+  const response = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization:
+        "Bearer " +
+        (await supabase.auth.getSession()).data.session.access_token,
+      Accept: "application/json"
+    }
+  });
 
-  if(!response.ok){
-
+  if (!response.ok) {
     throw new Error(
       "Gagal memeriksa hak akses Core Admin (HTTP " +
       response.status +
@@ -1051,64 +851,67 @@ async function isCoreAdmin(email){
     );
   }
 
-  const rows =
-    await response.json();
+  const rows = await response.json();
 
   return rows[0] || null;
 }
 
+function esc(value) {
+  return String(value ?? "").replace(
+    /[&<>'"]/g,
+    m => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;"
+    }[m])
+  );
+}
 
-/* =========================================================
-   LOAD DATA
-========================================================= */
+function badge(status) {
+  return (
+    '<span class="badge b-' +
+    status.toLowerCase() +
+    '">' +
+    status +
+    "</span>"
+  );
+}
 
-async function load(){
+async function load() {
+  const {
+    data: sessionData
+  } = await supabase.auth.getSession();
 
-  if(!accessToken){
-    return;
+  const session = sessionData.session;
+
+  if (!session) {
+    throw new Error("Sesi login tidak valid.");
   }
 
-  const url =
+  const response = await fetch(
     SUPABASE_URL +
-    "/rest/v1/geparu_admin_access" +
-    "?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note" +
-    "&order=created_at.desc";
-
-  const response =
-    await fetch(
-      url,
-      {
-        headers:headers()
+      "/rest/v1/geparu_admin_access" +
+      "?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note" +
+      "&order=created_at.desc",
+    {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        Accept: "application/json"
       }
-    );
-
-  if(!response.ok){
-
-    const text =
-      await response.text();
-
-    if(
-      response.status === 401 ||
-      response.status === 403
-    ){
-      clearSession();
-
-      $("app").classList.add("hidden");
-      $("loginOverlay").classList.remove("hidden");
-
-      setMsg(
-        "Sesi login sudah tidak valid. Silakan login kembali.",
-        true
-      );
-
-      return;
     }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
 
     throw new Error(
       "Gagal memuat permintaan akses (HTTP " +
-      response.status +
-      ") " +
-      text
+        response.status +
+        ") " +
+        text
     );
   }
 
@@ -1117,358 +920,240 @@ async function load(){
   render();
 }
 
+function render() {
+  const searchEl = $("search");
+  const statusEl = $("status");
+  const tbody = $("tbody");
 
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
+  if (!tbody) return;
 
-function esc(value){
+  const q = searchEl
+    ? searchEl.value.toLowerCase()
+    : "";
 
-  return String(value ?? "")
-    .replace(
-      /[&<>'"]/g,
-      function(match){
+  const status = statusEl
+    ? statusEl.value
+    : "ALL";
 
-        return {
-          "&":"&amp;",
-          "<":"&lt;",
-          ">":"&gt;",
-          "'":"&#39;",
-          '"':"&quot;"
-        }[match];
+  const list = data.filter(item => {
+    const matchStatus =
+      status === "ALL" ||
+      item.approval_status === status;
 
-      }
-    );
-}
-
-
-/* =========================================================
-   BADGE STATUS
-========================================================= */
-
-function badge(status){
-
-  const s =
-    String(status || "")
-      .toUpperCase();
-
-  return `
-    <span class="badge b-${s.toLowerCase()}">
-      ${esc(s)}
-    </span>
-  `;
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render(){
-
-  const searchValue =
-    $("search").value
-      .trim()
-      .toLowerCase();
-
-  const selectedStatus =
-    $("status").value;
-
-
-  /* FILTER */
-
-  let list =
-    data.filter(function(row){
-
-      const matchesStatus =
-        selectedStatus === "ALL" ||
-        row.approval_status === selectedStatus;
-
-      const searchable = [
-        row.email,
-        row.client_name,
-        row.module_slug,
-        row.core_name
+    const matchSearch =
+      !q ||
+      [
+        item.email,
+        item.client_name,
+        item.module_slug,
+        item.core_name
       ]
-      .join(" ")
-      .toLowerCase();
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
 
-      const matchesSearch =
-        !searchValue ||
-        searchable.includes(searchValue);
-
-      return (
-        matchesStatus &&
-        matchesSearch
-      );
-    });
-
-
-  /* JUMLAH STATUS */
-
-  const count = {
-    PENDING:0,
-    APPROVED:0,
-    REJECTED:0,
-    SUSPENDED:0
-  };
-
-  data.forEach(function(row){
-
-    if(
-      Object.prototype.hasOwnProperty.call(
-        count,
-        row.approval_status
-      )
-    ){
-      count[row.approval_status]++;
-    }
-
+    return matchStatus && matchSearch;
   });
 
-
-  $("nPending").textContent =
-    count.PENDING;
-
-  $("nApproved").textContent =
-    count.APPROVED;
-
-  $("nRejected").textContent =
-    count.REJECTED;
-
-  $("nSuspended").textContent =
-    count.SUSPENDED;
-
-
-  /* TABEL KOSONG */
-
-  if(!list.length){
-
-    $("tbody").innerHTML = `
-      <tr>
-        <td colspan="6" class="empty">
-          Belum ada data permintaan akses.
-        </td>
-      </tr>
-    `;
-
-    return;
-  }
-
-
-  /* TABEL */
-
-  $("tbody").innerHTML =
-    list.map(function(row){
-
-      let action = "";
-
-
-      if(row.approval_status === "PENDING"){
-
-        action = `
-          <button
-            class="btn ok"
-            onclick="act('${esc(row.id)}','APPROVED')"
-          >
-            SETUJUI
-          </button>
-
-          <button
-            class="btn no"
-            onclick="act('${esc(row.id)}','REJECTED')"
-          >
-            TOLAK
-          </button>
-        `;
-
-      }
-
-
-      if(row.approval_status === "APPROVED"){
-
-        action = `
-          <button
-            class="btn warn"
-            onclick="act('${esc(row.id)}','SUSPENDED')"
-          >
-            SUSPEND
-          </button>
-        `;
-
-      }
-
-
-      if(row.approval_status === "SUSPENDED"){
-
-        action = `
-          <button
-            class="btn ok"
-            onclick="act('${esc(row.id)}','APPROVED')"
-          >
-            AKTIFKAN
-          </button>
-        `;
-
-      }
-
-
-      return `
-        <tr>
-
-          <td>
-            <b>${esc(row.email)}</b>
-          </td>
-
-          <td>
-            ${esc(
-              row.core_name ||
-              "PT Adiimasa Distribusi Indonesia"
-            )}
-          </td>
-
-          <td>
-            ${esc(
-              String(
-                row.module_slug || ""
-              ).toUpperCase()
-            )}
-          </td>
-
-          <td>
-            ${esc(
-              row.client_name ||
-              "GEPARU"
-            )}
-          </td>
-
-          <td>
-            ${badge(row.approval_status)}
-          </td>
-
-          <td>
-            <div class="actions">
-              ${action}
-            </div>
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
-}
-
-
-/* =========================================================
-   UBAH STATUS
-========================================================= */
-
-async function act(id,status){
-
-  let question = "";
-
-  if(status === "APPROVED"){
-    question =
-      "Setujui akses client ini?";
-  }
-
-  if(status === "REJECTED"){
-    question =
-      "Tolak permintaan akses ini?";
-  }
-
-  if(status === "SUSPENDED"){
-    question =
-      "Tangguhkan akses client ini?";
-  }
-
-  if(!confirm(question)){
-    return;
-  }
-
-
-  const body = {
-    approval_status:status,
-    is_active:
-      status === "APPROVED"
+  const count = {
+    PENDING: 0,
+    APPROVED: 0,
+    REJECTED: 0,
+    SUSPENDED: 0
   };
 
+  data.forEach(item => {
+    if (count[item.approval_status] !== undefined) {
+      count[item.approval_status]++;
+    }
+  });
 
-  if(status === "APPROVED"){
+  if ($("nPending"))
+    $("nPending").textContent = count.PENDING;
 
-    body.approved_at =
-      new Date().toISOString();
+  if ($("nApproved"))
+    $("nApproved").textContent = count.APPROVED;
 
+  if ($("nRejected"))
+    $("nRejected").textContent = count.REJECTED;
+
+  if ($("nSuspended"))
+    $("nSuspended").textContent = count.SUSPENDED;
+
+  if (!list.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="6" class="empty">' +
+      "Belum ada data permintaan akses." +
+      "</td></tr>";
+
+    return;
+  }
+
+  tbody.innerHTML = list
+    .map(item => `
+      <tr>
+        <td>
+          <b>${esc(item.email)}</b>
+        </td>
+
+        <td>
+          ${esc(
+            item.core_name ||
+              "PT Adiimasa Distribusi Indonesia"
+          )}
+        </td>
+
+        <td>
+          ${esc(
+            (item.module_slug || "").toUpperCase()
+          )}
+        </td>
+
+        <td>
+          ${esc(item.client_name || "GEPARU")}
+        </td>
+
+        <td>
+          ${badge(item.approval_status)}
+        </td>
+
+        <td>
+          <div class="actions">
+
+            ${
+              item.approval_status === "PENDING"
+                ? `
+                  <button
+                    class="btn ok"
+                    onclick="act('${item.id}','APPROVED')">
+                    SETUJUI
+                  </button>
+
+                  <button
+                    class="btn no"
+                    onclick="act('${item.id}','REJECTED')">
+                    TOLAK
+                  </button>
+                `
+                : ""
+            }
+
+            ${
+              item.approval_status === "APPROVED"
+                ? `
+                  <button
+                    class="btn warn"
+                    onclick="act('${item.id}','SUSPENDED')">
+                    SUSPEND
+                  </button>
+                `
+                : ""
+            }
+
+            ${
+              item.approval_status === "SUSPENDED"
+                ? `
+                  <button
+                    class="btn ok"
+                    onclick="act('${item.id}','APPROVED')">
+                    AKTIFKAN
+                  </button>
+                `
+                : ""
+            }
+
+          </div>
+        </td>
+      </tr>
+    `)
+    .join("");
+}
+
+async function act(id, status) {
+
+  if (
+    status === "REJECTED" &&
+    !confirm("Tolak permintaan akses ini?")
+  ) return;
+
+  if (
+    status === "APPROVED" &&
+    !confirm("Setujui akses client ini?")
+  ) return;
+
+  if (
+    status === "SUSPENDED" &&
+    !confirm("Tangguhkan akses client ini?")
+  ) return;
+
+  const {
+    data: sessionData
+  } = await supabase.auth.getSession();
+
+  const session = sessionData.session;
+
+  if (!session) {
+    alert("Sesi login sudah tidak valid.");
+    return;
+  }
+
+  const body = {
+    approval_status: status,
+    is_active: status === "APPROVED"
+  };
+
+  if (status === "APPROVED") {
+    body.approved_at = new Date().toISOString();
     body.rejected_at = null;
   }
 
-
-  if(status === "REJECTED"){
-
-    body.rejected_at =
-      new Date().toISOString();
-
+  if (status === "REJECTED") {
+    body.rejected_at = new Date().toISOString();
     body.approved_at = null;
   }
 
-
-  if(status === "SUSPENDED"){
-
+  if (status === "SUSPENDED") {
     body.approved_at = null;
   }
 
-
-  const url =
+  const response = await fetch(
     SUPABASE_URL +
-    "/rest/v1/geparu_admin_access" +
-    "?id=eq." +
-    encodeURIComponent(id);
+      "/rest/v1/geparu_admin_access?id=eq." +
+      encodeURIComponent(id),
+    {
+      method: "PATCH",
 
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization:
+          "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
 
-  const response =
-    await fetch(
-      url,
-      {
-        method:"PATCH",
+      body: JSON.stringify(body)
+    }
+  );
 
-        headers:{
-          ...headers(),
-          Prefer:"return=minimal"
-        },
-
-        body:JSON.stringify(body)
-      }
-    );
-
-
-  if(!response.ok){
-
+  if (!response.ok) {
     alert(
-      "Gagal mengubah status:\n\n" +
-      await response.text()
+      "Gagal mengubah status: " +
+        (await response.text())
     );
 
     return;
   }
-
 
   await load();
 
   toast(
     "Status berhasil diubah menjadi " +
-    status
+      status
   );
 }
 
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function toast(text){
-
-  const el =
-    document.createElement("div");
+function toast(text) {
+  const el = document.createElement("div");
 
   el.className = "toast";
   el.textContent = text;
@@ -1481,212 +1166,106 @@ function toast(text){
   );
 }
 
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-function logout(){
-
-  clearSession();
-
+async function logout() {
+  await supabase.auth.signOut();
   location.reload();
 }
 
+async function boot() {
 
-/* =========================================================
-   BOOT
-========================================================= */
-
-async function boot(){
-
-  /*
-    1. Coba baca hasil OAuth Google
-  */
-
-  parseOAuth();
-
-
-  /*
-    2. Ambil session dari localStorage
-  */
-
-  accessToken =
-    localStorage.getItem(
-      "core_access_token"
-    );
-
-  refreshToken =
-    localStorage.getItem(
-      "core_refresh_token"
-    );
-
-
-  /*
-    3. Kalau tidak ada access token,
-       coba refresh menggunakan refresh token
-  */
-
-  if(
-    !accessToken &&
-    refreshToken
-  ){
-
-    await refreshSession();
-  }
-
-
-  /*
-    4. Kalau tetap tidak ada token,
-       jangan panggil /auth/v1/user.
-       Tampilkan login.
-  */
-
-  if(!accessToken){
-
-    $("loginOverlay")
-      .classList
-      .remove("hidden");
-
-    $("app")
-      .classList
-      .add("hidden");
-
-    return;
-  }
-
-
-  /*
-    5. Validasi session
-  */
-
-  try{
-
-    currentUser =
-      await getUser();
-
+  try {
 
     /*
-      6. Cek apakah email terdaftar
-         sebagai Core Admin
+      Supabase otomatis menangani:
+      ?code=...
+      → tukar code
+      → session
+      → access token
     */
 
+    const {
+      data: sessionData
+    } = await supabase.auth.getSession();
+
+    const session = sessionData.session;
+
+    if (!session) {
+      $("loginOverlay").classList.remove("hidden");
+      return;
+    }
+
+    currentUser = await getUser();
+
     const admin =
-      await isCoreAdmin(
-        currentUser.email
+      await isCoreAdmin(currentUser.email);
+
+    if (!admin) {
+
+      await supabase.auth.signOut();
+
+      $("loginOverlay").classList.remove(
+        "hidden"
       );
 
-
-    if(!admin){
-
-      clearSession();
-
-      $("loginOverlay")
-        .classList
-        .remove("hidden");
-
-      $("app")
-        .classList
-        .add("hidden");
-
       setMsg(
-        "Akun Google berhasil login, tetapi email ini belum terdaftar sebagai Core Admin.",
+        "Akun Google berhasil login, tetapi belum terdaftar sebagai Core Admin.",
         true
       );
 
       return;
     }
 
+    if ($("userEmail")) {
+      $("userEmail").textContent =
+        currentUser.email;
+    }
 
-    /*
-      7. Login valid
-    */
+    $("loginOverlay").classList.add("hidden");
 
-    $("userEmail").textContent =
-      currentUser.email;
-
-    $("loginOverlay")
-      .classList
-      .add("hidden");
-
-    $("app")
-      .classList
-      .remove("hidden");
-
-
-    /*
-      8. Ambil data
-    */
+    $("app").classList.remove("hidden");
 
     await load();
 
-
-  }catch(error){
+  } catch (error) {
 
     console.error(error);
 
-    clearSession();
+    await supabase.auth.signOut();
 
-    $("loginOverlay")
-      .classList
-      .remove("hidden");
-
-    $("app")
-      .classList
-      .add("hidden");
+    $("loginOverlay").classList.remove(
+      "hidden"
+    );
 
     setMsg(
       error.message ||
-      "Sesi login tidak valid.",
+        "Terjadi kesalahan saat login.",
       true
     );
   }
 }
 
+$("googleBtn").onclick = loginGoogle;
 
-/* =========================================================
-   EVENT
-========================================================= */
+if ($("logoutBtn")) {
+  $("logoutBtn").onclick = logout;
+}
 
-document.addEventListener(
-  "DOMContentLoaded",
-  function(){
+if ($("refresh")) {
+  $("refresh").onclick = () =>
+    load().catch(error =>
+      alert(error.message)
+    );
+}
 
-    $("googleBtn").onclick =
-      loginGoogle;
+if ($("search")) {
+  $("search").oninput = render;
+}
 
-    $("logoutBtn").onclick =
-      logout;
+if ($("status")) {
+  $("status").onchange = render;
+}
 
-    $("refresh").onclick =
-      function(){
-
-        load()
-          .catch(function(error){
-
-            alert(error.message);
-
-          });
-
-      };
-
-
-    $("search").oninput =
-      render;
-
-    $("status").onchange =
-      render;
-
-
-    /*
-      Jalankan aplikasi setelah
-      seluruh HTML selesai dibuat.
-    */
-
-    boot();
-
-  }
-);
+boot();
 </script>
 
 </body>
