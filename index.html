@@ -204,7 +204,18 @@ function clearSession(){accessToken=null;refreshToken=null;localStorage.removeIt
 async function getUser(){const r=await fetch(SUPABASE_URL+"/auth/v1/user",{headers:headers()});if(!r.ok)throw new Error("Sesi login tidak valid.");return r.json()}
 async function refreshSession(){const rt=refreshToken||localStorage.getItem("core_refresh_token");if(!rt)return false;const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:rt})});if(!r.ok)return false;saveSession(await r.json());return true}
 async function isCoreAdmin(email){const r=await fetch(SUPABASE_URL+"/rest/v1/core_adiimasa_admins?select=email,name,is_active&email=eq."+encodeURIComponent(email.toLowerCase())+"&is_active=eq.true",{headers:headers()});if(!r.ok)throw new Error("Gagal memeriksa hak akses Core Adiimasa (HTTP "+r.status+").");const rows=await r.json();return rows[0]||null}
-async function loginGoogle(){localStorage.setItem("core_login_intent","1");const url=SUPABASE_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(REDIRECT);location.href=url}
+async function loginGoogle(){
+  localStorage.setItem("core_login_intent","1");
+
+  const url =
+    SUPABASE_URL +
+    "/auth/v1/authorize?provider=google" +
+    "&prompt=select_account" +
+    "&redirect_to=" +
+    encodeURIComponent(redirectTo);
+
+  location.href = url;
+}
 function parseOAuth(){const h=new URLSearchParams(location.hash.slice(1));if(h.get("access_token")){saveSession({access_token:h.get("access_token"),refresh_token:h.get("refresh_token")});history.replaceState({},document.title,location.pathname);return true}return false}
 async function load(){const r=await fetch(SUPABASE_URL+"/rest/v1/geparu_admin_access?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&order=created_at.desc",{headers:headers()});if(!r.ok){const t=await r.text();throw new Error("Gagal memuat permintaan akses (HTTP "+r.status+") "+t)}data=await r.json();render()}
 function badge(s){return '<span class="badge b-'+s.toLowerCase()+'">'+s+'</span>'}
