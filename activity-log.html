@@ -330,11 +330,55 @@ th{
 td{
     padding:14px;
     border-bottom:1px solid #e5e9ed;
+    vertical-align:top;
 }
 
 
 tbody tr:hover{
     background:#f7f9fb;
+}
+
+
+/* ==========================================
+   ACTOR / PELAKU
+========================================== */
+
+.actor-info{
+    min-width:180px;
+}
+
+
+.actor-name{
+    font-weight:bold;
+    color:#243447;
+    margin-bottom:5px;
+}
+
+
+.actor-meta{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+
+.actor-email{
+    font-size:12px;
+    color:#6c7a89;
+    word-break:break-word;
+}
+
+
+.actor-role{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:12px;
+    background:#e8eef4;
+    color:#17324d;
+    font-size:10px;
+    font-weight:bold;
+    letter-spacing:.4px;
 }
 
 
@@ -701,7 +745,7 @@ tbody tr:hover{
                         </th>
 
                         <th>
-                            Admin
+                            Pelaku
                         </th>
 
                         <th>
@@ -1144,6 +1188,134 @@ function selectClient(client){
 
 
 /* ==========================================
+   GET ACTOR HTML
+
+   Prioritas data:
+
+   1. actor_name
+   2. admin_name
+   3. actor_email
+   4. admin_email
+   5. user_id
+
+   Database baru menggunakan:
+   actor_name
+   actor_email
+   actor_role
+
+   Data lama tetap didukung.
+========================================== */
+
+function getActorHtml(log){
+
+    const actorName =
+
+        log.actor_name ||
+
+        log.admin_name ||
+
+        log.actor_email ||
+
+        log.admin_email ||
+
+        log.user_id ||
+
+        "Tidak diketahui";
+
+
+    const actorEmail =
+
+        log.actor_email ||
+
+        log.admin_email ||
+
+        "";
+
+
+    const actorRole =
+
+        log.actor_role ||
+
+        log.role ||
+
+        "";
+
+
+    let emailHtml = "";
+
+
+    if(
+
+        actorEmail &&
+
+        actorEmail !== actorName
+
+    ){
+
+        emailHtml = `
+
+            <div class="actor-email">
+
+                ${escapeHtml(
+                    actorEmail
+                )}
+
+            </div>
+
+        `;
+
+    }
+
+
+    let roleHtml = "";
+
+
+    if(actorRole){
+
+        roleHtml = `
+
+            <span class="actor-role">
+
+                ${escapeHtml(
+                    actorRole
+                )}
+
+            </span>
+
+        `;
+
+    }
+
+
+    return `
+
+        <div class="actor-info">
+
+            <div class="actor-name">
+
+                ${escapeHtml(
+                    actorName
+                )}
+
+            </div>
+
+            <div class="actor-meta">
+
+                ${roleHtml}
+
+            </div>
+
+            ${emailHtml}
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* ==========================================
    LOAD ACTIVITY LOG
 ========================================== */
 
@@ -1334,22 +1506,17 @@ async function loadActivity(
 
         /* ==========================================
            CLIENT FILTER
-           
-           Saat ini struktur tabel yang Anda buat
-           menggunakan module sebagai filter utama.
-           
-           Jadi GEPARU menampilkan Activity Log
-           modul SOSIAL.
+
+           Struktur sekarang menggunakan module
+           sebagai filter utama.
+
+           Untuk GEPARU saat ini:
+           module = SOSIAL
         ========================================== */
 
         if(
             client === "GEPARU"
         ){
-
-            /*
-               Tidak menghapus atau mengubah
-               data database yang sudah berjalan.
-            */
 
             logs = logs;
 
@@ -1427,25 +1594,13 @@ async function loadActivity(
 
 
 
-                    <!-- ADMIN -->
+                    <!-- PELAKU -->
 
                     <td>
 
-                        <b>
-
-                            ${escapeHtml(
-
-                                log.admin_name ||
-
-                                log.admin_email ||
-
-                                log.user_id ||
-
-                                "-"
-
-                            )}
-
-                        </b>
+                        ${getActorHtml(
+                            log
+                        )}
 
                     </td>
 
