@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>Activity Log | CORE ADIMASA</title>
 
+
 <style>
+
+/* ==========================================
+   RESET
+========================================== */
+
 *{
     margin:0;
     padding:0;
@@ -14,12 +26,16 @@
     font-family:Arial, sans-serif;
 }
 
+
 body{
     background:#f1f4f7;
     color:#243447;
 }
 
-/* HEADER */
+
+/* ==========================================
+   HEADER
+========================================== */
 
 .header{
     background:#17324d;
@@ -27,16 +43,21 @@ body{
     padding:25px;
 }
 
+
 .header h1{
     font-size:28px;
 }
+
 
 .header p{
     margin-top:8px;
     color:#cbd5df;
 }
 
-/* CONTAINER */
+
+/* ==========================================
+   CONTAINER
+========================================== */
 
 .container{
     max-width:1100px;
@@ -44,7 +65,10 @@ body{
     padding:25px;
 }
 
-/* INFO */
+
+/* ==========================================
+   INFO
+========================================== */
 
 .info-box{
     background:white;
@@ -54,22 +78,31 @@ body{
     box-shadow:0 4px 15px rgba(0,0,0,0.08);
 }
 
+
 .info-box h2{
     margin-bottom:8px;
 }
 
-/* MODUL MENU */
+
+/* ==========================================
+   MODUL MENU
+========================================== */
 
 .module-title{
     margin-bottom:15px;
     font-size:22px;
 }
 
+
 .module-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    grid-template-columns:repeat(
+        auto-fit,
+        minmax(160px,1fr)
+    );
     gap:15px;
 }
+
 
 .module-card{
     background:white;
@@ -80,19 +113,39 @@ body{
     transition:0.2s;
 }
 
+
 .module-card:hover{
     transform:translateY(-3px);
     box-shadow:0 6px 18px rgba(0,0,0,0.1);
 }
+
+
+.module-card.active{
+    background:#17324d;
+    border-color:#17324d;
+}
+
+
+.module-card.active h3{
+    color:white;
+}
+
+
+.module-card.active p{
+    color:#d7e1ea;
+}
+
 
 .module-icon{
     font-size:32px;
     margin-bottom:10px;
 }
 
+
 .module-card h3{
     color:#17324d;
 }
+
 
 .module-card p{
     margin-top:6px;
@@ -100,7 +153,10 @@ body{
     font-size:14px;
 }
 
-/* LOG AREA */
+
+/* ==========================================
+   LOG AREA
+========================================== */
 
 .log-section{
     margin-top:30px;
@@ -110,6 +166,7 @@ body{
     box-shadow:0 4px 15px rgba(0,0,0,0.08);
 }
 
+
 .log-header{
     display:flex;
     justify-content:space-between;
@@ -117,67 +174,87 @@ body{
     margin-bottom:20px;
 }
 
+
 .log-header h2{
     color:#17324d;
 }
 
-/* TABLE */
+
+/* ==========================================
+   TABLE
+========================================== */
 
 .table-wrapper{
     overflow-x:auto;
 }
+
 
 table{
     width:100%;
     border-collapse:collapse;
 }
 
+
 th{
     background:#17324d;
     color:white;
     padding:14px;
     text-align:left;
+    white-space:nowrap;
 }
+
 
 td{
     padding:14px;
     border-bottom:1px solid #e5e9ed;
 }
 
+
 tr:hover{
     background:#f7f9fb;
 }
 
-/* STATUS */
+
+/* ==========================================
+   STATUS
+========================================== */
 
 .status{
+    display:inline-block;
     padding:6px 10px;
     border-radius:20px;
     font-size:12px;
     font-weight:bold;
 }
 
+
 .login{
     background:#dbeafe;
     color:#1d4ed8;
 }
+
 
 .edit{
     background:#fef3c7;
     color:#b45309;
 }
 
+
 .create{
     background:#dcfce7;
     color:#15803d;
 }
+
 
 .delete{
     background:#fee2e2;
     color:#b91c1c;
 }
 
-/* EMPTY */
+
+/* ==========================================
+   EMPTY
+========================================== */
 
 .empty{
     text-align:center;
@@ -185,14 +262,46 @@ tr:hover{
     color:#7b8794;
 }
 
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media(max-width:600px){
+
+    .header h1{
+        font-size:22px;
+    }
+
+
+    .container{
+        padding:15px;
+    }
+
+
+    .module-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
 </style>
+
 </head>
+
 
 <body>
 
+
+<!-- ==========================================
+     HEADER
+========================================== -->
+
 <div class="header">
 
-    <h1>📋 Activity Log</h1>
+    <h1>
+        📋 Activity Log
+    </h1>
 
     <p>
         Pusat riwayat aktivitas seluruh modul Platform CORE ADIMASA
@@ -201,14 +310,23 @@ tr:hover{
 </div>
 
 
+
+<!-- ==========================================
+     MAIN CONTAINER
+========================================== -->
+
 <div class="container">
 
 
-    <!-- PENJELASAN -->
+    <!-- ==========================================
+         PENJELASAN
+    ========================================== -->
 
     <div class="info-box">
 
-        <h2>Activity Monitoring</h2>
+        <h2>
+            Activity Monitoring
+        </h2>
 
         <p>
             CORE dapat memantau seluruh aktivitas administrator
@@ -218,19 +336,34 @@ tr:hover{
     </div>
 
 
-    <!-- PILIH MODUL -->
 
-    <h2 class="module-title">Pilih Modul</h2>
+    <!-- ==========================================
+         PILIH MODUL
+    ========================================== -->
+
+    <h2 class="module-title">
+        Pilih Modul
+    </h2>
+
 
 
     <div class="module-grid">
 
 
-        <div class="module-card">
+        <!-- SOSIAL -->
 
-            <div class="module-icon">🤝</div>
+        <div
+            class="module-card active"
+            data-module="SOSIAL"
+        >
 
-            <h3>SOSIAL</h3>
+            <div class="module-icon">
+                🤝
+            </div>
+
+            <h3>
+                SOSIAL
+            </h3>
 
             <p>
                 Activity Log layanan sosial dan client GEPARU.
@@ -239,11 +372,21 @@ tr:hover{
         </div>
 
 
-        <div class="module-card">
 
-            <div class="module-icon">🍽️</div>
+        <!-- FOOD -->
 
-            <h3>FOOD</h3>
+        <div
+            class="module-card"
+            data-module="FOOD"
+        >
+
+            <div class="module-icon">
+                🍽️
+            </div>
+
+            <h3>
+                FOOD
+            </h3>
 
             <p>
                 Activity Log modul Food.
@@ -252,11 +395,21 @@ tr:hover{
         </div>
 
 
-        <div class="module-card">
 
-            <div class="module-icon">🛒</div>
+        <!-- MARKETPLACE -->
 
-            <h3>MARKETPLACE</h3>
+        <div
+            class="module-card"
+            data-module="MARKETPLACE"
+        >
+
+            <div class="module-icon">
+                🛒
+            </div>
+
+            <h3>
+                MARKETPLACE
+            </h3>
 
             <p>
                 Activity Log marketplace dan penjualan.
@@ -265,11 +418,21 @@ tr:hover{
         </div>
 
 
-        <div class="module-card">
 
-            <div class="module-icon">🏢</div>
+        <!-- COMPANY -->
 
-            <h3>COMPANY</h3>
+        <div
+            class="module-card"
+            data-module="COMPANY"
+        >
+
+            <div class="module-icon">
+                🏢
+            </div>
+
+            <h3>
+                COMPANY
+            </h3>
 
             <p>
                 Activity Log perusahaan dan client.
@@ -278,11 +441,21 @@ tr:hover{
         </div>
 
 
-        <div class="module-card">
 
-            <div class="module-icon">📦</div>
+        <!-- PRODUCT -->
 
-            <h3>PRODUCT</h3>
+        <div
+            class="module-card"
+            data-module="PRODUCT"
+        >
+
+            <div class="module-icon">
+                📦
+            </div>
+
+            <h3>
+                PRODUCT
+            </h3>
 
             <p>
                 Activity Log produk dan katalog.
@@ -295,56 +468,87 @@ tr:hover{
 
 
 
-    <!-- RIWAYAT -->
+    <!-- ==========================================
+         RIWAYAT
+    ========================================== -->
 
     <div class="log-section">
+
 
         <div class="log-header">
 
             <h2 id="activityTitle">
-    Riwayat Aktivitas — SOSIAL
-</h2>
+
+                Riwayat Aktivitas — SOSIAL
+
+            </h2>
 
         </div>
 
 
+
         <div class="table-wrapper">
 
+
             <table>
+
 
                 <thead>
 
                     <tr>
 
-                        <th>Waktu</th>
+                        <th>
+                            Waktu
+                        </th>
 
-                        <th>Admin</th>
+                        <th>
+                            Admin
+                        </th>
 
-                        <th>Aktivitas</th>
+                        <th>
+                            Aktivitas
+                        </th>
 
-                        <th>Modul</th>
+                        <th>
+                            Modul
+                        </th>
 
-                        <th>Status</th>
+                        <th>
+                            Status
+                        </th>
 
-                        <th>Aksi</th>
+                        <th>
+                            Aksi
+                        </th>
 
                     </tr>
 
                 </thead>
 
 
+
                 <tbody id="logBody">
 
-    <tr>
 
-        <td colspan="6" class="empty">
-            Memuat Activity Log...
-        </td>
+                    <tr>
 
-    </tr>
+                        <td
+                            colspan="6"
+                            class="empty"
+                        >
 
-</tbody>
+                            Memuat Activity Log...
+
+                        </td>
+
+                    </tr>
+
+
+                </tbody>
+
+
             </table>
+
 
         </div>
 
@@ -354,17 +558,22 @@ tr:hover{
 
 </div>
 
+
+
 <script>
+
 
 /* ==========================================
    SUPABASE CONFIG
 ========================================== */
 
 const SUPABASE_URL =
-  "https://fysaxpqpqexjnlpkbwap.supabase.co";
+    "https://fysaxpqpqexjnlpkbwap.supabase.co";
+
 
 const SUPABASE_KEY =
-  "sb_publishable_DWRaEZTcNMjhglwN3nqCOw_pua8rsjD";
+    "sb_publishable_DWRaEZTcNMjhglwN3nqCOw_pua8rsjD";
+
 
 
 /* ==========================================
@@ -372,438 +581,827 @@ const SUPABASE_KEY =
 ========================================== */
 
 let accessToken =
-  localStorage.getItem("core_access_token");
+    localStorage.getItem(
+        "core_access_token"
+    );
 
-let currentModule = "SOSIAL";
+
+let currentModule =
+    "SOSIAL";
+
 
 
 /* ==========================================
    GET HEADERS
 ========================================== */
 
-function getHeaders() {
+function getHeaders(){
 
-  const headers = {
-    apikey: SUPABASE_KEY,
-    "Content-Type": "application/json",
-    Accept: "application/json"
-  };
+    const headers = {
 
+        apikey:
+            SUPABASE_KEY,
 
-  if (accessToken) {
+        "Content-Type":
+            "application/json",
 
-    headers.Authorization =
-      "Bearer " + accessToken;
+        Accept:
+            "application/json"
 
-  } else {
-
-    /*
-      Jika belum ada token,
-      tetap gunakan anon/publishable key
-    */
-
-    headers.Authorization =
-      "Bearer " + SUPABASE_KEY;
-
-  }
+    };
 
 
-  return headers;
+    if(accessToken){
+
+        headers.Authorization =
+            "Bearer " +
+            accessToken;
+
+    }else{
+
+        headers.Authorization =
+            "Bearer " +
+            SUPABASE_KEY;
+
+    }
+
+
+    return headers;
 
 }
+
+
+
+/* ==========================================
+   UPDATE ACTIVE MODULE
+========================================== */
+
+function updateActiveModule(module){
+
+    const cards =
+        document.querySelectorAll(
+            ".module-card"
+        );
+
+
+    cards.forEach(card => {
+
+        const cardModule =
+            card.dataset.module;
+
+
+        if(cardModule === module){
+
+            card.classList.add(
+                "active"
+            );
+
+        }else{
+
+            card.classList.remove(
+                "active"
+            );
+
+        }
+
+    });
+
+}
+
 
 
 /* ==========================================
    LOAD ACTIVITY LOG
 ========================================== */
 
-async function loadActivity(module = currentModule) {
-
-  currentModule = module;
+async function loadActivity(module){
 
 
-  const tbody =
-    document.getElementById("logBody");
+    /* Pastikan module selalu ada */
 
+    if(!module){
 
-  const title =
-    document.getElementById("activityTitle");
-
-
-  if (!tbody) {
-
-    console.error(
-      "activityBody tidak ditemukan."
-    );
-
-    return;
-
-  }
-
-
-  if (title) {
-
-    title.textContent =
-      "Riwayat Aktivitas — " + module;
-
-  }
-
-
-  tbody.innerHTML = `
-
-    <tr>
-
-      <td colspan="6" class="empty">
-
-        Memuat Activity Log...
-
-      </td>
-
-    </tr>
-
-  `;
-
-
-  try {
-
-    const url =
-  SUPABASE_URL +
-  "/rest/v1/activity_logs" +
-  "?select=*" +
-  "&module=eq." +
-  encodeURIComponent(module) +
-  "&order=created_at.desc";
-
-
-    const response =
-      await fetch(
-        url,
-        {
-          headers: getHeaders()
-        }
-      );
-
-
-    if (!response.ok) {
-
-      const errorText =
-        await response.text();
-
-      throw new Error(
-        "HTTP " +
-        response.status +
-        " — " +
-        errorText
-      );
+        module =
+            currentModule;
 
     }
 
 
-    const logs =
-      await response.json();
+    /* Simpan modul aktif */
+
+    currentModule =
+        module;
 
 
-    if (!logs || logs.length === 0) {
+    /* Ambil elemen */
 
-      tbody.innerHTML = `
+    const tbody =
+        document.getElementById(
+            "logBody"
+        );
 
-        <tr>
 
-          <td colspan="6" class="empty">
+    const title =
+        document.getElementById(
+            "activityTitle"
+        );
 
-            Belum ada Activity Log
-            untuk modul ${escapeHtml(module)}.
 
-          </td>
+    /* Validasi */
 
-        </tr>
+    if(!tbody){
 
-      `;
+        console.error(
+            "logBody tidak ditemukan."
+        );
 
-      return;
+        return;
 
     }
 
 
-    tbody.innerHTML =
-      logs.map(log => `
+    /* ==========================================
+       UPDATE JUDUL
+    ========================================== */
 
-        <tr>
+    if(title){
 
-          <td>
-            ${formatDate(log.created_at)}
-          </td>
+        title.textContent =
+            "Riwayat Aktivitas — " +
+            module;
 
-
-          <td>
-
-            <b>
-
-              ${escapeHtml(
-                log.admin_name ||
-                log.admin_email ||
-                "-"
-              )}
-
-            </b>
-
-          </td>
+    }
 
 
-          <td>
+    /* ==========================================
+       UPDATE CARD ACTIVE
+    ========================================== */
 
-            ${escapeHtml(
-              log.description ||
-              "-"
-            )}
-
-          </td>
-
-
-          <td>
-
-            ${escapeHtml(
-              log.module_slug ||
-              "-"
-            )}
-
-          </td>
-
-
-          <td>
-
-            <span class="
-              status
-              ${getStatusClass(log.status)}
-            ">
-
-              ${escapeHtml(
-                log.status ||
-                "SUCCESS"
-              )}
-
-            </span>
-
-          </td>
-
-
-          <td>
-
-            ${escapeHtml(
-              log.action ||
-              "-"
-            )}
-
-          </td>
-
-        </tr>
-
-      `)
-      .join("");
-
-
-  } catch (error) {
-
-    console.error(
-      "ACTIVITY LOG ERROR:",
-      error
+    updateActiveModule(
+        module
     );
 
+
+    /* ==========================================
+       LOADING
+    ========================================== */
 
     tbody.innerHTML = `
 
-      <tr>
+        <tr>
 
-        <td colspan="6" class="empty">
+            <td
+                colspan="6"
+                class="empty"
+            >
 
-          <b>
-            Gagal memuat Activity Log.
-          </b>
+                Memuat Activity Log...
 
-          <br><br>
+            </td>
 
-          <small>
-
-            ${escapeHtml(error.message)}
-
-          </small>
-
-        </td>
-
-      </tr>
+        </tr>
 
     `;
 
-  }
+
+
+    try{
+
+
+        /* ==========================================
+           URL SUPABASE
+        ========================================== */
+
+        const url =
+
+            SUPABASE_URL +
+
+            "/rest/v1/activity_logs" +
+
+            "?select=*" +
+
+            "&module=eq." +
+
+            encodeURIComponent(
+                module
+            ) +
+
+            "&order=created_at.desc";
+
+
+
+        console.log(
+            "LOAD MODULE:",
+            module
+        );
+
+
+        console.log(
+            "URL:",
+            url
+        );
+
+
+
+        /* ==========================================
+           FETCH DATA
+        ========================================== */
+
+        const response =
+
+            await fetch(
+
+                url,
+
+                {
+
+                    headers:
+                        getHeaders()
+
+                }
+
+            );
+
+
+
+        /* ==========================================
+           CEK RESPONSE
+        ========================================== */
+
+        if(!response.ok){
+
+
+            const errorText =
+
+                await response.text();
+
+
+
+            throw new Error(
+
+                "HTTP " +
+
+                response.status +
+
+                " — " +
+
+                errorText
+
+            );
+
+        }
+
+
+
+        /* ==========================================
+           AMBIL JSON
+        ========================================== */
+
+        const logs =
+
+            await response.json();
+
+
+
+        console.log(
+            "ACTIVITY LOG:",
+            logs
+        );
+
+
+
+        /* ==========================================
+           JIKA DATA KOSONG
+        ========================================== */
+
+        if(
+
+            !logs ||
+
+            logs.length === 0
+
+        ){
+
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty"
+                    >
+
+                        Belum ada Activity Log
+                        untuk modul
+                        <b>
+                            ${escapeHtml(module)}
+                        </b>.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+
+            return;
+
+        }
+
+
+
+        /* ==========================================
+           TAMPILKAN DATA
+        ========================================== */
+
+        tbody.innerHTML =
+
+            logs.map(log => `
+
+
+                <tr>
+
+
+                    <!-- WAKTU -->
+
+                    <td>
+
+                        ${formatDate(
+                            log.created_at
+                        )}
+
+                    </td>
+
+
+
+                    <!-- ADMIN -->
+
+                    <td>
+
+                        <b>
+
+                            ${escapeHtml(
+
+                                log.admin_name ||
+
+                                log.admin_email ||
+
+                                log.user_id ||
+
+                                "-"
+
+                            )}
+
+                        </b>
+
+                    </td>
+
+
+
+                    <!-- AKTIVITAS -->
+
+                    <td>
+
+                        ${escapeHtml(
+
+                            log.description ||
+
+                            log.action ||
+
+                            "-"
+
+                        )}
+
+                    </td>
+
+
+
+                    <!-- MODUL -->
+
+                    <td>
+
+                        ${escapeHtml(
+
+                            log.module ||
+
+                            log.module_slug ||
+
+                            module
+
+                        )}
+
+                    </td>
+
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        <span class="
+                            status
+                            ${getStatusClass(
+                                log.status
+                            )}
+                        ">
+
+                            ${escapeHtml(
+
+                                log.status ||
+
+                                "SUCCESS"
+
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+
+                    <!-- AKSI -->
+
+                    <td>
+
+                        ${escapeHtml(
+
+                            log.action ||
+
+                            "-"
+
+                        )}
+
+                    </td>
+
+
+                </tr>
+
+
+            `)
+
+            .join("");
+
+
+    }catch(error){
+
+
+        console.error(
+
+            "ACTIVITY LOG ERROR:",
+
+            error
+
+        );
+
+
+
+        tbody.innerHTML = `
+
+
+            <tr>
+
+
+                <td
+                    colspan="6"
+                    class="empty"
+                >
+
+
+                    <b>
+                        Gagal memuat Activity Log.
+                    </b>
+
+
+                    <br>
+
+                    <br>
+
+
+                    <small>
+
+                        ${escapeHtml(
+                            error.message
+                        )}
+
+                    </small>
+
+
+                </td>
+
+
+            </tr>
+
+
+        `;
+
+    }
 
 }
+
 
 
 /* ==========================================
    FORMAT TANGGAL
 ========================================== */
 
-function formatDate(date) {
-
-  if (!date)
-    return "-";
+function formatDate(date){
 
 
-  try {
+    if(!date){
 
-    return new Date(date)
-      .toLocaleString(
-        "id-ID",
-        {
-          dateStyle: "medium",
-          timeStyle: "short"
-        }
-      );
+        return "-";
 
-  } catch (error) {
+    }
 
-    return date;
 
-  }
+    try{
+
+
+        return new Date(date)
+
+            .toLocaleString(
+
+                "id-ID",
+
+                {
+
+                    dateStyle:
+                        "medium",
+
+                    timeStyle:
+                        "short"
+
+                }
+
+            );
+
+
+    }catch(error){
+
+
+        return date;
+
+    }
 
 }
+
 
 
 /* ==========================================
    STATUS CLASS
 ========================================== */
 
-function getStatusClass(status) {
-
-  const value =
-    String(status || "SUCCESS")
-      .toUpperCase();
+function getStatusClass(status){
 
 
-  if (value === "SUCCESS") {
+    const value =
 
-    return "create";
+        String(
 
-  }
+            status ||
 
+            "SUCCESS"
 
-  if (
-    value === "ERROR" ||
-    value === "FAILED"
-  ) {
+        )
 
-    return "delete";
-
-  }
+        .toUpperCase();
 
 
-  return "edit";
+
+    /* SUCCESS */
+
+    if(
+
+        value === "SUCCESS" ||
+
+        value === "CREATE" ||
+
+        value === "CREATED"
+
+    ){
+
+        return "create";
+
+    }
+
+
+
+    /* LOGIN */
+
+    if(
+
+        value === "LOGIN"
+
+    ){
+
+        return "login";
+
+    }
+
+
+
+    /* ERROR */
+
+    if(
+
+        value === "ERROR" ||
+
+        value === "FAILED" ||
+
+        value === "DELETE"
+
+    ){
+
+        return "delete";
+
+    }
+
+
+
+    /* DEFAULT */
+
+    return "edit";
 
 }
+
 
 
 /* ==========================================
    ESCAPE HTML
 ========================================== */
 
-function escapeHtml(value) {
+function escapeHtml(value){
 
-  return String(value ?? "")
 
-    .replace(
-      /&/g,
-      "&amp;"
+    return String(
+
+        value ??
+
+        ""
+
     )
 
     .replace(
-      /</g,
-      "&lt;"
+
+        /&/g,
+
+        "&amp;"
+
     )
 
     .replace(
-      />/g,
-      "&gt;"
+
+        /</g,
+
+        "&lt;"
+
     )
 
     .replace(
-      /"/g,
-      "&quot;"
+
+        />/g,
+
+        "&gt;"
+
     )
 
     .replace(
-      /'/g,
-      "&#039;"
+
+        /"/g,
+
+        "&quot;"
+
+    )
+
+    .replace(
+
+        /'/g,
+
+        "&#039;"
+
     );
 
 }
 
 
-/* ==========================================
-   MODULE BUTTONS
-========================================== */
 
 /* ==========================================
    MODULE BUTTONS
 ========================================== */
 
-function setupModules() {
-
-  document.addEventListener(
-    "click",
-    function(event) {
-
-      const card =
-        event.target.closest(".module-card");
+function setupModules(){
 
 
-      if (!card)
-        return;
+    const cards =
 
-
-      const module =
-        card.dataset.module;
-
-
-      if (!module) {
-
-        console.error(
-          "Module tidak ditemukan pada card:",
-          card
+        document.querySelectorAll(
+            ".module-card"
         );
 
-        return;
-
-      }
 
 
-      console.log(
-        "MODULE DIKLIK:",
-        module
-      );
+    cards.forEach(card => {
 
 
-      loadActivity(module);
+        card.addEventListener(
 
-    }
-  );
+            "click",
+
+            function(){
+
+
+                const module =
+
+                    this.dataset.module;
+
+
+
+                console.log(
+
+                    "MODULE DIKLIK:",
+
+                    module
+
+                );
+
+
+
+                /* Pastikan module tersedia */
+
+                if(!module){
+
+
+                    console.error(
+
+                        "data-module tidak ditemukan.",
+
+                        this
+
+                    );
+
+
+                    return;
+
+                }
+
+
+
+                /* Load activity */
+
+                loadActivity(
+                    module
+                );
+
+
+            }
+
+        );
+
+
+    });
+
 
 }
+
+
 
 /* ==========================================
    START SYSTEM
 ========================================== */
 
 document.addEventListener(
-  "DOMContentLoaded",
-  () => {
 
-    setupModules();
+    "DOMContentLoaded",
 
-    loadActivity("SOSIAL");
+    function(){
 
-  }
+
+        console.log(
+            "ACTIVITY LOG SYSTEM START"
+        );
+
+
+        /* Aktifkan klik module */
+
+        setupModules();
+
+
+        /* Load awal */
+
+        loadActivity(
+            "SOSIAL"
+        );
+
+
+    }
+
 );
 
+
 </script>
+
+
 </body>
+
 </html>
