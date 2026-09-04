@@ -467,12 +467,12 @@ async function loadActivity(module = currentModule) {
   try {
 
     const url =
-      SUPABASE_URL +
-      "/rest/v1/activity_logs" +
-      "?select=*" +
-      "&module_slug=eq." +
-      encodeURIComponent(module) +
-      "&order=created_at.desc";
+  SUPABASE_URL +
+  "/rest/v1/activity_logs" +
+  "?select=*" +
+  "&module=eq." +
+  encodeURIComponent(module) +
+  "&order=created_at.desc";
 
 
     const response =
