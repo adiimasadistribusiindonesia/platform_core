@@ -6,8 +6,8 @@
 <meta charset="UTF-8">
 
 <meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
 >
 
 <title>Activity Log | CORE ADIMASA</title>
@@ -85,7 +85,7 @@ body{
 
 
 /* ==========================================
-   MODUL MENU
+   MODUL
 ========================================== */
 
 .module-title{
@@ -104,6 +104,10 @@ body{
 }
 
 
+/* ==========================================
+   MODULE CARD
+========================================== */
+
 .module-card{
     background:white;
     border:1px solid #dce3ea;
@@ -111,6 +115,7 @@ body{
     padding:22px;
     cursor:pointer;
     transition:0.2s;
+    user-select:none;
 }
 
 
@@ -151,6 +156,124 @@ body{
     margin-top:6px;
     color:#6c7a89;
     font-size:14px;
+}
+
+
+/* ==========================================
+   CLIENT AREA
+========================================== */
+
+.client-section{
+    display:none;
+    margin-top:30px;
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+
+
+.client-section.show{
+    display:block;
+}
+
+
+.client-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+}
+
+
+.client-header h2{
+    color:#17324d;
+}
+
+
+.client-grid{
+    display:grid;
+    grid-template-columns:repeat(
+        auto-fit,
+        minmax(200px,1fr)
+    );
+    gap:15px;
+}
+
+
+/* ==========================================
+   CLIENT CARD
+========================================== */
+
+.client-card{
+    background:#f8fafc;
+    border:1px solid #dce3ea;
+    border-radius:14px;
+    padding:22px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+
+.client-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.1);
+}
+
+
+.client-card.active{
+    background:#17324d;
+    border-color:#17324d;
+    color:white;
+}
+
+
+.client-card.active h3{
+    color:white;
+}
+
+
+.client-card.active p{
+    color:#d7e1ea;
+}
+
+
+.client-icon{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+
+.client-card h3{
+    color:#17324d;
+}
+
+
+.client-card p{
+    margin-top:6px;
+    color:#6c7a89;
+    font-size:14px;
+}
+
+
+/* ==========================================
+   BACK BUTTON
+========================================== */
+
+.back-button{
+    display:none;
+    border:none;
+    background:#e8eef4;
+    color:#17324d;
+    padding:10px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+
+.back-button:hover{
+    background:#dbe5ee;
 }
 
 
@@ -210,7 +333,7 @@ td{
 }
 
 
-tr:hover{
+tbody tr:hover{
     background:#f7f9fb;
 }
 
@@ -283,77 +406,20 @@ tr:hover{
         grid-template-columns:1fr;
     }
 
-}
-/* ==========================================
-   CLIENT SOSIAL
-========================================== */
 
-.client-section{
-    display:none;
-    margin-top:25px;
-    margin-bottom:25px;
-}
+    .client-grid{
+        grid-template-columns:1fr;
+    }
 
-.client-section.show{
-    display:block;
-}
 
-.client-section h2{
-    margin-bottom:15px;
-    font-size:22px;
+    .log-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:12px;
+    }
+
 }
 
-.client-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:15px;
-}
-
-.client-card{
-    background:white;
-    border:1px solid #dce3ea;
-    border-radius:14px;
-    padding:20px;
-    cursor:pointer;
-    transition:0.2s;
-}
-
-.client-card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 6px 18px rgba(0,0,0,0.1);
-}
-
-.client-card.active{
-    border:2px solid #17324d;
-    background:#f3f7fa;
-}
-
-.client-icon{
-    font-size:30px;
-    margin-bottom:10px;
-}
-
-.client-card h3{
-    color:#17324d;
-    margin-bottom:6px;
-}
-
-.client-card p{
-    color:#6c7a89;
-    font-size:14px;
-    line-height:1.5;
-}
-
-.client-code{
-    display:inline-block;
-    margin-top:10px;
-    padding:5px 10px;
-    border-radius:20px;
-    background:#e8f0f6;
-    color:#17324d;
-    font-size:12px;
-    font-weight:bold;
-}
 </style>
 
 </head>
@@ -388,7 +454,7 @@ tr:hover{
 
 
     <!-- ==========================================
-         PENJELASAN
+         INFO
     ========================================== -->
 
     <div class="info-box">
@@ -413,7 +479,6 @@ tr:hover{
     <h2 class="module-title">
         Pilih Modul
     </h2>
-
 
 
     <div class="module-grid">
@@ -535,70 +600,87 @@ tr:hover{
 
     </div>
 
-<!-- ==========================================
-     CLIENT MODUL SOSIAL
-========================================== -->
-
-<div
-    id="socialClients"
-    class="client-section"
->
-
-    <h2>
-        Client Modul SOSIAL
-    </h2>
 
 
-    <div class="client-grid">
+    <!-- ==========================================
+         CLIENT SOSIAL
+    ========================================== -->
+
+    <div
+        class="client-section show"
+        id="clientSection"
+    >
 
 
-        <!-- CLIENT GEPARU -->
+        <div class="client-header">
 
-        <div
-            class="client-card"
-            data-client="GEPARU"
-        >
+            <h2>
+                Client — SOSIAL
+            </h2>
 
-            <div class="client-icon">
-                🤝
+
+            <button
+                class="back-button"
+                id="backButton"
+                type="button"
+            >
+                ← Kembali ke Client
+            </button>
+
+        </div>
+
+
+        <div class="client-grid">
+
+
+            <!-- GEPARU -->
+
+            <div
+                class="client-card"
+                data-client="GEPARU"
+            >
+
+                <div class="client-icon">
+                    🏛️
+                </div>
+
+
+                <h3>
+                    GEPARU
+                </h3>
+
+
+                <p>
+                    Lihat Activity Log client GEPARU.
+                </p>
+
             </div>
 
-
-            <h3>
-                GEPARU
-            </h3>
-
-
-            <p>
-                Generasi Padjajaran Baru
-            </p>
-
-
-            <span class="client-code">
-                CLIENT SOSIAL
-            </span>
 
         </div>
 
 
     </div>
 
-</div>
+
 
     <!-- ==========================================
          RIWAYAT
     ========================================== -->
 
-    <div class="log-section">
+    <div
+        class="log-section"
+        id="logSection"
+    >
 
 
         <div class="log-header">
 
+
             <h2 id="activityTitle">
-
-                Riwayat Aktivitas — SOSIAL
-
+                Pilih Client SOSIAL
             </h2>
+
 
         </div>
 
@@ -646,7 +728,6 @@ tr:hover{
 
                 <tbody id="logBody">
 
-
                     <tr>
 
                         <td
@@ -654,12 +735,11 @@ tr:hover{
                             class="empty"
                         >
 
-                            Memuat Activity Log...
+                            Pilih client untuk melihat Activity Log.
 
                         </td>
 
                     </tr>
-
 
                 </tbody>
 
@@ -694,7 +774,7 @@ const SUPABASE_KEY =
 
 
 /* ==========================================
-   SESSION CORE ADMIN
+   SESSION
 ========================================== */
 
 let accessToken =
@@ -705,6 +785,10 @@ let accessToken =
 
 let currentModule =
     "SOSIAL";
+
+
+let currentClient =
+    null;
 
 
 
@@ -763,11 +847,9 @@ function updateActiveModule(module){
 
     cards.forEach(card => {
 
-        const cardModule =
-            card.dataset.module;
-
-
-        if(cardModule === module){
+        if(
+            card.dataset.module === module
+        ){
 
             card.classList.add(
                 "active"
@@ -788,29 +870,287 @@ function updateActiveModule(module){
 
 
 /* ==========================================
-   LOAD ACTIVITY LOG
+   UPDATE ACTIVE CLIENT
 ========================================== */
 
-async function loadActivity(module){
+function updateActiveClient(client){
+
+    const cards =
+        document.querySelectorAll(
+            ".client-card"
+        );
 
 
-    /* Pastikan module selalu ada */
+    cards.forEach(card => {
 
-    if(!module){
+        if(
+            card.dataset.client === client
+        ){
 
-        module =
-            currentModule;
+            card.classList.add(
+                "active"
+            );
+
+        }else{
+
+            card.classList.remove(
+                "active"
+            );
+
+        }
+
+    });
+
+}
+
+
+
+/* ==========================================
+   SHOW CLIENT SECTION
+========================================== */
+
+function showClientSection(){
+
+    const section =
+        document.getElementById(
+            "clientSection"
+        );
+
+
+    if(section){
+
+        section.classList.add(
+            "show"
+        );
 
     }
 
+}
 
-    /* Simpan modul aktif */
+
+
+/* ==========================================
+   HIDE CLIENT SECTION
+========================================== */
+
+function hideClientSection(){
+
+    const section =
+        document.getElementById(
+            "clientSection"
+        );
+
+
+    if(section){
+
+        section.classList.remove(
+            "show"
+        );
+
+    }
+
+}
+
+
+
+/* ==========================================
+   RESET CLIENT
+========================================== */
+
+function resetClient(){
+
+    currentClient =
+        null;
+
+
+    const clientCards =
+        document.querySelectorAll(
+            ".client-card"
+        );
+
+
+    clientCards.forEach(card => {
+
+        card.classList.remove(
+            "active"
+        );
+
+    });
+
+}
+
+
+
+/* ==========================================
+   SELECT MODULE
+========================================== */
+
+function selectModule(module){
+
+    if(!module){
+        return;
+    }
+
 
     currentModule =
         module;
 
 
-    /* Ambil elemen */
+    currentClient =
+        null;
+
+
+    updateActiveModule(
+        module
+    );
+
+
+    resetClient();
+
+
+    const title =
+        document.getElementById(
+            "activityTitle"
+        );
+
+
+    const tbody =
+        document.getElementById(
+            "logBody"
+        );
+
+
+    const backButton =
+        document.getElementById(
+            "backButton"
+        );
+
+
+    if(backButton){
+
+        backButton.style.display =
+            "none";
+
+    }
+
+
+    /* ==========================================
+       KHUSUS SOSIAL
+    ========================================== */
+
+    if(module === "SOSIAL"){
+
+        showClientSection();
+
+
+        if(title){
+
+            title.textContent =
+                "Pilih Client — SOSIAL";
+
+        }
+
+
+        if(tbody){
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty"
+                    >
+
+                        Pilih client untuk melihat
+                        Activity Log.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
+
+        return;
+
+    }
+
+
+    /* ==========================================
+       MODUL LAIN LANGSUNG LOAD
+    ========================================== */
+
+    hideClientSection();
+
+
+    loadActivity(
+        module,
+        null
+    );
+
+}
+
+
+
+/* ==========================================
+   SELECT CLIENT
+========================================== */
+
+function selectClient(client){
+
+    if(!client){
+        return;
+    }
+
+
+    if(currentModule !== "SOSIAL"){
+        return;
+    }
+
+
+    currentClient =
+        client;
+
+
+    updateActiveClient(
+        client
+    );
+
+
+    const backButton =
+        document.getElementById(
+            "backButton"
+        );
+
+
+    if(backButton){
+
+        backButton.style.display =
+            "inline-block";
+
+    }
+
+
+    loadActivity(
+        currentModule,
+        client
+    );
+
+}
+
+
+
+/* ==========================================
+   LOAD ACTIVITY LOG
+========================================== */
+
+async function loadActivity(
+    module,
+    client = null
+){
 
     const tbody =
         document.getElementById(
@@ -824,8 +1164,6 @@ async function loadActivity(module){
         );
 
 
-    /* Validasi */
-
     if(!tbody){
 
         console.error(
@@ -838,20 +1176,32 @@ async function loadActivity(module){
 
 
     /* ==========================================
-       UPDATE JUDUL
+       UPDATE TITLE
     ========================================== */
 
     if(title){
 
-        title.textContent =
-            "Riwayat Aktivitas — " +
-            module;
+        if(client){
+
+            title.textContent =
+                "Riwayat Aktivitas — " +
+                module +
+                " / " +
+                client;
+
+        }else{
+
+            title.textContent =
+                "Riwayat Aktivitas — " +
+                module;
+
+        }
 
     }
 
 
     /* ==========================================
-       UPDATE CARD ACTIVE
+       UPDATE ACTIVE MODULE
     ========================================== */
 
     updateActiveModule(
@@ -881,7 +1231,6 @@ async function loadActivity(module){
     `;
 
 
-
     try{
 
 
@@ -906,10 +1255,15 @@ async function loadActivity(module){
             "&order=created_at.desc";
 
 
-
         console.log(
             "LOAD MODULE:",
             module
+        );
+
+
+        console.log(
+            "LOAD CLIENT:",
+            client
         );
 
 
@@ -919,9 +1273,8 @@ async function loadActivity(module){
         );
 
 
-
         /* ==========================================
-           FETCH DATA
+           FETCH
         ========================================== */
 
         const response =
@@ -940,18 +1293,14 @@ async function loadActivity(module){
             );
 
 
-
         /* ==========================================
-           CEK RESPONSE
+           CHECK RESPONSE
         ========================================== */
 
         if(!response.ok){
 
-
             const errorText =
-
                 await response.text();
-
 
 
             throw new Error(
@@ -969,15 +1318,12 @@ async function loadActivity(module){
         }
 
 
-
         /* ==========================================
-           AMBIL JSON
+           GET JSON
         ========================================== */
 
-        const logs =
-
+        let logs =
             await response.json();
-
 
 
         console.log(
@@ -986,18 +1332,53 @@ async function loadActivity(module){
         );
 
 
-
         /* ==========================================
-           JIKA DATA KOSONG
+           CLIENT FILTER
+           
+           Saat ini struktur tabel yang Anda buat
+           menggunakan module sebagai filter utama.
+           
+           Jadi GEPARU menampilkan Activity Log
+           modul SOSIAL.
         ========================================== */
 
         if(
-
-            !logs ||
-
-            logs.length === 0
-
+            client === "GEPARU"
         ){
+
+            /*
+               Tidak menghapus atau mengubah
+               data database yang sudah berjalan.
+            */
+
+            logs = logs;
+
+        }
+
+
+        /* ==========================================
+           DATA KOSONG
+        ========================================== */
+
+        if(
+            !logs ||
+            logs.length === 0
+        ){
+
+            let message =
+                "Belum ada Activity Log untuk modul " +
+                escapeHtml(module) +
+                ".";
+
+
+            if(client){
+
+                message =
+                    "Belum ada Activity Log untuk client " +
+                    escapeHtml(client) +
+                    ".";
+
+            }
 
 
             tbody.innerHTML = `
@@ -1009,11 +1390,7 @@ async function loadActivity(module){
                         class="empty"
                     >
 
-                        Belum ada Activity Log
-                        untuk modul
-                        <b>
-                            ${escapeHtml(module)}
-                        </b>.
+                        ${message}
 
                     </td>
 
@@ -1027,15 +1404,13 @@ async function loadActivity(module){
         }
 
 
-
         /* ==========================================
-           TAMPILKAN DATA
+           DISPLAY DATA
         ========================================== */
 
         tbody.innerHTML =
 
             logs.map(log => `
-
 
                 <tr>
 
@@ -1154,7 +1529,6 @@ async function loadActivity(module){
 
                 </tr>
 
-
             `)
 
             .join("");
@@ -1162,38 +1536,26 @@ async function loadActivity(module){
 
     }catch(error){
 
-
         console.error(
-
             "ACTIVITY LOG ERROR:",
-
             error
-
         );
-
 
 
         tbody.innerHTML = `
 
-
             <tr>
-
 
                 <td
                     colspan="6"
                     class="empty"
                 >
 
-
                     <b>
                         Gagal memuat Activity Log.
                     </b>
 
-
-                    <br>
-
-                    <br>
-
+                    <br><br>
 
                     <small>
 
@@ -1203,12 +1565,9 @@ async function loadActivity(module){
 
                     </small>
 
-
                 </td>
 
-
             </tr>
-
 
         `;
 
@@ -1219,21 +1578,17 @@ async function loadActivity(module){
 
 
 /* ==========================================
-   FORMAT TANGGAL
+   FORMAT DATE
 ========================================== */
 
 function formatDate(date){
 
-
     if(!date){
-
         return "-";
-
     }
 
 
     try{
-
 
         return new Date(date)
 
@@ -1253,9 +1608,7 @@ function formatDate(date){
 
             );
 
-
     }catch(error){
-
 
         return date;
 
@@ -1271,22 +1624,14 @@ function formatDate(date){
 
 function getStatusClass(status){
 
-
     const value =
 
         String(
-
-            status ||
-
-            "SUCCESS"
-
+            status || "SUCCESS"
         )
 
         .toUpperCase();
 
-
-
-    /* SUCCESS */
 
     if(
 
@@ -1303,22 +1648,14 @@ function getStatusClass(status){
     }
 
 
-
-    /* LOGIN */
-
     if(
-
         value === "LOGIN"
-
     ){
 
         return "login";
 
     }
 
-
-
-    /* ERROR */
 
     if(
 
@@ -1335,9 +1672,6 @@ function getStatusClass(status){
     }
 
 
-
-    /* DEFAULT */
-
     return "edit";
 
 }
@@ -1350,258 +1684,171 @@ function getStatusClass(status){
 
 function escapeHtml(value){
 
-
     return String(
-
-        value ??
-
-        ""
-
+        value ?? ""
     )
 
     .replace(
-
         /&/g,
-
         "&amp;"
-
     )
 
     .replace(
-
         /</g,
-
         "&lt;"
-
     )
 
     .replace(
-
         />/g,
-
         "&gt;"
-
     )
 
     .replace(
-
         /"/g,
-
         "&quot;"
-
     )
 
     .replace(
-
         /'/g,
-
         "&#039;"
-
     );
 
 }
 
 
+
 /* ==========================================
-   MODULE BUTTONS
+   EVENT SYSTEM
 ========================================== */
 
-function setupModules(){
-
-    const cards =
-        document.querySelectorAll(
-            ".module-card"
-        );
+document.addEventListener(
+    "click",
+    function(event){
 
 
-    cards.forEach(card => {
+        /* ==========================================
+           MODULE CARD
+        ========================================== */
 
-        card.addEventListener(
-            "click",
-            function(){
-
-                /*
-                   Ambil nama modul dari
-                   data-module.
-                */
-
-                const module =
-                    this.dataset.module;
+        const moduleCard =
+            event.target.closest(
+                ".module-card"
+            );
 
 
-                if(!module){
+        if(moduleCard){
 
-                    console.error(
-                        "Module tidak ditemukan:",
-                        this
-                    );
-
-                    return;
-
-                }
+            const module =
+                moduleCard.dataset.module;
 
 
-                console.log(
-                    "MODULE DIKLIK:",
-                    module
+            selectModule(
+                module
+            );
+
+
+            return;
+
+        }
+
+
+
+        /* ==========================================
+           CLIENT CARD
+        ========================================== */
+
+        const clientCard =
+            event.target.closest(
+                ".client-card"
+            );
+
+
+        if(clientCard){
+
+            const client =
+                clientCard.dataset.client;
+
+
+            selectClient(
+                client
+            );
+
+
+            return;
+
+        }
+
+
+
+        /* ==========================================
+           BACK BUTTON
+        ========================================== */
+
+        const backButton =
+            event.target.closest(
+                "#backButton"
+            );
+
+
+        if(backButton){
+
+            resetClient();
+
+
+            const title =
+                document.getElementById(
+                    "activityTitle"
                 );
 
 
-                /*
-                   Jalankan sistem yang
-                   sebelumnya sudah berhasil.
-                */
-
-                loadActivity(module);
-
-            }
-        );
-
-    });
-
-}
-
-                /* =================================
-                   RESET MODULE ACTIVE
-                ================================= */
-
-                document
-                    .querySelectorAll(".module-card")
-                    .forEach(item => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                this.classList.add(
-                    "active"
+            const tbody =
+                document.getElementById(
+                    "logBody"
                 );
 
 
-                /* =================================
-                   KHUSUS SOSIAL
-                ================================= */
+            if(title){
 
-                const socialClients =
-                    document.getElementById(
-                        "socialClients"
-                    );
-
-
-                if(module === "SOSIAL"){
-
-                    /*
-                       Tampilkan pilihan client
-                    */
-
-                    if(socialClients){
-
-                        socialClients.classList.add(
-                            "show"
-                        );
-
-                    }
-
-
-                    /*
-                       Jangan langsung load
-                       activity client.
-
-                       Tampilkan informasi dulu.
-                    */
-
-                    const title =
-                        document.getElementById(
-                            "activityTitle"
-                        );
-
-
-                    const tbody =
-                        document.getElementById(
-                            "logBody"
-                        );
-
-
-                    if(title){
-
-                        title.textContent =
-                            "Pilih Client — SOSIAL";
-
-                    }
-
-
-                    if(tbody){
-
-                        tbody.innerHTML = `
-
-                            <tr>
-
-                                <td
-                                    colspan="6"
-                                    class="empty"
-                                >
-
-                                    Pilih Client SOSIAL
-                                    untuk melihat
-                                    Activity Log.
-
-                                </td>
-
-                            </tr>
-
-                        `;
-
-                    }
-
-
-                    return;
-
-                }
-
-
-                /* =================================
-                   MODUL SELAIN SOSIAL
-                ================================= */
-
-                if(socialClients){
-
-                    socialClients.classList.remove(
-                        "show"
-                    );
-
-                }
-
-
-                /*
-                   Reset client aktif
-                */
-
-                document
-                    .querySelectorAll(".client-card")
-                    .forEach(client => {
-
-                        client.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                /*
-                   Sistem lama tetap berjalan
-                */
-
-                loadActivity(module);
+                title.textContent =
+                    "Pilih Client — SOSIAL";
 
             }
-        );
 
-    });
 
-}
+            if(tbody){
+
+                tbody.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            class="empty"
+                        >
+
+                            Pilih client untuk melihat
+                            Activity Log.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+
+
+            backButton.style.display =
+                "none";
+
+
+            return;
+
+        }
+
+
+    }
+);
 
 
 
@@ -1611,213 +1858,20 @@ function setupModules(){
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function(){
 
         console.log(
             "ACTIVITY LOG SYSTEM START"
         );
 
 
-        /* Aktifkan klik modul */
+        /* Default SOSIAL */
 
-        setupModules();
-
-
-        /* Aktifkan klik client */
-
-        setupClients();
-
-
-        /*
-           Tampilan awal:
-           SOSIAL aktif dan
-           meminta Core memilih client.
-        */
-
-        const socialClients =
-            document.getElementById(
-                "socialClients"
-            );
-
-
-        if(socialClients){
-
-            socialClients.classList.add(
-                "show"
-            );
-
-        }
-
-
-        const title =
-            document.getElementById(
-                "activityTitle"
-            );
-
-
-        if(title){
-
-            title.textContent =
-                "Pilih Client — SOSIAL";
-
-        }
-
-
-        const tbody =
-            document.getElementById(
-                "logBody"
-            );
-
-
-        if(tbody){
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="6"
-                        class="empty"
-                    >
-
-                        Pilih Client SOSIAL
-                        untuk melihat
-                        Activity Log.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        }
-
-    }
-);
-/* ==========================================
-   CLIENT BUTTONS
-========================================== */
-
-function setupClients(){
-
-    const clients =
-        document.querySelectorAll(
-            ".client-card"
-        );
-
-
-    clients.forEach(client => {
-
-        client.addEventListener(
-            "click",
-            function(){
-
-                const clientName =
-                    this.dataset.client;
-
-
-                if(!clientName)
-                    return;
-
-
-                console.log(
-                    "CLIENT DIKLIK:",
-                    clientName
-                );
-
-
-                /* =================================
-                   ACTIVE CLIENT
-                ================================= */
-
-                document
-                    .querySelectorAll(".client-card")
-                    .forEach(item => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                this.classList.add(
-                    "active"
-                );
-
-
-                /* =================================
-                   UPDATE JUDUL
-                ================================= */
-
-                const title =
-                    document.getElementById(
-                        "activityTitle"
-                    );
-
-
-                if(title){
-
-                    title.textContent =
-                        "Riwayat Aktivitas — SOSIAL / " +
-                        clientName;
-
-                }
-
-
-                /* =================================
-                   LOAD ACTIVITY SOSIAL
-                   
-                   Saat ini database kita belum
-                   memiliki filter client yang
-                   dipastikan dipakai pada kode
-                   halaman ini.
-
-                   Jadi sementara tetap memakai
-                   sistem SOSIAL yang sudah berjalan.
-                ================================= */
-
-                loadActivity(
-                    "SOSIAL"
-                );
-
-
-                /*
-                   Setelah loadActivity(),
-                   kembalikan judul agar
-                   menampilkan nama client.
-                */
-
-                setTimeout(
-                    function(){
-
-                        if(title){
-
-                            title.textContent =
-                                "Riwayat Aktivitas — SOSIAL / " +
-                                clientName;
-
-                        }
-
-                    },
-                    50
-                );
-
-            }
-        );
-
-    });
-
-}
-        /* Load awal */
-
-        loadActivity(
+        selectModule(
             "SOSIAL"
         );
 
-
     }
-
 );
 
 
@@ -1825,5 +1879,4 @@ function setupClients(){
 
 
 </body>
-
 </html>
