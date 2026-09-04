@@ -96,10 +96,8 @@ body{
 
 .module-grid{
     display:grid;
-    grid-template-columns:repeat(
-        auto-fit,
-        minmax(160px,1fr)
-    );
+    grid-template-columns:
+        repeat(auto-fit,minmax(160px,1fr));
     gap:15px;
 }
 
@@ -193,10 +191,8 @@ body{
 
 .client-grid{
     display:grid;
-    grid-template-columns:repeat(
-        auto-fit,
-        minmax(200px,1fr)
-    );
+    grid-template-columns:
+        repeat(auto-fit,minmax(200px,1fr));
     gap:15px;
 }
 
@@ -453,9 +449,7 @@ tbody tr:hover{
 <div class="container">
 
 
-    <!-- ==========================================
-         INFO
-    ========================================== -->
+    <!-- INFO -->
 
     <div class="info-box">
 
@@ -472,9 +466,7 @@ tbody tr:hover{
 
 
 
-    <!-- ==========================================
-         PILIH MODUL
-    ========================================== -->
+    <!-- PILIH MODUL -->
 
     <h2 class="module-title">
         Pilih Modul
@@ -603,7 +595,7 @@ tbody tr:hover{
 
 
     <!-- ==========================================
-         CLIENT SOSIAL
+         CLIENT
     ========================================== -->
 
     <div
@@ -611,10 +603,9 @@ tbody tr:hover{
         id="clientSection"
     >
 
-
         <div class="client-header">
 
-            <h2>
+            <h2 id="clientTitle">
                 Client — SOSIAL
             </h2>
 
@@ -630,32 +621,14 @@ tbody tr:hover{
         </div>
 
 
-        <div class="client-grid">
+        <div
+            class="client-grid"
+            id="clientGrid"
+        >
 
-
-            <!-- GEPARU -->
-
-            <div
-                class="client-card"
-                data-client="GEPARU"
-            >
-
-                <div class="client-icon">
-                    🏛️
-                </div>
-
-
-                <h3>
-                    GEPARU
-                </h3>
-
-
-                <p>
-                    Lihat Activity Log client GEPARU.
-                </p>
-
+            <div class="empty">
+                Memuat data client...
             </div>
-
 
         </div>
 
@@ -673,57 +646,38 @@ tbody tr:hover{
         id="logSection"
     >
 
-
         <div class="log-header">
 
-
             <h2 id="activityTitle">
-                Pilih Client SOSIAL
+                Pilih Client — SOSIAL
             </h2>
-
 
         </div>
 
 
-
         <div class="table-wrapper">
 
-
             <table>
-
 
                 <thead>
 
                     <tr>
 
-                        <th>
-                            Waktu
-                        </th>
+                        <th>Waktu</th>
 
-                        <th>
-                            Admin
-                        </th>
+                        <th>Admin</th>
 
-                        <th>
-                            Aktivitas
-                        </th>
+                        <th>Aktivitas</th>
 
-                        <th>
-                            Modul
-                        </th>
+                        <th>Modul</th>
 
-                        <th>
-                            Status
-                        </th>
+                        <th>Status</th>
 
-                        <th>
-                            Aksi
-                        </th>
+                        <th>Aksi</th>
 
                     </tr>
 
                 </thead>
-
 
 
                 <tbody id="logBody">
@@ -743,12 +697,9 @@ tbody tr:hover{
 
                 </tbody>
 
-
             </table>
 
-
         </div>
-
 
     </div>
 
@@ -758,7 +709,6 @@ tbody tr:hover{
 
 
 <script>
-
 
 /* ==========================================
    SUPABASE CONFIG
@@ -772,7 +722,6 @@ const SUPABASE_KEY =
     "sb_publishable_DWRaEZTcNMjhglwN3nqCOw_pua8rsjD";
 
 
-
 /* ==========================================
    SESSION
 ========================================== */
@@ -783,25 +732,26 @@ let accessToken =
     );
 
 
-let currentModule =
-    "SOSIAL";
+let currentModule = "SOSIAL";
 
+let currentClientId = null;
 
-let currentClient =
-    null;
-
+let currentClientName = null;
 
 
 /* ==========================================
-   GET HEADERS
+   HEADERS
 ========================================== */
 
 function getHeaders(){
 
     const headers = {
 
-        apikey:
-            SUPABASE_KEY,
+        apikey:SUPABASE_KEY,
+
+        Authorization:
+            "Bearer " +
+            (accessToken || SUPABASE_KEY),
 
         "Content-Type":
             "application/json",
@@ -812,25 +762,102 @@ function getHeaders(){
     };
 
 
-    if(accessToken){
-
-        headers.Authorization =
-            "Bearer " +
-            accessToken;
-
-    }else{
-
-        headers.Authorization =
-            "Bearer " +
-            SUPABASE_KEY;
-
-    }
-
-
     return headers;
 
 }
 
+
+/* ==========================================
+   ESCAPE HTML
+========================================== */
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+/* ==========================================
+   FORMAT DATE
+========================================== */
+
+function formatDate(date){
+
+    if(!date){
+        return "-";
+    }
+
+
+    try{
+
+        return new Date(date)
+            .toLocaleString(
+                "id-ID",
+                {
+                    dateStyle:"medium",
+                    timeStyle:"short"
+                }
+            );
+
+    }catch(error){
+
+        return date;
+
+    }
+
+}
+
+
+/* ==========================================
+   STATUS CLASS
+========================================== */
+
+function getStatusClass(status){
+
+    const value =
+        String(status || "SUCCESS")
+            .toUpperCase();
+
+
+    if(
+        value === "SUCCESS" ||
+        value === "CREATE" ||
+        value === "CREATED"
+    ){
+
+        return "create";
+
+    }
+
+
+    if(value === "LOGIN"){
+
+        return "login";
+
+    }
+
+
+    if(
+        value === "ERROR" ||
+        value === "FAILED" ||
+        value === "DELETE"
+    ){
+
+        return "delete";
+
+    }
+
+
+    return "edit";
+
+}
 
 
 /* ==========================================
@@ -839,70 +866,38 @@ function getHeaders(){
 
 function updateActiveModule(module){
 
-    const cards =
-        document.querySelectorAll(
-            ".module-card"
-        );
+    document
+        .querySelectorAll(".module-card")
+        .forEach(card => {
 
-
-    cards.forEach(card => {
-
-        if(
-            card.dataset.module === module
-        ){
-
-            card.classList.add(
-                "active"
+            card.classList.toggle(
+                "active",
+                card.dataset.module === module
             );
 
-        }else{
-
-            card.classList.remove(
-                "active"
-            );
-
-        }
-
-    });
+        });
 
 }
-
 
 
 /* ==========================================
    UPDATE ACTIVE CLIENT
 ========================================== */
 
-function updateActiveClient(client){
+function updateActiveClient(clientId){
 
-    const cards =
-        document.querySelectorAll(
-            ".client-card"
-        );
+    document
+        .querySelectorAll(".client-card")
+        .forEach(card => {
 
-
-    cards.forEach(card => {
-
-        if(
-            card.dataset.client === client
-        ){
-
-            card.classList.add(
-                "active"
+            card.classList.toggle(
+                "active",
+                card.dataset.clientId === clientId
             );
 
-        }else{
-
-            card.classList.remove(
-                "active"
-            );
-
-        }
-
-    });
+        });
 
 }
-
 
 
 /* ==========================================
@@ -911,22 +906,11 @@ function updateActiveClient(client){
 
 function showClientSection(){
 
-    const section =
-        document.getElementById(
-            "clientSection"
-        );
-
-
-    if(section){
-
-        section.classList.add(
-            "show"
-        );
-
-    }
+    document
+        .getElementById("clientSection")
+        .classList.add("show");
 
 }
-
 
 
 /* ==========================================
@@ -935,22 +919,11 @@ function showClientSection(){
 
 function hideClientSection(){
 
-    const section =
-        document.getElementById(
-            "clientSection"
-        );
-
-
-    if(section){
-
-        section.classList.remove(
-            "show"
-        );
-
-    }
+    document
+        .getElementById("clientSection")
+        .classList.remove("show");
 
 }
-
 
 
 /* ==========================================
@@ -959,50 +932,44 @@ function hideClientSection(){
 
 function resetClient(){
 
-    currentClient =
-        null;
+    currentClientId = null;
+
+    currentClientName = null;
 
 
-    const clientCards =
-        document.querySelectorAll(
-            ".client-card"
-        );
+    document
+        .querySelectorAll(".client-card")
+        .forEach(card => {
 
+            card.classList.remove("active");
 
-    clientCards.forEach(card => {
-
-        card.classList.remove(
-            "active"
-        );
-
-    });
+        });
 
 }
 
+
 /* ==========================================
-   LOAD CLIENT DARI SUPABASE
+   LOAD CLIENTS
 ========================================== */
 
 async function loadClients(module){
 
     const clientGrid =
-        document.querySelector(".client-grid");
+        document.getElementById("clientGrid");
 
 
-    if(!clientGrid){
-        console.error(
-            "client-grid tidak ditemukan"
-        );
-        return;
-    }
+    const clientTitle =
+        document.getElementById("clientTitle");
+
+
+    clientTitle.textContent =
+        "Client — " + module;
 
 
     clientGrid.innerHTML = `
 
         <div class="empty">
-
             Memuat data client...
-
         </div>
 
     `;
@@ -1011,52 +978,43 @@ async function loadClients(module){
     try{
 
 
-        let url =
+        const url =
 
-    SUPABASE_URL +
+            SUPABASE_URL +
 
-    "/rest/v1/activity_logs" +
+            "/rest/v1/platform_clients" +
 
-    "?select=*" +
+            "?select=id,client_name,module_slug,is_active,created_at" +
 
-    "&module=eq." +
+            "&module_slug=eq." +
 
-    encodeURIComponent(module);
+            encodeURIComponent(module) +
 
+            "&is_active=eq.true" +
 
-if(clientId){
-
-    url +=
-
-        "&client_id=eq." +
-
-        encodeURIComponent(clientId);
-
-}
-
-
-url +=
-    "&order=created_at.desc";
+            "&order=created_at.asc";
 
 
         const response =
-
             await fetch(
-
                 url,
-
                 {
                     headers:getHeaders()
                 }
-
             );
 
 
         if(!response.ok){
 
+            const errorText =
+                await response.text();
+
+
             throw new Error(
-                "Gagal memuat client: HTTP " +
-                response.status
+                "HTTP " +
+                response.status +
+                " " +
+                errorText
             );
 
         }
@@ -1090,29 +1048,27 @@ url +=
 
                 <div
                     class="client-card"
-                    data-client-id="${client.id}"
+
+                    data-client-id="${escapeHtml(client.id)}"
+
                     data-client-name="${escapeHtml(client.client_name)}"
                 >
 
                     <div class="client-icon">
-                        🏢
+                        🏛️
                     </div>
-
 
                     <h3>
                         ${escapeHtml(client.client_name)}
                     </h3>
 
-
                     <p>
-                        Lihat Activity Log client ini.
+                        Klik untuk melihat Activity Log.
                     </p>
 
                 </div>
 
-            `)
-
-            .join("");
+            `).join("");
 
 
     }catch(error){
@@ -1127,14 +1083,14 @@ url +=
 
             <div class="empty">
 
-                Gagal memuat data client.
+                <b>
+                    Gagal memuat data client.
+                </b>
 
                 <br><br>
 
                 <small>
-
                     ${escapeHtml(error.message)}
-
                 </small>
 
             </div>
@@ -1144,6 +1100,7 @@ url +=
     }
 
 }
+
 
 /* ==========================================
    SELECT MODULE
@@ -1156,109 +1113,56 @@ function selectModule(module){
     }
 
 
-    currentModule =
-        module;
-
-
-    currentClient =
-        null;
-
-
-    updateActiveModule(
-        module
-    );
+    currentModule = module;
 
 
     resetClient();
 
 
+    updateActiveModule(module);
+
+
     const title =
-        document.getElementById(
-            "activityTitle"
-        );
-
-
-    const tbody =
-        document.getElementById(
-            "logBody"
-        );
+        document.getElementById("activityTitle");
 
 
     const backButton =
-        document.getElementById(
-            "backButton"
-        );
+        document.getElementById("backButton");
 
 
-    if(backButton){
-
-        backButton.style.display =
-            "none";
-
-    }
+    backButton.style.display = "none";
 
 
-    /* ==========================================
-       KHUSUS SOSIAL
-    ========================================== */
-
-    if(module === "SOSIAL"){
+    /* SEMUA MODUL MENAMPILKAN CLIENT */
 
     showClientSection();
 
+
+    title.textContent =
+        "Pilih Client — " + module;
+
+
+    document.getElementById("logBody").innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="6"
+                class="empty"
+            >
+
+                Pilih client untuk melihat Activity Log.
+
+            </td>
+
+        </tr>
+
+    `;
+
+
     loadClients(module);
 
-
-        if(title){
-
-            title.textContent =
-                "Pilih Client — SOSIAL";
-
-        }
-
-
-        if(tbody){
-
-            tbody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="6"
-                        class="empty"
-                    >
-
-                        Pilih client untuk melihat
-                        Activity Log.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        }
-
-
-        return;
-
-    }
-
-
-    /* ==========================================
-       MODUL LAIN LANGSUNG LOAD
-    ========================================== */
-
-    hideClientSection();
-
-
-    loadActivity(
-        module,
-        null
-    );
-
 }
-
 
 
 /* ==========================================
@@ -1275,49 +1179,18 @@ function selectClient(
     }
 
 
-    currentClient =
-        clientId;
+    currentClientId = clientId;
+
+    currentClientName = clientName;
 
 
-    const cards =
-        document.querySelectorAll(
-            ".client-card"
-        );
+    updateActiveClient(clientId);
 
 
-    cards.forEach(card => {
-
-        if(
-            card.dataset.clientId === clientId
-        ){
-
-            card.classList.add(
-                "active"
-            );
-
-        }else{
-
-            card.classList.remove(
-                "active"
-            );
-
-        }
-
-    });
-
-
-    const backButton =
-        document.getElementById(
-            "backButton"
-        );
-
-
-    if(backButton){
-
-        backButton.style.display =
+    document
+        .getElementById("backButton")
+        .style.display =
             "inline-block";
-
-    }
 
 
     loadActivity(
@@ -1335,70 +1208,24 @@ function selectClient(
 
 async function loadActivity(
     module,
-    clientId = null,
-    clientName = null
+    clientId,
+    clientName
 ){
 
     const tbody =
-        document.getElementById(
-            "logBody"
-        );
+        document.getElementById("logBody");
 
 
     const title =
-        document.getElementById(
-            "activityTitle"
-        );
+        document.getElementById("activityTitle");
 
 
-    if(!tbody){
+    title.textContent =
+        "Riwayat Aktivitas — " +
+        module +
+        " / " +
+        clientName;
 
-        console.error(
-            "logBody tidak ditemukan."
-        );
-
-        return;
-
-    }
-
-
-    /* ==========================================
-       UPDATE TITLE
-    ========================================== */
-
-    if(title){
-
-        if(client){
-
-            title.textContent =
-                "Riwayat Aktivitas — " +
-                module +
-                " / " +
-                client;
-
-        }else{
-
-            title.textContent =
-                "Riwayat Aktivitas — " +
-                module;
-
-        }
-
-    }
-
-
-    /* ==========================================
-       UPDATE ACTIVE MODULE
-    ========================================== */
-
-    updateActiveModule(
-        module
-    );
-
-
-    /* ==========================================
-       LOADING
-    ========================================== */
 
     tbody.innerHTML = `
 
@@ -1421,11 +1248,7 @@ async function loadActivity(
     try{
 
 
-        /* ==========================================
-           URL SUPABASE
-        ========================================== */
-
-        const url =
+        let url =
 
             SUPABASE_URL +
 
@@ -1435,54 +1258,34 @@ async function loadActivity(
 
             "&module=eq." +
 
-            encodeURIComponent(
-                module
-            ) +
+            encodeURIComponent(module);
 
+
+        /* FILTER CLIENT */
+
+        if(clientId){
+
+            url +=
+
+                "&client_id=eq." +
+
+                encodeURIComponent(clientId);
+
+        }
+
+
+        url +=
             "&order=created_at.desc";
 
 
-        console.log(
-            "LOAD MODULE:",
-            module
-        );
-
-
-        console.log(
-            "LOAD CLIENT:",
-            client
-        );
-
-
-        console.log(
-            "URL:",
-            url
-        );
-
-
-        /* ==========================================
-           FETCH
-        ========================================== */
-
         const response =
-
             await fetch(
-
                 url,
-
                 {
-
-                    headers:
-                        getHeaders()
-
+                    headers:getHeaders()
                 }
-
             );
 
-
-        /* ==========================================
-           CHECK RESPONSE
-        ========================================== */
 
         if(!response.ok){
 
@@ -1491,82 +1294,20 @@ async function loadActivity(
 
 
             throw new Error(
-
                 "HTTP " +
-
                 response.status +
-
-                " — " +
-
+                " " +
                 errorText
-
             );
 
         }
 
 
-        /* ==========================================
-           GET JSON
-        ========================================== */
-
-        let logs =
+        const logs =
             await response.json();
 
 
-        console.log(
-            "ACTIVITY LOG:",
-            logs
-        );
-
-
-        /* ==========================================
-           CLIENT FILTER
-           
-           Saat ini struktur tabel yang Anda buat
-           menggunakan module sebagai filter utama.
-           
-           Jadi GEPARU menampilkan Activity Log
-           modul SOSIAL.
-        ========================================== */
-
-        if(
-            client === "GEPARU"
-        ){
-
-            /*
-               Tidak menghapus atau mengubah
-               data database yang sudah berjalan.
-            */
-
-            logs = logs;
-
-        }
-
-
-        /* ==========================================
-           DATA KOSONG
-        ========================================== */
-
-        if(
-            !logs ||
-            logs.length === 0
-        ){
-
-            let message =
-                "Belum ada Activity Log untuk modul " +
-                escapeHtml(module) +
-                ".";
-
-
-            if(client){
-
-                message =
-                    "Belum ada Activity Log untuk client " +
-                    escapeHtml(client) +
-                    ".";
-
-            }
-
+        if(!logs.length){
 
             tbody.innerHTML = `
 
@@ -1577,7 +1318,9 @@ async function loadActivity(
                         class="empty"
                     >
 
-                        ${message}
+                        Belum ada Activity Log
+                        untuk client
+                        ${escapeHtml(clientName)}.
 
                     </td>
 
@@ -1585,15 +1328,10 @@ async function loadActivity(
 
             `;
 
-
             return;
 
         }
 
-
-        /* ==========================================
-           DISPLAY DATA
-        ========================================== */
 
         tbody.innerHTML =
 
@@ -1601,20 +1339,10 @@ async function loadActivity(
 
                 <tr>
 
-
-                    <!-- WAKTU -->
-
                     <td>
-
-                        ${formatDate(
-                            log.created_at
-                        )}
-
+                        ${formatDate(log.created_at)}
                     </td>
 
-
-
-                    <!-- ADMIN -->
 
                     <td>
 
@@ -1637,9 +1365,6 @@ async function loadActivity(
                     </td>
 
 
-
-                    <!-- AKTIVITAS -->
-
                     <td>
 
                         ${escapeHtml(
@@ -1655,16 +1380,11 @@ async function loadActivity(
                     </td>
 
 
-
-                    <!-- MODUL -->
-
                     <td>
 
                         ${escapeHtml(
 
                             log.module ||
-
-                            log.module_slug ||
 
                             module
 
@@ -1673,24 +1393,17 @@ async function loadActivity(
                     </td>
 
 
-
-                    <!-- STATUS -->
-
                     <td>
 
-                        <span class="
-                            status
-                            ${getStatusClass(
+                        <span
+                            class="status ${getStatusClass(
                                 log.status
-                            )}
-                        ">
+                            )}"
+                        >
 
                             ${escapeHtml(
-
                                 log.status ||
-
                                 "SUCCESS"
-
                             )}
 
                         </span>
@@ -1698,21 +1411,14 @@ async function loadActivity(
                     </td>
 
 
-
-                    <!-- AKSI -->
-
                     <td>
 
                         ${escapeHtml(
-
                             log.action ||
-
                             "-"
-
                         )}
 
                     </td>
-
 
                 </tr>
 
@@ -1746,9 +1452,7 @@ async function loadActivity(
 
                     <small>
 
-                        ${escapeHtml(
-                            error.message
-                        )}
+                        ${escapeHtml(error.message)}
 
                     </small>
 
@@ -1763,149 +1467,8 @@ async function loadActivity(
 }
 
 
-
 /* ==========================================
-   FORMAT DATE
-========================================== */
-
-function formatDate(date){
-
-    if(!date){
-        return "-";
-    }
-
-
-    try{
-
-        return new Date(date)
-
-            .toLocaleString(
-
-                "id-ID",
-
-                {
-
-                    dateStyle:
-                        "medium",
-
-                    timeStyle:
-                        "short"
-
-                }
-
-            );
-
-    }catch(error){
-
-        return date;
-
-    }
-
-}
-
-
-
-/* ==========================================
-   STATUS CLASS
-========================================== */
-
-function getStatusClass(status){
-
-    const value =
-
-        String(
-            status || "SUCCESS"
-        )
-
-        .toUpperCase();
-
-
-    if(
-
-        value === "SUCCESS" ||
-
-        value === "CREATE" ||
-
-        value === "CREATED"
-
-    ){
-
-        return "create";
-
-    }
-
-
-    if(
-        value === "LOGIN"
-    ){
-
-        return "login";
-
-    }
-
-
-    if(
-
-        value === "ERROR" ||
-
-        value === "FAILED" ||
-
-        value === "DELETE"
-
-    ){
-
-        return "delete";
-
-    }
-
-
-    return "edit";
-
-}
-
-
-
-/* ==========================================
-   ESCAPE HTML
-========================================== */
-
-function escapeHtml(value){
-
-    return String(
-        value ?? ""
-    )
-
-    .replace(
-        /&/g,
-        "&amp;"
-    )
-
-    .replace(
-        /</g,
-        "&lt;"
-    )
-
-    .replace(
-        />/g,
-        "&gt;"
-    )
-
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-
-    .replace(
-        /'/g,
-        "&#039;"
-    );
-
-}
-
-
-
-/* ==========================================
-   EVENT SYSTEM
+   EVENT MODULE CARD
 ========================================== */
 
 document.addEventListener(
@@ -1913,77 +1476,42 @@ document.addEventListener(
     function(event){
 
 
-        /* ==========================================
-           MODULE CARD
-        ========================================== */
-
         const moduleCard =
-            event.target.closest(
-                ".module-card"
-            );
+            event.target.closest(".module-card");
 
 
         if(moduleCard){
 
-            const module =
-                moduleCard.dataset.module;
-
-
             selectModule(
-                module
+                moduleCard.dataset.module
             );
-
 
             return;
 
         }
 
 
-
-/* ==========================================
-   CLIENT CARD
-========================================== */
-
-const clientCard =
-    event.target.closest(
-        ".client-card"
-    );
+        const clientCard =
+            event.target.closest(".client-card");
 
 
-if(clientCard){
+        if(clientCard){
 
-    const clientId =
-        clientCard.dataset.clientId;
+            selectClient(
 
+                clientCard.dataset.clientId,
 
-    const clientName =
-        clientCard.dataset.clientName;
+                clientCard.dataset.clientName
 
+            );
 
-    if(!clientId){
-        return;
-    }
+            return;
 
+        }
 
-    selectClient(
-        clientId,
-        clientName
-    );
-
-
-    return;
-
-}
-
-
-        /* ==========================================
-           BACK BUTTON
-        ========================================== */
 
         const backButton =
-            event.target.closest(
-                "#backButton"
-            );
+            event.target.closest("#backButton");
 
 
         if(backButton){
@@ -1991,29 +1519,19 @@ if(clientCard){
             resetClient();
 
 
-            const title =
-                document.getElementById(
-                    "activityTitle"
-                );
+            backButton.style.display = "none";
 
 
-            const tbody =
-                document.getElementById(
-                    "logBody"
-                );
+            document
+                .getElementById("activityTitle")
+                .textContent =
+                    "Pilih Client — " +
+                    currentModule;
 
 
-            if(title){
-
-                title.textContent =
-                    "Pilih Client — SOSIAL";
-
-            }
-
-
-            if(tbody){
-
-                tbody.innerHTML = `
+            document
+                .getElementById("logBody")
+                .innerHTML = `
 
                     <tr>
 
@@ -2031,12 +1549,6 @@ if(clientCard){
 
                 `;
 
-            }
-
-
-            backButton.style.display =
-                "none";
-
 
             return;
 
@@ -2047,7 +1559,6 @@ if(clientCard){
 );
 
 
-
 /* ==========================================
    START SYSTEM
 ========================================== */
@@ -2056,20 +1567,10 @@ document.addEventListener(
     "DOMContentLoaded",
     function(){
 
-        console.log(
-            "ACTIVITY LOG SYSTEM START"
-        );
-
-
-        /* Default SOSIAL */
-
-        selectModule(
-            "SOSIAL"
-        );
+        selectModule("SOSIAL");
 
     }
 );
-
 
 </script>
 
