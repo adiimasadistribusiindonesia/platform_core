@@ -1402,11 +1402,6 @@ function escapeHtml(value){
 }
 
 
-
-/* ==========================================
-   MODULE BUTTONS
-========================================== */
-
 /* ==========================================
    MODULE BUTTONS
 ========================================== */
@@ -1425,16 +1420,25 @@ function setupModules(){
             "click",
             function(){
 
+                /*
+                   Ambil nama modul dari
+                   data-module.
+                */
+
                 const module =
-                    this.dataset.module ||
-                    this.querySelector("h3")
-                        ?.textContent
-                        .trim()
-                        .toUpperCase();
+                    this.dataset.module;
 
 
-                if(!module)
+                if(!module){
+
+                    console.error(
+                        "Module tidak ditemukan:",
+                        this
+                    );
+
                     return;
+
+                }
 
 
                 console.log(
@@ -1442,6 +1446,20 @@ function setupModules(){
                     module
                 );
 
+
+                /*
+                   Jalankan sistem yang
+                   sebelumnya sudah berhasil.
+                */
+
+                loadActivity(module);
+
+            }
+        );
+
+    });
+
+}
 
                 /* =================================
                    RESET MODULE ACTIVE
