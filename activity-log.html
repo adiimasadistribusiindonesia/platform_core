@@ -742,37 +742,52 @@ function escapeHtml(value) {
    MODULE BUTTONS
 ========================================== */
 
+/* ==========================================
+   MODULE BUTTONS
+========================================== */
+
 function setupModules() {
 
-  const cards =
-    document.querySelectorAll(
-      ".module-card"
-    );
+  document.addEventListener(
+    "click",
+    function(event) {
+
+      const card =
+        event.target.closest(".module-card");
 
 
-  cards.forEach(card => {
-
-    card.addEventListener(
-      "click",
-      () => {
-
-        const module =
-          card.dataset.module;
+      if (!card)
+        return;
 
 
-        if (!module)
-          return;
+      const module =
+        card.dataset.module;
 
 
-        loadActivity(module);
+      if (!module) {
+
+        console.error(
+          "Module tidak ditemukan pada card:",
+          card
+        );
+
+        return;
 
       }
-    );
 
-  });
+
+      console.log(
+        "MODULE DIKLIK:",
+        module
+      );
+
+
+      loadActivity(module);
+
+    }
+  );
 
 }
-
 
 /* ==========================================
    START SYSTEM
