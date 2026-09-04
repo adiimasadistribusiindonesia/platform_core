@@ -1164,36 +1164,68 @@ function selectClient(client){
 
 function getActivityActorEmail(log){
 
-    const description =
-        String(log?.description || "");
-
-    const match =
-        description.match(
-            /\[\[ACTOR_EMAIL:([^\]]+)\]\]/
-        );
+    const description = String(log?.description || "");
+    const match = description.match(/\[\[ACTOR_EMAIL:([^\]]+)\]\]/);
 
     if(match && match[1]){
-
-        try{
-
-            return decodeURIComponent(
-                match[1]
-            );
-
-        }catch(error){
-
-            return match[1];
-
-        }
-
+        try{return decodeURIComponent(match[1]);}
+        catch(error){return match[1];}
     }
 
-    return (
+    // Mendukung log lama maupun struktur baru tanpa memaksa perubahan database.
+    return String(
+        log?._actorEmail ||
+        log?.actor_email ||
         log?.admin_email ||
+        log?.user_email ||
+        log?.performed_by_email ||
+        log?.created_by_email ||
         log?.email ||
+        log?.actor?.email ||
+        log?.user?.email ||
+        log?.metadata?.actor_email ||
+        log?.metadata?.email ||
         ""
-    );
+    ).trim().toLowerCase();
+}
 
+async function resolveLegacyActivityActors(logs){
+    if(!Array.isArray(logs) || !logs.length) return logs;
+
+    // Log baru sudah membawa Gmail di description. Untuk log lama yang hanya
+    // menyimpan user_id, coba cocokkan ke tabel admin yang sudah ada.
+    const directory=new Map();
+    const addRow=(row)=>{
+        if(!row || typeof row!=="object") return;
+        const email=String(row.email||row.admin_email||row.user_email||row.gmail||row.username_email||"").trim().toLowerCase();
+        const name=String(row.full_name||row.admin_name||row.nama||row.name||row.nama_admin||row.company_name||"").trim();
+        const ids=[row.user_id,row.auth_user_id,row.id,row.uid,row.admin_id].filter(Boolean).map(String);
+        if(!email && !name) return;
+        ids.forEach(id=>directory.set(id,{email,name}));
+    };
+
+    const tables=["geparu_admin_access","core_adiimasa_admins"];
+    for(const table of tables){
+        try{
+            const res=await fetch(SUPABASE_URL+"/rest/v1/"+table+"?select=*",{headers:getHeaders(),cache:"no-store"});
+            if(res.ok){
+                const rows=await res.json().catch(()=>[]);
+                if(Array.isArray(rows)) rows.forEach(addRow);
+            }
+        }catch(error){
+            console.warn("Direktori pelaku tidak dapat dibaca dari",table,error);
+        }
+    }
+
+    return logs.map(log=>{
+        const uid=String(log?.user_id||log?.auth_user_id||log?.created_by||"").trim();
+        const actor=uid ? directory.get(uid) : null;
+        if(actor){
+            if(actor.email) log._actorEmail=actor.email;
+            if(actor.name) log._actorName=actor.name;
+        }
+        return log;
+    });
 }
 
 
@@ -1222,9 +1254,11 @@ function getActivityActorDisplay(log){
 
 
     const name =
+        log?._actorName ||
         log?.admin_name ||
         log?.full_name ||
         log?.nama ||
+        log?.actor?.name ||
         "";
 
 
@@ -1460,6 +1494,8 @@ async function loadActivity(
         let logs =
             await response.json();
 
+        // Lengkapi identitas log lama yang hanya menyimpan user_id.
+        logs = await resolveLegacyActivityActors(logs);
 
         console.log(
             "ACTIVITY LOG:",
