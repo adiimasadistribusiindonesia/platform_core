@@ -301,7 +301,9 @@ tr:hover{
 
         <div class="log-header">
 
-            <h2>Riwayat Aktivitas</h2>
+            <h2 id="activityTitle">
+    Riwayat Aktivitas — SOSIAL
+</h2>
 
         </div>
 
@@ -354,9 +356,9 @@ tr:hover{
 
 <script>
 
-/* =========================================
+/* ==========================================
    SUPABASE CONFIG
-========================================= */
+========================================== */
 
 const SUPABASE_URL =
   "https://fysaxpqpqexjnlpkbwap.supabase.co";
@@ -365,123 +367,133 @@ const SUPABASE_KEY =
   "sb_publishable_DWRaEZTcNMjhglwN3nqCOw_pua8rsjD";
 
 
-/* =========================================
+/* ==========================================
    SESSION CORE ADMIN
-========================================= */
+========================================== */
 
 let accessToken =
   localStorage.getItem("core_access_token");
 
-let refreshToken =
-  localStorage.getItem("core_refresh_token");
+let currentModule = "SOSIAL";
 
 
-let selectedModule = null;
+/* ==========================================
+   GET HEADERS
+========================================== */
 
+function getHeaders() {
 
-/* =========================================
-   HEADER SUPABASE
-========================================= */
-
-function headers(){
-
-  return {
-
+  const headers = {
     apikey: SUPABASE_KEY,
-
-    Authorization:
-      "Bearer " + accessToken,
-
-    "Content-Type":
-      "application/json"
-
+    "Content-Type": "application/json",
+    Accept: "application/json"
   };
 
-}
 
+  if (accessToken) {
 
-/* =========================================
-   CEK LOGIN
-========================================= */
+    headers.Authorization =
+      "Bearer " + accessToken;
 
-function checkLogin(){
+  } else {
 
-  if(!accessToken){
+    /*
+      Jika belum ada token,
+      tetap gunakan anon/publishable key
+    */
 
-    alert(
-      "Silakan login terlebih dahulu sebagai Core Admin."
-    );
-
-    window.location.href =
-      "index.html";
-
-    return false;
+    headers.Authorization =
+      "Bearer " + SUPABASE_KEY;
 
   }
 
-  return true;
+
+  return headers;
 
 }
 
 
-/* =========================================
+/* ==========================================
    LOAD ACTIVITY LOG
-========================================= */
+========================================== */
 
-async function loadLogs(){
+async function loadActivity(module = currentModule) {
 
-  if(!checkLogin()) return;
+  currentModule = module;
 
 
-  const logBody =
+  const tbody =
     document.getElementById("logBody");
 
 
-  logBody.innerHTML = `
+  const title =
+    document.getElementById("activityTitle");
+
+
+  if (!tbody) {
+
+    console.error(
+      "activityBody tidak ditemukan."
+    );
+
+    return;
+
+  }
+
+
+  if (title) {
+
+    title.textContent =
+      "Riwayat Aktivitas — " + module;
+
+  }
+
+
+  tbody.innerHTML = `
+
     <tr>
+
       <td colspan="6" class="empty">
+
         Memuat Activity Log...
+
       </td>
+
     </tr>
+
   `;
 
 
-  try{
+  try {
 
-
-    let url =
+    const url =
       SUPABASE_URL +
       "/rest/v1/activity_logs" +
       "?select=*" +
+      "&module_slug=eq." +
+      encodeURIComponent(module) +
       "&order=created_at.desc";
-
-
-    /* FILTER MODUL */
-
-    if(selectedModule){
-
-      url +=
-        "&module_slug=eq." +
-        encodeURIComponent(
-          selectedModule
-        );
-
-    }
 
 
     const response =
       await fetch(
         url,
         {
-          headers: headers()
+          headers: getHeaders()
         }
       );
 
 
-    if(!response.ok){
+    if (!response.ok) {
+
+      const errorText =
+        await response.text();
 
       throw new Error(
-        await response.text()
+        "HTTP " +
+        response.status +
+        " — " +
+        errorText
       );
 
     }
@@ -491,197 +503,233 @@ async function loadLogs(){
       await response.json();
 
 
-    renderLogs(logs);
+    if (!logs || logs.length === 0) {
+
+      tbody.innerHTML = `
+
+        <tr>
+
+          <td colspan="6" class="empty">
+
+            Belum ada Activity Log
+            untuk modul ${escapeHtml(module)}.
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
 
 
-  }catch(error){
+    tbody.innerHTML =
+      logs.map(log => `
 
-    console.error(error);
+        <tr>
+
+          <td>
+            ${formatDate(log.created_at)}
+          </td>
 
 
-    logBody.innerHTML = `
+          <td>
+
+            <b>
+
+              ${escapeHtml(
+                log.admin_name ||
+                log.admin_email ||
+                "-"
+              )}
+
+            </b>
+
+          </td>
+
+
+          <td>
+
+            ${escapeHtml(
+              log.description ||
+              "-"
+            )}
+
+          </td>
+
+
+          <td>
+
+            ${escapeHtml(
+              log.module_slug ||
+              "-"
+            )}
+
+          </td>
+
+
+          <td>
+
+            <span class="
+              status
+              ${getStatusClass(log.status)}
+            ">
+
+              ${escapeHtml(
+                log.status ||
+                "SUCCESS"
+              )}
+
+            </span>
+
+          </td>
+
+
+          <td>
+
+            ${escapeHtml(
+              log.action ||
+              "-"
+            )}
+
+          </td>
+
+        </tr>
+
+      `)
+      .join("");
+
+
+  } catch (error) {
+
+    console.error(
+      "ACTIVITY LOG ERROR:",
+      error
+    );
+
+
+    tbody.innerHTML = `
+
       <tr>
 
         <td colspan="6" class="empty">
-
-          Gagal memuat Activity Log.
-
-        </td>
-
-      </tr>
-    `;
-
-  }
-
-}
-
-
-/* =========================================
-   TAMPILKAN LOG
-========================================= */
-
-function renderLogs(logs){
-
-  const logBody =
-    document.getElementById("logBody");
-
-
-  if(!logs.length){
-
-    logBody.innerHTML = `
-      <tr>
-
-        <td colspan="6" class="empty">
-
-          Belum ada Activity Log
-          untuk modul ini.
-
-        </td>
-
-      </tr>
-    `;
-
-    return;
-
-  }
-
-
-  logBody.innerHTML =
-    logs.map(log => `
-
-      <tr>
-
-        <td>
-
-          ${formatDate(
-            log.created_at
-          )}
-
-        </td>
-
-
-        <td>
-
-          ${escapeHtml(
-            log.admin_email || "-"
-          )}
-
-        </td>
-
-
-        <td>
 
           <b>
-            ${escapeHtml(
-              log.action || "-"
-            )}
+            Gagal memuat Activity Log.
           </b>
 
-          <br>
+          <br><br>
 
           <small>
-            ${escapeHtml(
-              log.description || ""
-            )}
+
+            ${escapeHtml(error.message)}
+
           </small>
 
         </td>
 
-
-        <td>
-
-          ${escapeHtml(
-            log.module_slug || "-"
-          )}
-
-        </td>
-
-
-        <td>
-
-          <span class="status">
-
-            ${escapeHtml(
-              log.status || "SUCCESS"
-            )}
-
-          </span>
-
-        </td>
-
-
-        <td>
-
-          <button
-            onclick="deleteLog('${log.id}')"
-            style="
-              border:none;
-              background:#b91c1c;
-              color:white;
-              padding:7px 10px;
-              border-radius:7px;
-              cursor:pointer;
-            "
-          >
-
-            🗑 Hapus
-
-          </button>
-
-        </td>
-
       </tr>
 
-    `)
-    .join("");
+    `;
+
+  }
 
 }
 
 
-/* =========================================
+/* ==========================================
    FORMAT TANGGAL
-========================================= */
+========================================== */
 
-function formatDate(date){
+function formatDate(date) {
 
-  if(!date) return "-";
+  if (!date)
+    return "-";
 
 
-  return new Date(date)
-    .toLocaleString(
-      "id-ID",
-      {
-        dateStyle: "medium",
-        timeStyle: "short"
-      }
-    );
+  try {
+
+    return new Date(date)
+      .toLocaleString(
+        "id-ID",
+        {
+          dateStyle: "medium",
+          timeStyle: "short"
+        }
+      );
+
+  } catch (error) {
+
+    return date;
+
+  }
 
 }
 
 
-/* =========================================
-   AMANKAN HTML
-========================================= */
+/* ==========================================
+   STATUS CLASS
+========================================== */
 
-function escapeHtml(value){
+function getStatusClass(status) {
 
-  return String(value || "")
+  const value =
+    String(status || "SUCCESS")
+      .toUpperCase();
+
+
+  if (value === "SUCCESS") {
+
+    return "create";
+
+  }
+
+
+  if (
+    value === "ERROR" ||
+    value === "FAILED"
+  ) {
+
+    return "delete";
+
+  }
+
+
+  return "edit";
+
+}
+
+
+/* ==========================================
+   ESCAPE HTML
+========================================== */
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+
     .replace(
       /&/g,
       "&amp;"
     )
+
     .replace(
       /</g,
       "&lt;"
     )
+
     .replace(
       />/g,
       "&gt;"
     )
+
     .replace(
       /"/g,
       "&quot;"
     )
+
     .replace(
       /'/g,
       "&#039;"
@@ -690,125 +738,56 @@ function escapeHtml(value){
 }
 
 
-/* =========================================
-   HAPUS ACTIVITY LOG
-========================================= */
+/* ==========================================
+   MODULE BUTTONS
+========================================== */
 
-async function deleteLog(id){
+function setupModules() {
 
-  const yakin =
-    confirm(
-      "Yakin ingin menghapus Activity Log ini?"
+  const cards =
+    document.querySelectorAll(
+      ".module-card"
     );
 
 
-  if(!yakin) return;
+  cards.forEach(card => {
+
+    card.addEventListener(
+      "click",
+      () => {
+
+        const module =
+          card.dataset.module;
 
 
-  try{
+        if (!module)
+          return;
 
 
-    const response =
-      await fetch(
+        loadActivity(module);
 
-        SUPABASE_URL +
-        "/rest/v1/activity_logs?id=eq." +
-        encodeURIComponent(id),
-
-        {
-
-          method: "DELETE",
-
-          headers: headers()
-
-        }
-
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        await response.text()
-      );
-
-    }
-
-
-    alert(
-      "Activity Log berhasil dihapus."
+      }
     );
 
-
-    loadLogs();
-
-
-  }catch(error){
-
-    console.error(error);
-
-
-    alert(
-      "Gagal menghapus Activity Log."
-    );
-
-  }
+  });
 
 }
 
 
-/* =========================================
-   PILIH MODUL
-========================================= */
+/* ==========================================
+   START SYSTEM
+========================================== */
 
-const moduleCards =
-  document.querySelectorAll(
-    ".module-card"
-  );
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
+    setupModules();
 
-moduleCards.forEach(card => {
+    loadActivity("SOSIAL");
 
-
-  card.addEventListener(
-    "click",
-    function(){
-
-
-      const moduleName =
-        this.querySelector("h3")
-          .textContent
-          .trim();
-
-
-      selectedModule =
-        moduleName.toLowerCase();
-
-
-      /* Judul riwayat */
-
-      document.querySelector(
-        ".log-header h2"
-      ).textContent =
-        "Riwayat Aktivitas — " +
-        moduleName;
-
-
-      loadLogs();
-
-
-    }
-  );
-
-
-});
-
-
-/* =========================================
-   LOAD AWAL
-========================================= */
-
-loadLogs();
+  }
+);
 
 </script>
 </body>
