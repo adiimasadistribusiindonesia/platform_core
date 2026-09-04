@@ -324,33 +324,24 @@ tr:hover{
 
                         <th>Status</th>
 
+                        <th>Aksi</th>
+
                     </tr>
 
                 </thead>
 
 
-                <tbody>
+                <tbody id="logBody">
 
+    <tr>
 
-                    <!-- CONTOH DATA -->
+        <td colspan="6" class="empty">
+            Memuat Activity Log...
+        </td>
 
-                    <tr>
+    </tr>
 
-                        <td>Belum ada data</td>
-
-                        <td>-</td>
-
-                        <td>Sistem Activity Log sedang disiapkan</td>
-
-                        <td>-</td>
-
-                        <td>-</td>
-
-                    </tr>
-
-
-                </tbody>
-
+</tbody>
             </table>
 
         </div>
@@ -361,6 +352,464 @@ tr:hover{
 
 </div>
 
+<script>
 
+/* =========================================
+   SUPABASE CONFIG
+========================================= */
+
+const SUPABASE_URL =
+  "https://fysaxpqpqexjnlpkbwap.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_DWRaEZTcNMjhglwN3nqCOw_pua8rsjD";
+
+
+/* =========================================
+   SESSION CORE ADMIN
+========================================= */
+
+let accessToken =
+  localStorage.getItem("core_access_token");
+
+let refreshToken =
+  localStorage.getItem("core_refresh_token");
+
+
+let selectedModule = null;
+
+
+/* =========================================
+   HEADER SUPABASE
+========================================= */
+
+function headers(){
+
+  return {
+
+    apikey: SUPABASE_KEY,
+
+    Authorization:
+      "Bearer " + accessToken,
+
+    "Content-Type":
+      "application/json"
+
+  };
+
+}
+
+
+/* =========================================
+   CEK LOGIN
+========================================= */
+
+function checkLogin(){
+
+  if(!accessToken){
+
+    alert(
+      "Silakan login terlebih dahulu sebagai Core Admin."
+    );
+
+    window.location.href =
+      "index.html";
+
+    return false;
+
+  }
+
+  return true;
+
+}
+
+
+/* =========================================
+   LOAD ACTIVITY LOG
+========================================= */
+
+async function loadLogs(){
+
+  if(!checkLogin()) return;
+
+
+  const logBody =
+    document.getElementById("logBody");
+
+
+  logBody.innerHTML = `
+    <tr>
+      <td colspan="6" class="empty">
+        Memuat Activity Log...
+      </td>
+    </tr>
+  `;
+
+
+  try{
+
+
+    let url =
+      SUPABASE_URL +
+      "/rest/v1/activity_logs" +
+      "?select=*" +
+      "&order=created_at.desc";
+
+
+    /* FILTER MODUL */
+
+    if(selectedModule){
+
+      url +=
+        "&module_slug=eq." +
+        encodeURIComponent(
+          selectedModule
+        );
+
+    }
+
+
+    const response =
+      await fetch(
+        url,
+        {
+          headers: headers()
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        await response.text()
+      );
+
+    }
+
+
+    const logs =
+      await response.json();
+
+
+    renderLogs(logs);
+
+
+  }catch(error){
+
+    console.error(error);
+
+
+    logBody.innerHTML = `
+      <tr>
+
+        <td colspan="6" class="empty">
+
+          Gagal memuat Activity Log.
+
+        </td>
+
+      </tr>
+    `;
+
+  }
+
+}
+
+
+/* =========================================
+   TAMPILKAN LOG
+========================================= */
+
+function renderLogs(logs){
+
+  const logBody =
+    document.getElementById("logBody");
+
+
+  if(!logs.length){
+
+    logBody.innerHTML = `
+      <tr>
+
+        <td colspan="6" class="empty">
+
+          Belum ada Activity Log
+          untuk modul ini.
+
+        </td>
+
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+  logBody.innerHTML =
+    logs.map(log => `
+
+      <tr>
+
+        <td>
+
+          ${formatDate(
+            log.created_at
+          )}
+
+        </td>
+
+
+        <td>
+
+          ${escapeHtml(
+            log.admin_email || "-"
+          )}
+
+        </td>
+
+
+        <td>
+
+          <b>
+            ${escapeHtml(
+              log.action || "-"
+            )}
+          </b>
+
+          <br>
+
+          <small>
+            ${escapeHtml(
+              log.description || ""
+            )}
+          </small>
+
+        </td>
+
+
+        <td>
+
+          ${escapeHtml(
+            log.module_slug || "-"
+          )}
+
+        </td>
+
+
+        <td>
+
+          <span class="status">
+
+            ${escapeHtml(
+              log.status || "SUCCESS"
+            )}
+
+          </span>
+
+        </td>
+
+
+        <td>
+
+          <button
+            onclick="deleteLog('${log.id}')"
+            style="
+              border:none;
+              background:#b91c1c;
+              color:white;
+              padding:7px 10px;
+              border-radius:7px;
+              cursor:pointer;
+            "
+          >
+
+            🗑 Hapus
+
+          </button>
+
+        </td>
+
+      </tr>
+
+    `)
+    .join("");
+
+}
+
+
+/* =========================================
+   FORMAT TANGGAL
+========================================= */
+
+function formatDate(date){
+
+  if(!date) return "-";
+
+
+  return new Date(date)
+    .toLocaleString(
+      "id-ID",
+      {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }
+    );
+
+}
+
+
+/* =========================================
+   AMANKAN HTML
+========================================= */
+
+function escapeHtml(value){
+
+  return String(value || "")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =========================================
+   HAPUS ACTIVITY LOG
+========================================= */
+
+async function deleteLog(id){
+
+  const yakin =
+    confirm(
+      "Yakin ingin menghapus Activity Log ini?"
+    );
+
+
+  if(!yakin) return;
+
+
+  try{
+
+
+    const response =
+      await fetch(
+
+        SUPABASE_URL +
+        "/rest/v1/activity_logs?id=eq." +
+        encodeURIComponent(id),
+
+        {
+
+          method: "DELETE",
+
+          headers: headers()
+
+        }
+
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        await response.text()
+      );
+
+    }
+
+
+    alert(
+      "Activity Log berhasil dihapus."
+    );
+
+
+    loadLogs();
+
+
+  }catch(error){
+
+    console.error(error);
+
+
+    alert(
+      "Gagal menghapus Activity Log."
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   PILIH MODUL
+========================================= */
+
+const moduleCards =
+  document.querySelectorAll(
+    ".module-card"
+  );
+
+
+moduleCards.forEach(card => {
+
+
+  card.addEventListener(
+    "click",
+    function(){
+
+
+      const moduleName =
+        this.querySelector("h3")
+          .textContent
+          .trim();
+
+
+      selectedModule =
+        moduleName.toLowerCase();
+
+
+      /* Judul riwayat */
+
+      document.querySelector(
+        ".log-header h2"
+      ).textContent =
+        "Riwayat Aktivitas — " +
+        moduleName;
+
+
+      loadLogs();
+
+
+    }
+  );
+
+
+});
+
+
+/* =========================================
+   LOAD AWAL
+========================================= */
+
+loadLogs();
+
+</script>
 </body>
 </html>
