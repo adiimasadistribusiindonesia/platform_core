@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Activity Log | CORE ADIMASA</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#f1f4f7;
+    color:#243447;
+}
+
+/* HEADER */
+
+.header{
+    background:#17324d;
+    color:white;
+    padding:25px;
+}
+
+.header h1{
+    font-size:28px;
+}
+
+.header p{
+    margin-top:8px;
+    color:#cbd5df;
+}
+
+/* CONTAINER */
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:25px;
+}
+
+/* INFO */
+
+.info-box{
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:25px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+
+.info-box h2{
+    margin-bottom:8px;
+}
+
+/* MODUL MENU */
+
+.module-title{
+    margin-bottom:15px;
+    font-size:22px;
+}
+
+.module-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:15px;
+}
+
+.module-card{
+    background:white;
+    border:1px solid #dce3ea;
+    border-radius:14px;
+    padding:22px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.module-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.1);
+}
+
+.module-icon{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+.module-card h3{
+    color:#17324d;
+}
+
+.module-card p{
+    margin-top:6px;
+    color:#6c7a89;
+    font-size:14px;
+}
+
+/* LOG AREA */
+
+.log-section{
+    margin-top:30px;
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+
+.log-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.log-header h2{
+    color:#17324d;
+}
+
+/* TABLE */
+
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#17324d;
+    color:white;
+    padding:14px;
+    text-align:left;
+}
+
+td{
+    padding:14px;
+    border-bottom:1px solid #e5e9ed;
+}
+
+tr:hover{
+    background:#f7f9fb;
+}
+
+/* STATUS */
+
+.status{
+    padding:6px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.login{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.edit{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.create{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.delete{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+/* EMPTY */
+
+.empty{
+    text-align:center;
+    padding:40px;
+    color:#7b8794;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <h1>📋 Activity Log</h1>
+
+    <p>
+        Pusat riwayat aktivitas seluruh modul Platform CORE ADIMASA
+    </p>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- PENJELASAN -->
+
+    <div class="info-box">
+
+        <h2>Activity Monitoring</h2>
+
+        <p>
+            CORE dapat memantau seluruh aktivitas administrator
+            berdasarkan masing-masing modul platform.
+        </p>
+
+    </div>
+
+
+    <!-- PILIH MODUL -->
+
+    <h2 class="module-title">Pilih Modul</h2>
+
+
+    <div class="module-grid">
+
+
+        <div class="module-card">
+
+            <div class="module-icon">🤝</div>
+
+            <h3>SOSIAL</h3>
+
+            <p>
+                Activity Log layanan sosial dan client GEPARU.
+            </p>
+
+        </div>
+
+
+        <div class="module-card">
+
+            <div class="module-icon">🍽️</div>
+
+            <h3>FOOD</h3>
+
+            <p>
+                Activity Log modul Food.
+            </p>
+
+        </div>
+
+
+        <div class="module-card">
+
+            <div class="module-icon">🛒</div>
+
+            <h3>MARKETPLACE</h3>
+
+            <p>
+                Activity Log marketplace dan penjualan.
+            </p>
+
+        </div>
+
+
+        <div class="module-card">
+
+            <div class="module-icon">🏢</div>
+
+            <h3>COMPANY</h3>
+
+            <p>
+                Activity Log perusahaan dan client.
+            </p>
+
+        </div>
+
+
+        <div class="module-card">
+
+            <div class="module-icon">📦</div>
+
+            <h3>PRODUCT</h3>
+
+            <p>
+                Activity Log produk dan katalog.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- RIWAYAT -->
+
+    <div class="log-section">
+
+        <div class="log-header">
+
+            <h2>Riwayat Aktivitas</h2>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Waktu</th>
+
+                        <th>Admin</th>
+
+                        <th>Aktivitas</th>
+
+                        <th>Modul</th>
+
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                    <!-- CONTOH DATA -->
+
+                    <tr>
+
+                        <td>Belum ada data</td>
+
+                        <td>-</td>
+
+                        <td>Sistem Activity Log sedang disiapkan</td>
+
+                        <td>-</td>
+
+                        <td>-</td>
+
+                    </tr>
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+</body>
+</html>
