@@ -284,7 +284,76 @@ tr:hover{
     }
 
 }
+/* ==========================================
+   CLIENT SOSIAL
+========================================== */
 
+.client-section{
+    display:none;
+    margin-top:25px;
+    margin-bottom:25px;
+}
+
+.client-section.show{
+    display:block;
+}
+
+.client-section h2{
+    margin-bottom:15px;
+    font-size:22px;
+}
+
+.client-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.client-card{
+    background:white;
+    border:1px solid #dce3ea;
+    border-radius:14px;
+    padding:20px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.client-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.1);
+}
+
+.client-card.active{
+    border:2px solid #17324d;
+    background:#f3f7fa;
+}
+
+.client-icon{
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+.client-card h3{
+    color:#17324d;
+    margin-bottom:6px;
+}
+
+.client-card p{
+    color:#6c7a89;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.client-code{
+    display:inline-block;
+    margin-top:10px;
+    padding:5px 10px;
+    border-radius:20px;
+    background:#e8f0f6;
+    color:#17324d;
+    font-size:12px;
+    font-weight:bold;
+}
 </style>
 
 </head>
@@ -466,7 +535,55 @@ tr:hover{
 
     </div>
 
+<!-- ==========================================
+     CLIENT MODUL SOSIAL
+========================================== -->
 
+<div
+    id="socialClients"
+    class="client-section"
+>
+
+    <h2>
+        Client Modul SOSIAL
+    </h2>
+
+
+    <div class="client-grid">
+
+
+        <!-- CLIENT GEPARU -->
+
+        <div
+            class="client-card"
+            data-client="GEPARU"
+        >
+
+            <div class="client-icon">
+                🤝
+            </div>
+
+
+            <h3>
+                GEPARU
+            </h3>
+
+
+            <p>
+                Generasi Padjajaran Baru
+            </p>
+
+
+            <span class="client-code">
+                CLIENT SOSIAL
+            </span>
+
+        </div>
+
+
+    </div>
+
+</div>
 
     <!-- ==========================================
          RIWAYAT
@@ -1290,55 +1407,136 @@ function escapeHtml(value){
    MODULE BUTTONS
 ========================================== */
 
+/* ==========================================
+   MODULE BUTTONS
+========================================== */
+
 function setupModules(){
 
-
     const cards =
-
         document.querySelectorAll(
             ".module-card"
         );
 
 
-
     cards.forEach(card => {
 
-
         card.addEventListener(
-
             "click",
-
             function(){
 
-
                 const module =
+                    this.dataset.module ||
+                    this.querySelector("h3")
+                        ?.textContent
+                        .trim()
+                        .toUpperCase();
 
-                    this.dataset.module;
 
+                if(!module)
+                    return;
 
 
                 console.log(
-
                     "MODULE DIKLIK:",
-
                     module
-
                 );
 
 
+                /* =================================
+                   RESET MODULE ACTIVE
+                ================================= */
 
-                /* Pastikan module tersedia */
+                document
+                    .querySelectorAll(".module-card")
+                    .forEach(item => {
 
-                if(!module){
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    });
 
 
-                    console.error(
+                this.classList.add(
+                    "active"
+                );
 
-                        "data-module tidak ditemukan.",
 
-                        this
+                /* =================================
+                   KHUSUS SOSIAL
+                ================================= */
 
+                const socialClients =
+                    document.getElementById(
+                        "socialClients"
                     );
+
+
+                if(module === "SOSIAL"){
+
+                    /*
+                       Tampilkan pilihan client
+                    */
+
+                    if(socialClients){
+
+                        socialClients.classList.add(
+                            "show"
+                        );
+
+                    }
+
+
+                    /*
+                       Jangan langsung load
+                       activity client.
+
+                       Tampilkan informasi dulu.
+                    */
+
+                    const title =
+                        document.getElementById(
+                            "activityTitle"
+                        );
+
+
+                    const tbody =
+                        document.getElementById(
+                            "logBody"
+                        );
+
+
+                    if(title){
+
+                        title.textContent =
+                            "Pilih Client — SOSIAL";
+
+                    }
+
+
+                    if(tbody){
+
+                        tbody.innerHTML = `
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="empty"
+                                >
+
+                                    Pilih Client SOSIAL
+                                    untuk melihat
+                                    Activity Log.
+
+                                </td>
+
+                            </tr>
+
+                        `;
+
+                    }
 
 
                     return;
@@ -1346,21 +1544,44 @@ function setupModules(){
                 }
 
 
+                /* =================================
+                   MODUL SELAIN SOSIAL
+                ================================= */
 
-                /* Load activity */
+                if(socialClients){
 
-                loadActivity(
-                    module
-                );
+                    socialClients.classList.remove(
+                        "show"
+                    );
 
+                }
+
+
+                /*
+                   Reset client aktif
+                */
+
+                document
+                    .querySelectorAll(".client-card")
+                    .forEach(client => {
+
+                        client.classList.remove(
+                            "active"
+                        );
+
+                    });
+
+
+                /*
+                   Sistem lama tetap berjalan
+                */
+
+                loadActivity(module);
 
             }
-
         );
 
-
     });
-
 
 }
 
@@ -1371,22 +1592,205 @@ function setupModules(){
 ========================================== */
 
 document.addEventListener(
-
     "DOMContentLoaded",
-
-    function(){
-
+    () => {
 
         console.log(
             "ACTIVITY LOG SYSTEM START"
         );
 
 
-        /* Aktifkan klik module */
+        /* Aktifkan klik modul */
 
         setupModules();
 
 
+        /* Aktifkan klik client */
+
+        setupClients();
+
+
+        /*
+           Tampilan awal:
+           SOSIAL aktif dan
+           meminta Core memilih client.
+        */
+
+        const socialClients =
+            document.getElementById(
+                "socialClients"
+            );
+
+
+        if(socialClients){
+
+            socialClients.classList.add(
+                "show"
+            );
+
+        }
+
+
+        const title =
+            document.getElementById(
+                "activityTitle"
+            );
+
+
+        if(title){
+
+            title.textContent =
+                "Pilih Client — SOSIAL";
+
+        }
+
+
+        const tbody =
+            document.getElementById(
+                "logBody"
+            );
+
+
+        if(tbody){
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty"
+                    >
+
+                        Pilih Client SOSIAL
+                        untuk melihat
+                        Activity Log.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
+    }
+);
+/* ==========================================
+   CLIENT BUTTONS
+========================================== */
+
+function setupClients(){
+
+    const clients =
+        document.querySelectorAll(
+            ".client-card"
+        );
+
+
+    clients.forEach(client => {
+
+        client.addEventListener(
+            "click",
+            function(){
+
+                const clientName =
+                    this.dataset.client;
+
+
+                if(!clientName)
+                    return;
+
+
+                console.log(
+                    "CLIENT DIKLIK:",
+                    clientName
+                );
+
+
+                /* =================================
+                   ACTIVE CLIENT
+                ================================= */
+
+                document
+                    .querySelectorAll(".client-card")
+                    .forEach(item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    });
+
+
+                this.classList.add(
+                    "active"
+                );
+
+
+                /* =================================
+                   UPDATE JUDUL
+                ================================= */
+
+                const title =
+                    document.getElementById(
+                        "activityTitle"
+                    );
+
+
+                if(title){
+
+                    title.textContent =
+                        "Riwayat Aktivitas — SOSIAL / " +
+                        clientName;
+
+                }
+
+
+                /* =================================
+                   LOAD ACTIVITY SOSIAL
+                   
+                   Saat ini database kita belum
+                   memiliki filter client yang
+                   dipastikan dipakai pada kode
+                   halaman ini.
+
+                   Jadi sementara tetap memakai
+                   sistem SOSIAL yang sudah berjalan.
+                ================================= */
+
+                loadActivity(
+                    "SOSIAL"
+                );
+
+
+                /*
+                   Setelah loadActivity(),
+                   kembalikan judul agar
+                   menampilkan nama client.
+                */
+
+                setTimeout(
+                    function(){
+
+                        if(title){
+
+                            title.textContent =
+                                "Riwayat Aktivitas — SOSIAL / " +
+                                clientName;
+
+                        }
+
+                    },
+                    50
+                );
+
+            }
+        );
+
+    });
+
+}
         /* Load awal */
 
         loadActivity(
