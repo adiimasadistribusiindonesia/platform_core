@@ -1309,6 +1309,63 @@ $('status').onchange=
 boot();
 
 </script>
+<script>
 
+/* =========================================
+   TAMBAHKAN MENU ACTIVITY LOG
+========================================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  const nav = document.querySelector(".nav");
+
+  if (!nav) return;
+
+
+  /* Buat tombol Activity Log */
+
+  const activityBtn = document.createElement("button");
+
+  activityBtn.id = "activityLogBtn";
+
+  activityBtn.innerHTML = `
+    ☷ &nbsp; Activity Log
+  `;
+
+
+  /* Ketika diklik buka halaman Activity Log */
+
+  activityBtn.onclick = function () {
+
+    window.location.href = "activity-log.html";
+
+  };
+
+
+  /* Masukkan sebelum Pengaturan Core */
+
+  const navButtons = nav.querySelectorAll("button");
+
+  const settingButton = Array.from(navButtons).find(
+    btn => btn.textContent.includes("Pengaturan Core")
+  );
+
+
+  if (settingButton) {
+
+    nav.insertBefore(
+      activityBtn,
+      settingButton
+    );
+
+  } else {
+
+    nav.appendChild(activityBtn);
+
+  }
+
+});
+
+</script>
 </body>
 </html>
