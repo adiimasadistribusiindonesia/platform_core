@@ -979,7 +979,171 @@ function resetClient(){
 
 }
 
+/* ==========================================
+   LOAD CLIENT DARI SUPABASE
+========================================== */
 
+async function loadClients(module){
+
+    const clientGrid =
+        document.querySelector(".client-grid");
+
+
+    if(!clientGrid){
+        console.error(
+            "client-grid tidak ditemukan"
+        );
+        return;
+    }
+
+
+    clientGrid.innerHTML = `
+
+        <div class="empty">
+
+            Memuat data client...
+
+        </div>
+
+    `;
+
+
+    try{
+
+
+        let url =
+
+    SUPABASE_URL +
+
+    "/rest/v1/activity_logs" +
+
+    "?select=*" +
+
+    "&module=eq." +
+
+    encodeURIComponent(module);
+
+
+if(clientId){
+
+    url +=
+
+        "&client_id=eq." +
+
+        encodeURIComponent(clientId);
+
+}
+
+
+url +=
+    "&order=created_at.desc";
+
+
+        const response =
+
+            await fetch(
+
+                url,
+
+                {
+                    headers:getHeaders()
+                }
+
+            );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "Gagal memuat client: HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const clients =
+            await response.json();
+
+
+        if(!clients.length){
+
+            clientGrid.innerHTML = `
+
+                <div class="empty">
+
+                    Belum ada client
+                    untuk modul ${escapeHtml(module)}.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        clientGrid.innerHTML =
+
+            clients.map(client => `
+
+                <div
+                    class="client-card"
+                    data-client-id="${client.id}"
+                    data-client-name="${escapeHtml(client.client_name)}"
+                >
+
+                    <div class="client-icon">
+                        🏢
+                    </div>
+
+
+                    <h3>
+                        ${escapeHtml(client.client_name)}
+                    </h3>
+
+
+                    <p>
+                        Lihat Activity Log client ini.
+                    </p>
+
+                </div>
+
+            `)
+
+            .join("");
+
+
+    }catch(error){
+
+        console.error(
+            "CLIENT ERROR:",
+            error
+        );
+
+
+        clientGrid.innerHTML = `
+
+            <div class="empty">
+
+                Gagal memuat data client.
+
+                <br><br>
+
+                <small>
+
+                    ${escapeHtml(error.message)}
+
+                </small>
+
+            </div>
+
+        `;
+
+    }
+
+}
 
 /* ==========================================
    SELECT MODULE
@@ -1040,7 +1204,9 @@ function selectModule(module){
 
     if(module === "SOSIAL"){
 
-        showClientSection();
+    showClientSection();
+
+    loadClients(module);
 
 
         if(title){
@@ -1099,25 +1265,45 @@ function selectModule(module){
    SELECT CLIENT
 ========================================== */
 
-function selectClient(client){
+function selectClient(
+    clientId,
+    clientName
+){
 
-    if(!client){
-        return;
-    }
-
-
-    if(currentModule !== "SOSIAL"){
+    if(!clientId){
         return;
     }
 
 
     currentClient =
-        client;
+        clientId;
 
 
-    updateActiveClient(
-        client
-    );
+    const cards =
+        document.querySelectorAll(
+            ".client-card"
+        );
+
+
+    cards.forEach(card => {
+
+        if(
+            card.dataset.clientId === clientId
+        ){
+
+            card.classList.add(
+                "active"
+            );
+
+        }else{
+
+            card.classList.remove(
+                "active"
+            );
+
+        }
+
+    });
 
 
     const backButton =
@@ -1136,11 +1322,11 @@ function selectClient(client){
 
     loadActivity(
         currentModule,
-        client
+        clientId,
+        clientName
     );
 
 }
-
 
 
 /* ==========================================
@@ -1149,7 +1335,8 @@ function selectClient(client){
 
 async function loadActivity(
     module,
-    client = null
+    clientId = null,
+    clientName = null
 ){
 
     const tbody =
@@ -1753,31 +1940,40 @@ document.addEventListener(
 
 
 
-        /* ==========================================
-           CLIENT CARD
-        ========================================== */
+/* ==========================================
+   CLIENT CARD
+========================================== */
 
-        const clientCard =
-            event.target.closest(
-                ".client-card"
-            );
-
-
-        if(clientCard){
-
-            const client =
-                clientCard.dataset.client;
+const clientCard =
+    event.target.closest(
+        ".client-card"
+    );
 
 
-            selectClient(
-                client
-            );
+if(clientCard){
+
+    const clientId =
+        clientCard.dataset.clientId;
 
 
-            return;
+    const clientName =
+        clientCard.dataset.clientName;
 
-        }
 
+    if(!clientId){
+        return;
+    }
+
+
+    selectClient(
+        clientId,
+        clientName
+    );
+
+
+    return;
+
+}
 
 
         /* ==========================================
