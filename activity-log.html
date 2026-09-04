@@ -330,55 +330,11 @@ th{
 td{
     padding:14px;
     border-bottom:1px solid #e5e9ed;
-    vertical-align:top;
 }
 
 
 tbody tr:hover{
     background:#f7f9fb;
-}
-
-
-/* ==========================================
-   ACTOR / PELAKU
-========================================== */
-
-.actor-info{
-    min-width:180px;
-}
-
-
-.actor-name{
-    font-weight:bold;
-    color:#243447;
-    margin-bottom:5px;
-}
-
-
-.actor-meta{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    flex-wrap:wrap;
-}
-
-
-.actor-email{
-    font-size:12px;
-    color:#6c7a89;
-    word-break:break-word;
-}
-
-
-.actor-role{
-    display:inline-block;
-    padding:3px 8px;
-    border-radius:12px;
-    background:#e8eef4;
-    color:#17324d;
-    font-size:10px;
-    font-weight:bold;
-    letter-spacing:.4px;
 }
 
 
@@ -464,6 +420,18 @@ tbody tr:hover{
 
 }
 
+
+/* ==========================================
+   EMAIL PELAKU
+========================================== */
+.actor-email{
+    display:inline-block;
+    margin-top:4px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:400;
+    word-break:break-word;
+}
 </style>
 
 </head>
@@ -745,7 +713,7 @@ tbody tr:hover{
                         </th>
 
                         <th>
-                            Pelaku
+                            Admin
                         </th>
 
                         <th>
@@ -1188,99 +1156,113 @@ function selectClient(client){
 
 
 /* ==========================================
-   GET ACTOR HTML
+   IDENTITAS PELAKU DARI ACTIVITY LOG
 
-   Prioritas data:
-
-   1. actor_name
-   2. admin_name
-   3. actor_email
-   4. admin_email
-   5. user_id
-
-   Database baru menggunakan:
-   actor_name
-   actor_email
-   actor_role
-
-   Data lama tetap didukung.
+   Log baru menyimpan penanda Gmail di description
+   tanpa mengubah struktur tabel activity_logs lama.
 ========================================== */
 
-function getActorHtml(log){
+function getActivityActorEmail(log){
 
-    const actorName =
+    const description =
+        String(log?.description || "");
 
-        log.actor_name ||
+    const match =
+        description.match(
+            /\[\[ACTOR_EMAIL:([^\]]+)\]\]/
+        );
 
-        log.admin_name ||
+    if(match && match[1]){
 
-        log.actor_email ||
+        try{
 
-        log.admin_email ||
+            return decodeURIComponent(
+                match[1]
+            );
 
-        log.user_id ||
+        }catch(error){
 
-        "Tidak diketahui";
+            return match[1];
+
+        }
+
+    }
+
+    return (
+        log?.admin_email ||
+        log?.email ||
+        ""
+    );
+
+}
 
 
-    const actorEmail =
+function getCleanActivityDescription(log){
 
-        log.actor_email ||
+    return String(
+        log?.description ||
+        log?.action ||
+        "-"
+    )
 
-        log.admin_email ||
+    .replace(
+        /\[\[ACTOR_EMAIL:[^\]]+\]\]\s*/,
+        ""
+    )
 
+    .trim();
+
+}
+
+
+function getActivityActorDisplay(log){
+
+    const email =
+        getActivityActorEmail(log);
+
+
+    const name =
+        log?.admin_name ||
+        log?.full_name ||
+        log?.nama ||
         "";
 
 
-    const actorRole =
+    if(name && email){
 
-        log.actor_role ||
+        return `
 
-        log.role ||
+            <b>${escapeHtml(name)}</b>
 
-        "";
+            <br>
 
-
-    let emailHtml = "";
-
-
-    if(
-
-        actorEmail &&
-
-        actorEmail !== actorName
-
-    ){
-
-        emailHtml = `
-
-            <div class="actor-email">
-
-                ${escapeHtml(
-                    actorEmail
-                )}
-
-            </div>
+            <small class="actor-email">
+                ${escapeHtml(email)}
+            </small>
 
         `;
 
     }
 
 
-    let roleHtml = "";
+    if(email){
+
+        return `
+
+            <b>${escapeHtml(email)}</b>
+
+        `;
+
+    }
 
 
-    if(actorRole){
+    if(log?.admin_name){
 
-        roleHtml = `
+        return `
 
-            <span class="actor-role">
-
-                ${escapeHtml(
-                    actorRole
-                )}
-
-            </span>
+            <b>${escapeHtml(
+                log.admin_name
+            )}</b>
 
         `;
 
@@ -1289,30 +1271,11 @@ function getActorHtml(log){
 
     return `
 
-        <div class="actor-info">
-
-            <div class="actor-name">
-
-                ${escapeHtml(
-                    actorName
-                )}
-
-            </div>
-
-            <div class="actor-meta">
-
-                ${roleHtml}
-
-            </div>
-
-            ${emailHtml}
-
-        </div>
+        <b>Tidak diketahui</b>
 
     `;
 
 }
-
 
 
 /* ==========================================
@@ -1506,17 +1469,22 @@ async function loadActivity(
 
         /* ==========================================
            CLIENT FILTER
-
-           Struktur sekarang menggunakan module
-           sebagai filter utama.
-
-           Untuk GEPARU saat ini:
-           module = SOSIAL
+           
+           Saat ini struktur tabel yang Anda buat
+           menggunakan module sebagai filter utama.
+           
+           Jadi GEPARU menampilkan Activity Log
+           modul SOSIAL.
         ========================================== */
 
         if(
             client === "GEPARU"
         ){
+
+            /*
+               Tidak menghapus atau mengubah
+               data database yang sudah berjalan.
+            */
 
             logs = logs;
 
@@ -1598,7 +1566,7 @@ async function loadActivity(
 
                     <td>
 
-                        ${getActorHtml(
+                        ${getActivityActorDisplay(
                             log
                         )}
 
@@ -1612,11 +1580,9 @@ async function loadActivity(
 
                         ${escapeHtml(
 
-                            log.description ||
-
-                            log.action ||
-
-                            "-"
+                            getCleanActivityDescription(
+                                log
+                            )
 
                         )}
 
