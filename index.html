@@ -200,6 +200,20 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
   .main{margin:0;width:100%;padding:24px 16px}.module-grid,.feature-tabs{grid-template-columns:1fr}.client-head{align-items:flex-start;flex-direction:column}
   h1{font-size:28px}.banner{height:180px}.building{right:-40px;opacity:.45}.analysis-grid{grid-template-columns:1fr}
 }
+
+/* CORE OVERVIEW LIVE */
+.overview-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}
+.overview-refresh{border:1px solid #d9e3ed;background:#fff;color:#17324d;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.overview-card{background:#fff;border:1px solid #e0e8ef;border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(24,50,71,.05);border-top:4px solid #789}
+.pending-card{border-top-color:#d39a21}.approved-card{border-top-color:#2c8c5b}.rejected-card{border-top-color:#bd4545}.suspended-card{border-top-color:#777}
+.overview-label{font-size:12px;color:#687b90;font-weight:700}.overview-num{font-size:32px;font-weight:800;color:#17324d;margin:8px 0}.overview-note{font-size:11px;color:#8a98a6;line-height:1.4}
+.overview-status{margin-top:18px;border:1px solid #e0e8ef;border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:20px;background:#f8fbfd}.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#198754;margin-right:8px}.overview-status p{margin:7px 0 0;color:#708195;font-size:13px}.overview-total{text-align:right}.overview-total span{display:block;font-size:12px;color:#718296}.overview-total strong{display:block;font-size:28px;color:#17324d;margin-top:3px}.overview-message{margin-top:14px;font-size:12px;color:#718296}
+@media(max-width:900px){.overview-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.overview-head,.overview-status{flex-direction:column}.overview-grid{grid-template-columns:1fr}.overview-total{text-align:left}.overview-refresh{width:100%}}
+
+/* Approval actions */
+.approval-actions{display:flex;gap:6px;flex-wrap:wrap}.approval-btn{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}.approval-btn.ok{background:#19734a;color:#fff}.approval-btn.no{background:#a52b2b;color:#fff}.approval-btn.warn{background:#e8edf2;color:#334155}.approval-btn.delete{background:#7f1d1d;color:#fff}.approval-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700}.approval-badge.pending{background:#fff3d5;color:#9a6500}.approval-badge.approved{background:#e3f5eb;color:#19734a}.approval-badge.rejected{background:#fae5e5;color:#a52b2b}.approval-badge.suspended{background:#e9e9e9;color:#555}
 </style>
 </head>
 
@@ -336,21 +350,39 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
       </div>
 
       <div class="panel active" id="panel-overview">
-        <h2>Overview Client</h2>
-        <p class="section-sub">Ringkasan kondisi dan aktivitas client saat ini.</p>
-        <div class="stat-grid">
-          <div class="stat"><span>Total Pengunjung</span><b>—</b></div>
-          <div class="stat"><span>Konten / Data</span><b>—</b></div>
-          <div class="stat"><span>User Aktif</span><b>—</b></div>
-          <div class="stat"><span>Status Platform</span><b style="font-size:18px;color:#198754">Aktif</b></div>
+        <div class="overview-head">
+          <div>
+            <h2 id="overviewTitle">Overview GEPARU</h2>
+            <p class="section-sub">Ringkasan akses dan kondisi client yang sedang dipilih.</p>
+          </div>
+          <button class="overview-refresh" onclick="loadClientOverview()">↻ Perbarui</button>
         </div>
-        <div class="chart-placeholder">Area ini nanti dihubungkan dengan data asli dari platform client dan Supabase. Struktur dashboard sudah disiapkan tanpa mengganggu kode lama.</div>
+
+        <div class="overview-grid">
+          <div class="overview-card pending-card"><div class="overview-label">Menunggu Approval</div><div class="overview-num" id="ovPending">0</div><div class="overview-note">Permintaan membutuhkan keputusan</div></div>
+          <div class="overview-card approved-card"><div class="overview-label">Akses Disetujui</div><div class="overview-num" id="ovApproved">0</div><div class="overview-note">Admin/client aktif</div></div>
+          <div class="overview-card rejected-card"><div class="overview-label">Akses Ditolak</div><div class="overview-num" id="ovRejected">0</div><div class="overview-note">Permintaan tidak disetujui</div></div>
+          <div class="overview-card suspended-card"><div class="overview-label">Ditangguhkan</div><div class="overview-num" id="ovSuspended">0</div><div class="overview-note">Akses sementara dihentikan</div></div>
+        </div>
+
+        <div class="overview-status">
+          <div><span class="status-dot"></span><b>Status Platform</b><p id="ovPlatformText">Client aktif dan terhubung ke CORE ADIIMASA</p></div>
+          <div class="overview-total"><span>Total Data Akses</span><strong id="ovTotal">0</strong></div>
+        </div>
+        <div id="overviewMessage" class="overview-message">Overview siap dimuat.</div>
       </div>
 
       <div class="panel" id="panel-approval">
-        <h2>Approval Akses</h2>
-        <p class="section-sub">Semua permintaan akses untuk client yang sedang dipilih akan muncul di sini.</p>
-        <table class="log-table"><thead><tr><th>Email</th><th>Role</th><th>Tanggal</th><th>Status</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:#8190a0;padding:35px">Belum ada permintaan akses.</td></tr></tbody></table>
+        <div class="overview-head">
+          <div><h2>Approval Akses</h2><p class="section-sub">Kelola seluruh permintaan akses untuk client yang sedang dipilih.</p></div>
+          <button class="overview-refresh" onclick="loadApprovalData()">↻ Perbarui</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">
+          <input id="approvalSearch" placeholder="Cari email..." oninput="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;min-width:220px">
+          <select id="approvalStatus" onchange="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;background:white"><option value="ALL">Semua Status</option><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option><option value="SUSPENDED">SUSPENDED</option></select>
+        </div>
+        <div style="overflow:auto"><table class="log-table"><thead><tr><th>Email</th><th>Core</th><th>Modul</th><th>Client</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="approvalBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Pilih client untuk memuat data.</td></tr></tbody></table></div>
+        <div id="approvalMessage" class="overview-message"></div>
       </div>
 
       <div class="panel" id="panel-activity">
@@ -558,7 +590,33 @@ function openClient(module,index){
   document.getElementById('dashIcon').textContent = c.icon;
   showView('dashboardView');
   openPanel('overview',document.querySelector('.feature-tab[data-panel="overview"]'));
+  loadClientOverview();
 }
+async function loadClientOverview(){
+  const client = document.getElementById('dashClient').textContent.trim();
+  document.getElementById('overviewTitle').textContent = 'Overview ' + client;
+  const msg = document.getElementById('overviewMessage');
+  if(!coreAccessToken){ msg.textContent='Silakan login ulang untuk memuat data overview.'; return; }
+  try{
+    msg.textContent='Memuat data overview...';
+    let url = SUPABASE_URL + '/rest/v1/geparu_admin_access?select=approval_status,client_name';
+    if(client) url += '&client_name=eq.' + encodeURIComponent(client);
+    const r = await fetch(url,{headers:authHeaders()});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const rows = await r.json();
+    const count={PENDING:0,APPROVED:0,REJECTED:0,SUSPENDED:0};
+    rows.forEach(x=>{if(count[x.approval_status]!==undefined) count[x.approval_status]++});
+    document.getElementById('ovPending').textContent=count.PENDING;
+    document.getElementById('ovApproved').textContent=count.APPROVED;
+    document.getElementById('ovRejected').textContent=count.REJECTED;
+    document.getElementById('ovSuspended').textContent=count.SUSPENDED;
+    document.getElementById('ovTotal').textContent=rows.length;
+    msg.textContent='Terakhir diperbarui: '+new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date());
+  }catch(e){
+    msg.textContent='Data overview belum dapat dimuat: '+e.message;
+  }
+}
+
 function backToClients(){openModule(currentModule)}
 
 function openPanel(panel,el){
@@ -569,6 +627,56 @@ function openPanel(panel,el){
 }
 </script>
 
+<script>
+/* =====================================================
+   APPROVAL AKSES — dipindahkan dari CORE lama
+   ===================================================== */
+let approvalData=[];
+function approvalEsc(v){return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+function approvalBadge(s){return '<span class="approval-badge '+String(s||'').toLowerCase()+'">'+approvalEsc(s)+'</span>';}
+async function loadApprovalData(){
+  const client=document.getElementById('dashClient').textContent.trim();
+  const body=document.getElementById('approvalBody');
+  const msg=document.getElementById('approvalMessage');
+  if(!coreAccessToken){msg.textContent='Silakan login ulang.';return;}
+  try{
+    msg.textContent='Memuat permintaan akses...';
+    body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px">Memuat...</td></tr>';
+    let url=SUPABASE_URL+'/rest/v1/geparu_admin_access?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&order=created_at.desc';
+    if(client) url+='&client_name=eq.'+encodeURIComponent(client);
+    const r=await fetch(url,{headers:authHeaders()});
+    if(!r.ok) throw new Error(await r.text());
+    approvalData=await r.json(); renderApproval();
+    msg.textContent='Data berhasil diperbarui.';
+  }catch(e){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#a52b2b">Gagal memuat data.</td></tr>';msg.textContent='Error: '+e.message;}
+}
+function renderApproval(){
+ const q=(document.getElementById('approvalSearch').value||'').toLowerCase();
+ const st=document.getElementById('approvalStatus').value;
+ const list=approvalData.filter(x=>(st==='ALL'||x.approval_status===st)&&(!q||[x.email,x.client_name,x.module_slug,x.core_name].join(' ').toLowerCase().includes(q)));
+ const body=document.getElementById('approvalBody');
+ if(!list.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada data permintaan akses.</td></tr>';return;}
+ body.innerHTML=list.map(x=>`<tr><td><b>${approvalEsc(x.email)}</b></td><td>${approvalEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')}</td><td>${approvalEsc((x.module_slug||'').toUpperCase())}</td><td>${approvalEsc(x.client_name||'-')}</td><td>${approvalBadge(x.approval_status)}</td><td><div class="approval-actions">${x.approval_status==='PENDING'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">SETUJUI</button><button class="approval-btn no" onclick="changeApproval('${x.id}','REJECTED')">TOLAK</button>`:''}${x.approval_status==='APPROVED'?`<button class="approval-btn warn" onclick="changeApproval('${x.id}','SUSPENDED')">SUSPEND</button>`:''}${x.approval_status==='SUSPENDED'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">AKTIFKAN</button>`:''}<button class="approval-btn delete" onclick="deleteApproval('${x.id}')">🗑 HAPUS</button></div></td></tr>`).join('');
+}
+async function changeApproval(id,status){
+ if(!confirm('Yakin mengubah status menjadi '+status+'?')) return;
+ const body={approval_status:status,is_active:status==='APPROVED'};
+ if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
+ if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
+ if(status==='SUSPENDED') body.approved_at=null;
+ const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
+ if(!r.ok){alert('Gagal mengubah status: '+await r.text());return;}
+ await loadApprovalData(); await loadClientOverview();
+}
+async function deleteApproval(id){
+ if(!confirm('Yakin ingin menghapus data akses ini?')) return;
+ const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});
+ if(!r.ok){alert('Gagal menghapus data: '+await r.text());return;}
+ await loadApprovalData(); await loadClientOverview();
+}
+const originalOpenPanel=openPanel;
+openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') loadApprovalData();}
+</script>
 <script>
 (function(){
   const el = document.getElementById('realtimeClock');
