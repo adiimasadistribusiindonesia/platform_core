@@ -2033,7 +2033,520 @@ document.addEventListener(
 
 
 </script>
+<!-- ==========================================
+     TAMBAHAN FITUR CORE
+     DASHBOARD + CLEAR ACTIVITY LOG
+     TIDAK MENGUBAH KODE SISTEM UTAMA
+========================================== -->
 
+<style>
+
+/* ==========================================
+   CORE ACTION CARD
+========================================== */
+
+.core-action-card{
+    margin-top:25px;
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+
+    flex-wrap:wrap;
+}
+
+
+/* ==========================================
+   CORE ACTION INFO
+========================================== */
+
+.core-action-info h3{
+    color:#17324d;
+    margin-bottom:6px;
+}
+
+
+.core-action-info p{
+    color:#6c7a89;
+    font-size:14px;
+}
+
+
+/* ==========================================
+   ACTION BUTTON AREA
+========================================== */
+
+.core-action-buttons{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+
+/* ==========================================
+   DASHBOARD BUTTON
+========================================== */
+
+.core-dashboard-button{
+    border:none;
+    background:#17324d;
+    color:white;
+
+    padding:11px 18px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+    transition:0.2s;
+}
+
+
+.core-dashboard-button:hover{
+    background:#234a6d;
+}
+
+
+/* ==========================================
+   CLEAR BUTTON
+========================================== */
+
+.core-clear-button{
+    border:none;
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+    padding:11px 18px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+    transition:0.2s;
+}
+
+
+.core-clear-button:hover{
+    background:#fecaca;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media(max-width:600px){
+
+    .core-action-card{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+
+    .core-action-buttons{
+        width:100%;
+    }
+
+
+    .core-dashboard-button,
+    .core-clear-button{
+        width:100%;
+    }
+
+}
+
+</style>
+
+
+<script>
+
+/* ==========================================
+   TAMBAHAN FITUR CORE
+   TIDAK MENGUBAH SISTEM UTAMA
+========================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        /* ==========================================
+           CEGAH DUPLIKASI
+        ========================================== */
+
+        if(
+            document.getElementById(
+                "coreActionCard"
+            )
+        ){
+            return;
+        }
+
+
+        /* ==========================================
+           BUAT KARTU AKSI CORE
+        ========================================== */
+
+        const actionCard =
+            document.createElement(
+                "div"
+            );
+
+
+        actionCard.id =
+            "coreActionCard";
+
+
+        actionCard.className =
+            "core-action-card";
+
+
+        actionCard.innerHTML = `
+
+            <div class="core-action-info">
+
+                <h3>
+                    ⚙️ Pengaturan Activity Log
+                </h3>
+
+                <p>
+                    Kelola riwayat aktivitas atau kembali
+                    ke Dashboard CORE ADIMASA.
+                </p>
+
+            </div>
+
+
+            <div class="core-action-buttons">
+
+
+                <button
+                    type="button"
+                    class="core-dashboard-button"
+                    id="coreDashboardButton"
+                >
+
+                    🏠 Kembali ke Dashboard
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="core-clear-button"
+                    id="coreClearButton"
+                >
+
+                    🗑️ Clear Semua Aktivitas
+
+                </button>
+
+
+            </div>
+
+        `;
+
+
+        /* ==========================================
+           TEMPATKAN DI BAWAH RIWAYAT ACTIVITY
+        ========================================== */
+
+        const logSection =
+            document.getElementById(
+                "logSection"
+            );
+
+
+        if(logSection){
+
+            logSection.insertAdjacentElement(
+                "afterend",
+                actionCard
+            );
+
+        }else{
+
+            const container =
+                document.querySelector(
+                    ".container"
+                );
+
+
+            if(container){
+
+                container.appendChild(
+                    actionCard
+                );
+
+            }
+
+        }
+
+
+        /* ==========================================
+           KEMBALI KE DASHBOARD CORE
+        ========================================== */
+
+        const dashboardButton =
+            document.getElementById(
+                "coreDashboardButton"
+            );
+
+
+        if(dashboardButton){
+
+            dashboardButton.addEventListener(
+                "click",
+                function(){
+
+                    window.location.href =
+                        "./index.html";
+
+                }
+            );
+
+        }
+
+
+        /* ==========================================
+           CLEAR SEMUA ACTIVITY LOG
+        ========================================== */
+
+        const clearButton =
+            document.getElementById(
+                "coreClearButton"
+            );
+
+
+        if(clearButton){
+
+            clearButton.addEventListener(
+                "click",
+                async function(){
+
+
+                    /* ==========================================
+                       KONFIRMASI PERTAMA
+                    ========================================== */
+
+                    const confirmFirst =
+                        confirm(
+
+                            "PERINGATAN!\n\n" +
+
+                            "Anda akan menghapus SELURUH " +
+
+                            "riwayat Activity Log.\n\n" +
+
+                            "Data yang dihapus tidak dapat " +
+
+                            "dikembalikan.\n\n" +
+
+                            "Lanjutkan?"
+
+                        );
+
+
+                    if(!confirmFirst){
+                        return;
+                    }
+
+
+                    /* ==========================================
+                       KONFIRMASI KEDUA
+                    ========================================== */
+
+                    const confirmSecond =
+                        confirm(
+
+                            "Konfirmasi terakhir.\n\n" +
+
+                            "Yakin ingin CLEAR SEMUA " +
+
+                            "Activity Log?"
+
+                        );
+
+
+                    if(!confirmSecond){
+                        return;
+                    }
+
+
+                    /* ==========================================
+                       DISABLE BUTTON
+                    ========================================== */
+
+                    const originalText =
+                        clearButton.innerHTML;
+
+
+                    clearButton.disabled =
+                        true;
+
+
+                    clearButton.innerHTML =
+                        "⏳ Menghapus...";
+
+
+                    try{
+
+
+                        /* ==========================================
+                           HAPUS SEMUA ACTIVITY LOG
+                        ========================================== */
+
+                        const response =
+                            await fetch(
+
+                                SUPABASE_URL +
+
+                                "/rest/v1/activity_logs" +
+
+                                "?module=not.is.null",
+
+                                {
+
+                                    method:"DELETE",
+
+                                    headers:{
+
+                                        ...getHeaders(),
+
+                                        Prefer:
+                                            "return=representation"
+
+                                    }
+
+                                }
+
+                            );
+
+
+                        /* ==========================================
+                           CEK RESPONSE
+                        ========================================== */
+
+                        if(!response.ok){
+
+                            const errorText =
+                                await response.text();
+
+
+                            throw new Error(
+
+                                errorText ||
+
+                                "Gagal menghapus Activity Log."
+
+                            );
+
+                        }
+
+
+                        /* ==========================================
+                           RESET TAMPILAN
+                        ========================================== */
+
+                        const tbody =
+                            document.getElementById(
+                                "logBody"
+                            );
+
+
+                        if(tbody){
+
+                            tbody.innerHTML = `
+
+                                <tr>
+
+                                    <td
+                                        colspan="6"
+                                        class="empty"
+                                    >
+
+                                        🗑️ Seluruh Activity Log
+                                        berhasil dihapus.
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+
+                        }
+
+
+                        /* ==========================================
+                           NOTIFIKASI
+                        ========================================== */
+
+                        alert(
+
+                            "Berhasil!\n\n" +
+
+                            "Seluruh Activity Log telah " +
+
+                            "dihapus dari Supabase."
+
+                        );
+
+
+                    }catch(error){
+
+
+                        console.error(
+                            "CLEAR ACTIVITY ERROR:",
+                            error
+                        );
+
+
+                        alert(
+
+                            "Gagal menghapus Activity Log.\n\n" +
+
+                            error.message
+
+                        );
+
+
+                    }finally{
+
+
+                        /* ==========================================
+                           KEMBALIKAN BUTTON
+                        ========================================== */
+
+                        clearButton.disabled =
+                            false;
+
+
+                        clearButton.innerHTML =
+                            originalText;
+
+                    }
+
+
+                }
+            );
+
+        }
+
+
+    }
+);
+
+</script>
 
 </body>
 </html>
