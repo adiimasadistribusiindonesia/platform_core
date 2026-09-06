@@ -211,12 +211,6 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 .overview-status{margin-top:18px;border:1px solid #e0e8ef;border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:20px;background:#f8fbfd}.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#198754;margin-right:8px}.overview-status p{margin:7px 0 0;color:#708195;font-size:13px}.overview-total{text-align:right}.overview-total span{display:block;font-size:12px;color:#718296}.overview-total strong{display:block;font-size:28px;color:#17324d;margin-top:3px}.overview-message{margin-top:14px;font-size:12px;color:#718296}
 @media(max-width:900px){.overview-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.overview-head,.overview-status{flex-direction:column}.overview-grid{grid-template-columns:1fr}.overview-total{text-align:left}.overview-refresh{width:100%}}
-
-/* Approval actions */
-.approval-actions{display:flex;gap:6px;flex-wrap:wrap}.approval-btn{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}.approval-btn.ok{background:#19734a;color:#fff}.approval-btn.no{background:#a52b2b;color:#fff}.approval-btn.warn{background:#e8edf2;color:#334155}.approval-btn.delete{background:#7f1d1d;color:#fff}.approval-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700}.approval-badge.pending{background:#fff3d5;color:#9a6500}.approval-badge.approved{background:#e3f5eb;color:#19734a}.approval-badge.rejected{background:#fae5e5;color:#a52b2b}.approval-badge.suspended{background:#e9e9e9;color:#555}
-
-/* ACTIVITY LOG STATUS */
-.activity-status{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#e8f5ec;color:#19734a}.activity-status.error,.activity-status.failed{background:#fae5e5;color:#a52b2b}.activity-status.warning{background:#fff3d5;color:#9a6500}.actor-email{font-size:11px;color:#6b7f90}
 </style>
 </head>
 
@@ -376,31 +370,29 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
       </div>
 
       <div class="panel" id="panel-approval">
-        <div class="overview-head">
-          <div><h2>Approval Akses</h2><p class="section-sub">Kelola seluruh permintaan akses untuk client yang sedang dipilih.</p></div>
-          <button class="overview-refresh" onclick="loadApprovalData()">↻ Perbarui</button>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">
-          <input id="approvalSearch" placeholder="Cari email..." oninput="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;min-width:220px">
-          <select id="approvalStatus" onchange="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;background:white"><option value="ALL">Semua Status</option><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option><option value="SUSPENDED">SUSPENDED</option></select>
-        </div>
-        <div style="overflow:auto"><table class="log-table"><thead><tr><th>Email</th><th>Core</th><th>Modul</th><th>Client</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="approvalBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Pilih client untuk memuat data.</td></tr></tbody></table></div>
-        <div id="approvalMessage" class="overview-message"></div>
+        <h2>Approval Akses</h2>
+        <p class="section-sub">Semua permintaan akses untuk client yang sedang dipilih akan muncul di sini.</p>
+        <table class="log-table"><thead><tr><th>Email</th><th>Role</th><th>Tanggal</th><th>Status</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:#8190a0;padding:35px">Belum ada permintaan akses.</td></tr></tbody></table>
       </div>
 
       <div class="panel" id="panel-activity">
-        <div class="overview-head">
-          <div><h2 id="activityTitle">Activity Log</h2><p class="section-sub">Riwayat aktivitas khusus client yang sedang dipilih.</p></div>
-          <button class="overview-refresh" onclick="loadMasterActivity()">↻ Perbarui</button>
-        </div>
-        <div style="overflow:auto">
-          <table class="log-table"><thead><tr><th>Waktu</th><th>Admin</th><th>Aktivitas</th><th>Modul</th><th>Status</th><th>Aksi</th></tr></thead>
-          <tbody id="masterActivityBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Pilih client untuk memuat Activity Log.</td></tr></tbody></table>
-        </div>
-        <div id="activityMessage" class="overview-message"></div>
-      </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap">
+    <div>
+      <h2 id="activityTitle">Activity Log</h2>
+      <p class="section-sub">Riwayat aktivitas khusus client yang sedang dipilih.</p>
+    </div>
+    <button class="overview-refresh" onclick="loadMasterActivityLog()">↻ Perbarui</button>
+  </div>
+  <div id="activityMessage" class="overview-message">Pilih client terlebih dahulu.</div>
+  <div style="overflow:auto;margin-top:15px">
+    <table class="log-table">
+      <thead><tr><th>Waktu</th><th>Admin</th><th>Aktivitas</th><th>Modul</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody id="logBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada data aktivitas.</td></tr></tbody>
+    </table>
+  </div>
+</div>
 
-      <div class="panel" id="panel-analysis">
+<div class="panel" id="panel-analysis">
         <h2>Platform Analysis</h2>
         <p class="section-sub">Area statistik untuk membaca perkembangan platform client.</p>
         <div class="analysis-grid">
@@ -637,56 +629,6 @@ function openPanel(panel,el){
 </script>
 
 <script>
-/* =====================================================
-   APPROVAL AKSES — dipindahkan dari CORE lama
-   ===================================================== */
-let approvalData=[];
-function approvalEsc(v){return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
-function approvalBadge(s){return '<span class="approval-badge '+String(s||'').toLowerCase()+'">'+approvalEsc(s)+'</span>';}
-async function loadApprovalData(){
-  const client=document.getElementById('dashClient').textContent.trim();
-  const body=document.getElementById('approvalBody');
-  const msg=document.getElementById('approvalMessage');
-  if(!coreAccessToken){msg.textContent='Silakan login ulang.';return;}
-  try{
-    msg.textContent='Memuat permintaan akses...';
-    body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px">Memuat...</td></tr>';
-    let url=SUPABASE_URL+'/rest/v1/geparu_admin_access?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&order=created_at.desc';
-    if(client) url+='&client_name=eq.'+encodeURIComponent(client);
-    const r=await fetch(url,{headers:authHeaders()});
-    if(!r.ok) throw new Error(await r.text());
-    approvalData=await r.json(); renderApproval();
-    msg.textContent='Data berhasil diperbarui.';
-  }catch(e){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#a52b2b">Gagal memuat data.</td></tr>';msg.textContent='Error: '+e.message;}
-}
-function renderApproval(){
- const q=(document.getElementById('approvalSearch').value||'').toLowerCase();
- const st=document.getElementById('approvalStatus').value;
- const list=approvalData.filter(x=>(st==='ALL'||x.approval_status===st)&&(!q||[x.email,x.client_name,x.module_slug,x.core_name].join(' ').toLowerCase().includes(q)));
- const body=document.getElementById('approvalBody');
- if(!list.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada data permintaan akses.</td></tr>';return;}
- body.innerHTML=list.map(x=>`<tr><td><b>${approvalEsc(x.email)}</b></td><td>${approvalEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')}</td><td>${approvalEsc((x.module_slug||'').toUpperCase())}</td><td>${approvalEsc(x.client_name||'-')}</td><td>${approvalBadge(x.approval_status)}</td><td><div class="approval-actions">${x.approval_status==='PENDING'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">SETUJUI</button><button class="approval-btn no" onclick="changeApproval('${x.id}','REJECTED')">TOLAK</button>`:''}${x.approval_status==='APPROVED'?`<button class="approval-btn warn" onclick="changeApproval('${x.id}','SUSPENDED')">SUSPEND</button>`:''}${x.approval_status==='SUSPENDED'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">AKTIFKAN</button>`:''}<button class="approval-btn delete" onclick="deleteApproval('${x.id}')">🗑 HAPUS</button></div></td></tr>`).join('');
-}
-async function changeApproval(id,status){
- if(!confirm('Yakin mengubah status menjadi '+status+'?')) return;
- const body={approval_status:status,is_active:status==='APPROVED'};
- if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
- if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
- if(status==='SUSPENDED') body.approved_at=null;
- const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
- if(!r.ok){alert('Gagal mengubah status: '+await r.text());return;}
- await loadApprovalData(); await loadClientOverview();
-}
-async function deleteApproval(id){
- if(!confirm('Yakin ingin menghapus data akses ini?')) return;
- const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});
- if(!r.ok){alert('Gagal menghapus data: '+await r.text());return;}
- await loadApprovalData(); await loadClientOverview();
-}
-const originalOpenPanel=openPanel;
-openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') loadApprovalData();}
-</script>
-<script>
 (function(){
   const el = document.getElementById('realtimeClock');
   if(!el) return;
@@ -706,114 +648,229 @@ openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') 
   updateClock();
   setInterval(updateClock, 1000);
 })();
-</script>
 
 
-<script>
-/* =====================================================
-   ACTIVITY LOG — dipindahkan dari sistem yang berjalan
-   ===================================================== */
-function activityEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
-function activityHeaders(){return {apikey:SUPABASE_KEY,Authorization:'Bearer '+coreAccessToken,'Content-Type':'application/json'};}
-function activityActorEmail(log){
-  const m=String(log?.description||'').match(/\[\[ACTOR_EMAIL:([^\]]+)\]\]/);
-  return log?._actorEmail||log?.email||log?.admin_email||m?.[1]||'';
+/* ACTIVITY LOG DARI SISTEM LAMA */
+function getActivityActorEmail(log){
+
+    const description = String(log?.description || "");
+    const match = description.match(/\[\[ACTOR_EMAIL:([^\]]+)\]\]/);
+
+    if(match && match[1]){
+        try{return decodeURIComponent(match[1]);}
+        catch(error){return match[1];}
+    }
+
+    // Mendukung log lama maupun struktur baru tanpa memaksa perubahan database.
+    return String(
+        log?._actorEmail ||
+        log?.actor_email ||
+        log?.admin_email ||
+        log?.user_email ||
+        log?.performed_by_email ||
+        log?.created_by_email ||
+        log?.email ||
+        log?.actor?.email ||
+        log?.user?.email ||
+        log?.metadata?.actor_email ||
+        log?.metadata?.email ||
+        ""
+    ).trim().toLowerCase();
 }
-async function resolveMasterActors(logs){
-  const ids=[...new Set(logs.map(x=>String(x?.user_id||x?.auth_user_id||x?.created_by||'').trim()).filter(Boolean))];
-  if(!ids.length)return logs;
-  const dir=new Map();
-  for(const table of ['geparu_admin_access','core_adiimasa_admins']){
-    try{const r=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?select=*',{headers:activityHeaders(),cache:'no-store'});if(r.ok){(await r.json()).forEach(row=>{const id=String(row.id||row.user_id||row.auth_user_id||'').trim();if(id)dir.set(id,{email:row.email,name:row.name||row.full_name||row.admin_name});});}}catch(e){}
-  }
-  return logs.map(log=>{const a=dir.get(String(log?.user_id||log?.auth_user_id||log?.created_by||'').trim());if(a){log._actorEmail=a.email||'';log._actorName=a.name||'';}return log;});
+
+async function resolveLegacyActivityActors(logs){
+    if(!Array.isArray(logs) || !logs.length) return logs;
+
+    // Log baru sudah membawa Gmail di description. Untuk log lama yang hanya
+    // menyimpan user_id, coba cocokkan ke tabel admin yang sudah ada.
+    const directory=new Map();
+    const addRow=(row)=>{
+        if(!row || typeof row!=="object") return;
+        const email=String(row.email||row.admin_email||row.user_email||row.gmail||row.username_email||"").trim().toLowerCase();
+        const name=String(row.full_name||row.admin_name||row.nama||row.name||row.nama_admin||row.company_name||"").trim();
+        const ids=[row.user_id,row.auth_user_id,row.id,row.uid,row.admin_id].filter(Boolean).map(String);
+        if(!email && !name) return;
+        ids.forEach(id=>directory.set(id,{email,name}));
+    };
+
+    const tables=["geparu_admin_access","core_adiimasa_admins"];
+    for(const table of tables){
+        try{
+            const res=await fetch(SUPABASE_URL+"/rest/v1/"+table+"?select=*",{headers:getHeaders(),cache:"no-store"});
+            if(res.ok){
+                const rows=await res.json().catch(()=>[]);
+                if(Array.isArray(rows)) rows.forEach(addRow);
+            }
+        }catch(error){
+            console.warn("Direktori pelaku tidak dapat dibaca dari",table,error);
+        }
+    }
+
+    return logs.map(log=>{
+        const uid=String(log?.user_id||log?.auth_user_id||log?.created_by||"").trim();
+        const actor=uid ? directory.get(uid) : null;
+        if(actor){
+            if(actor.email) log._actorEmail=actor.email;
+            if(actor.name) log._actorName=actor.name;
+        }
+        return log;
+    });
 }
-function cleanActivityDescription(log){return String(log?.description||log?.action||'-').replace(/\[\[ACTOR_EMAIL:[^\]]+\]\]\s*/,'').trim();}
-function activityActor(log){const email=activityActorEmail(log);const name=log?._actorName||log?.admin_name||log?.full_name||log?.nama||'';return name?(activityEsc(name)+(email?'<br><small class="actor-email">'+activityEsc(email)+'</small>':'')):(email?'<b>'+activityEsc(email)+'</b>':'<b>Tidak diketahui</b>');}
-function activityDate(v){if(!v)return '-';try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date(v));}catch(e){return v;}}
-function activityStatusClass(v){return String(v||'SUCCESS').toLowerCase().replace(/[^a-z0-9_-]/g,'');}
-async function loadMasterActivity(){
-  const tbody=document.getElementById('masterActivityBody');
-  const msg=document.getElementById('activityMessage');
-  const title=document.getElementById('activityTitle');
-  const module=(typeof currentModule!=='undefined'&&currentModule?currentModule:'SOSIAL').trim().toUpperCase();
-  const client=(document.getElementById('dashClient')?.textContent||'').trim();
 
-  if(title) title.textContent='Riwayat Aktivitas — '+module+(client?' / '+client:'');
-  if(!coreAccessToken){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">Silakan login ulang.</td></tr>';
-    msg.textContent='Sesi Core tidak ditemukan.';
-    return;
-  }
+function getCleanActivityDescription(log){
 
-  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:35px">Memuat Activity Log...</td></tr>';
-  msg.textContent='Menghubungkan ke database Activity Log...';
+    return String(
+        log?.description ||
+        log?.action ||
+        "-"
+    )
+
+    .replace(
+        /\[\[ACTOR_EMAIL:[^\]]+\]\]\s*/,
+        ""
+    )
+
+    .trim();
+
+}
+
+function getActivityActorDisplay(log){
+
+    const email =
+        getActivityActorEmail(log);
+
+
+    const name =
+        log?._actorName ||
+        log?.admin_name ||
+        log?.full_name ||
+        log?.nama ||
+        log?.actor?.name ||
+        "";
+
+
+    if(name && email){
+
+        return `
+
+            <b>${escapeHtml(name)}</b>
+
+            <br>
+
+            <small class="actor-email">
+                ${escapeHtml(email)}
+            </small>
+
+        `;
+
+    }
+
+
+    if(email){
+
+        return `
+
+            <b>${escapeHtml(email)}</b>
+
+        `;
+
+    }
+
+
+    if(log?.admin_name){
+
+        return `
+
+            <b>${escapeHtml(
+                log.admin_name
+            )}</b>
+
+        `;
+
+    }
+
+
+    return `
+
+        <b>Tidak diketahui</b>
+
+    `;
+
+}
+
+
+function masterEscapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,function(ch){
+    return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]);
+  });
+}
+
+async function loadMasterActivityLog(){
+  const tbody=document.getElementById("logBody");
+  const title=document.getElementById("activityTitle");
+  const msg=document.getElementById("activityMessage");
+  const client=(document.getElementById("dashClient")?.textContent||"").trim();
+  const module=(document.getElementById("dashModule")?.textContent||"").split("·")[0].trim().toUpperCase();
+
+  if(!tbody) return;
+  if(title) title.textContent="Riwayat Aktivitas — "+module+(client?" / "+client:"");
+  if(msg) msg.textContent="Memuat Activity Log...";
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Memuat Activity Log...</td></tr>';
 
   try{
-    /* 1. Ambil ID client yang benar dari platform_clients.
-       activity_logs terhubung ke client melalui client_id, bukan client_name. */
-    let clientId='';
-    if(client){
-      const clientUrl=SUPABASE_URL+'/rest/v1/platform_clients?select=id,client_name,module_slug'
-        +'&client_name=eq.'+encodeURIComponent(client)
-        +'&module_slug=eq.'+encodeURIComponent(module)
-        +'&limit=1';
-      const cr=await fetch(clientUrl,{headers:activityHeaders(),cache:'no-store'});
-      if(!cr.ok) throw new Error('Gagal membaca data client (HTTP '+cr.status+') — '+await cr.text());
-      const clients=await cr.json();
-      if(clients.length) clientId=clients[0].id;
+    if(!coreAccessToken) throw new Error("Sesi login Core tidak ditemukan. Silakan login ulang.");
+
+    const url=SUPABASE_URL+"/rest/v1/activity_logs?select=*&module=eq."+encodeURIComponent(module)+"&order=created_at.desc";
+    const response=await fetch(url,{headers:authHeaders(),cache:"no-store"});
+    if(!response.ok){
+      const detail=await response.text().catch(()=> "");
+      throw new Error("HTTP "+response.status+(detail?" — "+detail:""));
     }
-
-    /* 2. Ambil log dengan client_id + module. Ini sesuai struktur database sebenarnya. */
-    let url=SUPABASE_URL+'/rest/v1/activity_logs?select=id,action,module,module_slug,description,created_at,status,actor_name,actor_email,actor_role,client_id'
-      +'&order=created_at.desc';
-
-    if(clientId) url+='&client_id=eq.'+encodeURIComponent(clientId);
-    if(module) url+='&or=(module.eq.'+encodeURIComponent(module)+',module_slug.eq.'+encodeURIComponent(module)+')';
-
-    const response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
-    if(!response.ok) throw new Error('Gagal memuat Activity Log (HTTP '+response.status+') — '+await response.text());
 
     let logs=await response.json();
+    logs=await resolveLegacyActivityActors(logs);
 
-    /* Fallback untuk data lama: tetap filter di browser jika struktur modul tidak seragam. */
-    if(!logs.length && clientId){
-      const fallbackUrl=SUPABASE_URL+'/rest/v1/activity_logs?select=id,action,module,module_slug,description,created_at,status,actor_name,actor_email,actor_role,client_id&client_id=eq.'+encodeURIComponent(clientId)+'&order=created_at.desc';
-      const fr=await fetch(fallbackUrl,{headers:activityHeaders(),cache:'no-store'});
-      if(fr.ok) logs=await fr.json();
-    }
-
-    if(!logs.length){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk '+activityEsc(client||module)+'.</td></tr>';
-      msg.textContent='Tidak ditemukan data log untuk '+(client||module)+'.';
+    if(!Array.isArray(logs)||!logs.length){
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk '+masterEscapeHtml(module)+(client?" / "+masterEscapeHtml(client):"")+'.</td></tr>';
+      if(msg) msg.textContent="Belum ada data Activity Log.";
       return;
     }
 
     tbody.innerHTML=logs.map(log=>{
-      const action=log.action||'-';
-      const description=cleanActivityDescription(log);
-      const logModule=log.module||log.module_slug||module;
-      const actor=log.actor_name || log.actor_email || 'Tidak diketahui';
-      const email=(log.actor_email && log.actor_email!==actor)?'<br><small class="actor-email">'+activityEsc(log.actor_email)+'</small>':'';
-      return '<tr>'+
-        '<td>'+activityDate(log.created_at)+'</td>'+
-        '<td><b>'+activityEsc(actor)+'</b>'+email+'</td>'+
-        '<td>'+activityEsc(description)+'</td>'+
-        '<td>'+activityEsc(logModule)+'</td>'+
-        '<td><span class="activity-status '+activityStatusClass(log.status)+'">'+activityEsc(log.status||'SUCCESS')+'</span></td>'+
-        '<td>'+activityEsc(action)+'</td>'+
-      '</tr>';
-    }).join('');
+      const waktu=log.created_at ? new Intl.DateTimeFormat("id-ID",{dateStyle:"medium",timeStyle:"medium"}).format(new Date(log.created_at)) : "-";
+      const aktivitas=getCleanActivityDescription(log);
+      const status=String(log.status||log.action_type||log.type||"-").toUpperCase();
+      const aksi=String(log.action||log.activity||log.event||"-");
+      const modul=String(log.module||module||"-").toUpperCase();
 
-    msg.textContent='Menampilkan '+logs.length+' riwayat aktivitas.'+(clientId?' Client terhubung.':'');
-  }catch(e){
-    console.error('Activity Log error:',e);
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px"><b>Gagal memuat Activity Log.</b><br><small>'+activityEsc(e.message)+'</small></td></tr>';
-    msg.textContent='Error: '+e.message;
+      return `<tr>
+        <td>${masterEscapeHtml(waktu)}</td>
+        <td>${getActivityActorDisplay(log)}</td>
+        <td>${masterEscapeHtml(aktivitas)}</td>
+        <td>${masterEscapeHtml(modul)}</td>
+        <td>${masterEscapeHtml(status)}</td>
+        <td>${masterEscapeHtml(aksi)}</td>
+      </tr>`;
+    }).join("");
+
+    if(msg) msg.textContent=logs.length+" Activity Log berhasil dimuat.";
+  }catch(error){
+    console.error("Activity Log error:",error);
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:35px">Gagal memuat Activity Log: '+masterEscapeHtml(error.message)+'</td></tr>';
+    if(msg) msg.textContent="Terjadi kesalahan saat memuat Activity Log.";
   }
 }
-const previousOpenPanel=openPanel;
-openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')loadMasterActivity();};
+
+(function(){
+  const previousOpenPanel=window.openPanel;
+  if(typeof previousOpenPanel==="function"){
+    window.openPanel=function(panel,el){
+      previousOpenPanel(panel,el);
+      if(panel==="activity") setTimeout(loadMasterActivityLog,0);
+    };
+  }
+})();
+
 </script>
 
 </body>
