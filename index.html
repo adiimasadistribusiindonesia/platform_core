@@ -358,7 +358,7 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
             <h2 id="overviewTitle">Overview GEPARU</h2>
             <p class="section-sub">Ringkasan akses dan kondisi client yang sedang dipilih.</p>
           </div>
-          <button class="overview-refresh" onclick="loadClientOverview()">↻ Perbarui</button>
+          <button id="overviewRefreshBtn" class="overview-refresh" type="button" onclick="refreshOverviewNow()">↻ Perbarui</button>
         </div>
 
         <div class="overview-grid">
@@ -610,7 +610,7 @@ async function loadClientOverview(){
     msg.textContent='Memuat data overview...';
     let url = SUPABASE_URL + '/rest/v1/geparu_admin_access?select=approval_status,client_name';
     if(client) url += '&client_name=eq.' + encodeURIComponent(client);
-    const r = await fetch(url,{headers:authHeaders()});
+    const r = await fetch(url,{headers:authHeaders(),cache:'no-store'});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows = await r.json();
     const count={PENDING:0,APPROVED:0,REJECTED:0,SUSPENDED:0};
@@ -623,6 +623,23 @@ async function loadClientOverview(){
     msg.textContent='Terakhir diperbarui: '+new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date());
   }catch(e){
     msg.textContent='Data overview belum dapat dimuat: '+e.message;
+  }
+}
+
+async function refreshOverviewNow(){
+  const btn=document.getElementById('overviewRefreshBtn');
+  const msg=document.getElementById('overviewMessage');
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='↻ Memperbarui...';
+  }
+  try{
+    await loadClientOverview();
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='↻ Perbarui';
+    }
   }
 }
 
