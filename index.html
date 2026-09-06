@@ -219,6 +219,193 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 /* ACTIVITY LOG STATUS */
 .activity-status{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#e8f5ec;color:#19734a}.activity-status.error,.activity-status.failed{background:#fae5e5;color:#a52b2b}.activity-status.warning{background:#fff3d5;color:#9a6500}.actor-email{font-size:11px;color:#6b7f90}
 .core-logo{width:105px;height:105px;object-fit:contain;display:block;margin:0 auto 18px;}
+  /* =========================================
+   BANNER EKOSISTEM
+========================================= */
+
+.banner{position:relative;overflow:hidden;width:100%;min-height:210px;border-radius:20px;background:linear-gradient(90deg,#dce9f5 0%,#cbdced 55%,#b8cee3 100%);border:1px solid rgba(120,150,180,.20);}
+
+/* =========================
+   TEXT KIRI
+========================= */
+
+.banner-text{
+    position:relative;
+    z-index:5;
+
+    padding:38px 35px;
+
+    max-width:55%;
+}
+
+
+.banner-text h2{
+    margin:0 0 10px;
+
+    color:#263f5e;
+
+    font-size:30px;
+    line-height:1.15;
+
+    font-weight:800;
+}
+
+
+.banner-text p{
+    margin:0;
+
+    color:#425d79;
+
+    font-size:16px;
+}
+
+
+/* =========================
+   GAMBAR GEDUNG
+========================= */
+
+.banner-building{
+    position:absolute;
+
+    right:120px;
+    bottom:0;
+
+    width:48%;
+    height:100%;
+
+    object-fit:cover;
+    object-position:center bottom;
+
+    z-index:2;
+}
+
+
+/* GRADIENT AGAR GEDUNG MENYATU */
+
+.banner::after{
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    bottom:0;
+
+    left:40%;
+
+    width:28%;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(203,220,237,1) 0%,
+            rgba(203,220,237,.75) 30%,
+            rgba(203,220,237,0) 100%
+        );
+
+    z-index:3;
+
+    pointer-events:none;
+}
+
+
+/* =========================
+   ADIIMASA GROUP KANAN
+========================= */
+
+.group{
+    position:absolute;
+
+    top:28px;
+    right:38px;
+
+    z-index:10;
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    color:#294665;
+}
+
+
+.group-logo{
+    font-size:35px;
+
+    font-weight:bold;
+
+    transform:rotate(45deg);
+}
+
+
+.group-text{
+    display:flex;
+    flex-direction:column;
+
+    letter-spacing:3px;
+
+    line-height:1;
+}
+
+
+.group-text strong{
+    font-size:18px;
+
+    font-weight:700;
+}
+
+
+.group-text span{
+    margin-top:5px;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    letter-spacing:4px;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:768px){
+
+    .banner{
+        min-height:190px;
+    }
+
+    .banner-text{
+        max-width:70%;
+
+        padding:28px 22px;
+    }
+
+    .banner-text h2{
+        font-size:22px;
+    }
+
+    .banner-text p{
+        font-size:13px;
+    }
+
+    .banner-building{
+        width:70%;
+
+        right:40px;
+
+        opacity:.8;
+    }
+
+    .group{
+        right:20px;
+        top:20px;
+
+        transform:scale(.75);
+        transform-origin:top right;
+    }
+
+}
 </style>
 </head>
 
@@ -311,13 +498,38 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
         <div class="quick-arrow">›</div>
       </button>
 
-      <div class="banner">
-        <div class="group">◢ ADIIMASA<br>&nbsp;&nbsp;&nbsp;GROUP</div>
-        <h2>Bersama Membangun<br>Ekosistem yang Lebih Besar</h2>
-        <p>Integrasi · Inovasi · Pertumbuhan · Kebermanfaatan</p>
-        <div class="building"></div>
-        <div><img src="banner-gedung.png">
-      </div>
+      <!-- BANNER EKOSISTEM -->
+<div class="banner">
+
+    <div class="banner-text">
+        <h2>
+            Bersama Membangun<br>
+            Ekosistem yang Lebih Besar
+        </h2>
+
+        <p>
+            Integrasi · Inovasi · Pertumbuhan · Kebermanfaatan
+        </p>
+    </div>
+
+    <!-- GAMBAR GEDUNG -->
+    <img 
+        src="gedung-core.png"
+        alt="Gedung Adiimasa"
+        class="banner-building"
+    >
+
+    <!-- LOGO ADIIMASA GROUP -->
+    <div class="group">
+        <div class="group-logo">◢</div>
+
+        <div class="group-text">
+            <strong>ADIIMASA</strong>
+            <span>GROUP</span>
+        </div>
+    </div>
+
+</div>
     </section>
 
     <!-- CLIENT SELECT -->
