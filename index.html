@@ -116,9 +116,23 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 .quick-card h3{font-size:18px;margin-bottom:7px}
 .quick-card p{color:#5f7288;line-height:1.35}
 .quick-arrow{margin-left:auto;font-size:38px;color:#45627f}
-.banner{
-  max-width:875px;height:160px;border-radius:18px;margin-top:22px;overflow:hidden;position:relative;
-  background:linear-gradient(100deg,#d6e8f9,#c6d9ed 55%,#e9f2fb);padding:32px;box-shadow:0 10px 25px rgba(44,80,120,.05)
+.banner {
+    width: 100%;
+    height: 160px;
+    margin-top: 20px;
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(120, 160, 200, 0.35);
+    box-sizing: border-box;
+}
+
+.banner-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
 }
 .banner h2{font-size:27px;max-width:400px;line-height:1.15;position:relative;z-index:2}
 .banner p{margin-top:8px;color:#405a77;position:relative;z-index:2}
@@ -320,13 +334,15 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
         <div class="quick-arrow">›</div>
       </button>
 
-      <div class="banner">
-        <div class="group">◢ ADIIMASA<br>&nbsp;&nbsp;&nbsp;GROUP</div>
-        <h2>Bersama Membangun<br>Ekosistem yang Lebih Besar</h2>
-        <p>Integrasi · Inovasi · Pertumbuhan · Kebermanfaatan</p>
-        <img src="gedung-core.png" alt="Gedung Adiimasa" class="building">
-      </div>
-    </section>
+      
+    <!-- BANNER CORE -->
+<section class="banner">
+    <img 
+        src="gedung-core.png" 
+        alt="Banner Adiimasa Group"
+        class="banner-image"
+    >
+</section>
 
     <!-- CLIENT SELECT -->
     <section class="view" id="clientView">
