@@ -325,25 +325,22 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 }
 
 
-.group-logo{
-    font-size:35px;
-
-    font-weight:bold;
-
-    transform:rotate(45deg);
+.group {
+    position: absolute;
+    top: 32px;
+    right: 40px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-
-.group-text{
-    display:flex;
-    flex-direction:column;
-
-    letter-spacing:3px;
-
-    line-height:1;
+.group-logo-img {
+    width: 120px;
+    height: auto;
+    display: block;
+    object-fit: contain;
 }
-
-
 .group-text strong{
     font-size:18px;
 
@@ -517,15 +514,12 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
     >
 
     <!-- LOGO ADIIMASA GROUP -->
-    <div class="group">
-        <div class="group-logo">◢</div>
-
-        <div class="group-text">
-            <strong>ADIIMASA</strong>
-            <span>GROUP</span>
-        </div>
-    </div>
-
+<div class="group">
+    <img 
+        src="logo-adiimasa.png"
+        alt="ADIIMASA GROUP"
+        class="group-logo-img"
+    >
 </div>
     </section>
 
