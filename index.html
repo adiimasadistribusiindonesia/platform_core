@@ -204,6 +204,7 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 /* CORE OVERVIEW LIVE */
 .overview-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}
 .overview-refresh{border:1px solid #d9e3ed;background:#fff;color:#17324d;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}
+.overview-refresh.danger{border-color:#efcaca;color:#a52b2b;background:#fff7f7}.overview-refresh.danger:hover{background:#fff0f0}
 .overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
 .overview-card{background:#fff;border:1px solid #e0e8ef;border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(24,50,71,.05);border-top:4px solid #789}
 .pending-card{border-top-color:#d39a21}.approved-card{border-top-color:#2c8c5b}.rejected-card{border-top-color:#bd4545}.suspended-card{border-top-color:#777}
@@ -391,7 +392,10 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
       <div class="panel" id="panel-activity">
         <div class="overview-head">
           <div><h2 id="activityTitle">Activity Log</h2><p class="section-sub">Riwayat aktivitas khusus client yang sedang dipilih.</p></div>
-          <button class="overview-refresh" onclick="loadMasterActivity()">↻ Perbarui</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="overview-refresh" onclick="loadMasterActivity()">↻ Perbarui</button>
+            <button class="overview-refresh danger" id="clearActivityBtn" onclick="clearMasterActivity()">🗑 Bersihkan Riwayat</button>
+          </div>
         </div>
         <div style="overflow:auto">
           <table class="log-table"><thead><tr><th>Waktu</th><th>Admin</th><th>Aktivitas</th><th>Modul</th><th>Status</th><th>Aksi</th></tr></thead>
@@ -849,6 +853,7 @@ async function loadMasterActivity(){
     return;
   }
 
+  window.currentActivityLogs=[];
   tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:35px">Memuat Activity Log...</td></tr>';
   msg.textContent='Menghubungkan ke Activity Log...';
 
@@ -880,6 +885,7 @@ async function loadMasterActivity(){
     }
 
     logs=await resolveMasterActors(logs);
+    window.currentActivityLogs=Array.isArray(logs)?logs:[];
 
     if(!logs || logs.length===0){
       tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk client '+activityEsc(client||module)+'.</td></tr>';
@@ -908,6 +914,58 @@ async function loadMasterActivity(){
     msg.textContent='Error: '+e.message;
   }
 }
+
+async function clearMasterActivity(){
+  const msg=document.getElementById('activityMessage');
+  const btn=document.getElementById('clearActivityBtn');
+  const logs=Array.isArray(window.currentActivityLogs)?window.currentActivityLogs:[];
+  const client=(document.getElementById('dashClient')?.textContent||'client yang dipilih').trim();
+
+  if(!coreAccessToken){
+    msg.textContent='Sesi Core tidak ditemukan. Silakan login ulang.';
+    return;
+  }
+  if(!logs.length){
+    msg.textContent='Tidak ada riwayat yang sedang ditampilkan untuk dibersihkan.';
+    return;
+  }
+
+  const validLogs=logs.filter(log=>log && log.id);
+  if(!validLogs.length){
+    msg.textContent='Riwayat ini tidak memiliki ID yang dapat dihapus dengan aman.';
+    return;
+  }
+
+  const ok=confirm('Yakin ingin menghapus '+validLogs.length+' riwayat aktivitas yang sedang ditampilkan untuk '+client+'?\n\nTindakan ini tidak dapat dibatalkan.');
+  if(!ok) return;
+
+  if(btn){btn.disabled=true;btn.textContent='⏳ Membersihkan...';}
+  msg.textContent='Sedang membersihkan riwayat aktivitas...';
+
+  try{
+    const results=await Promise.all(validLogs.map(async log=>{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/activity_logs?id=eq.'+encodeURIComponent(log.id),{
+        method:'DELETE',
+        headers:{...activityHeaders(),Prefer:'return=minimal'}
+      });
+      if(!r.ok){
+        const text=await r.text();
+        throw new Error('Gagal menghapus salah satu riwayat: '+r.status+' '+text);
+      }
+      return true;
+    }));
+    window.currentActivityLogs=[];
+    msg.textContent=results.length+' riwayat aktivitas berhasil dibersihkan.';
+    await loadMasterActivity();
+  }catch(e){
+    console.error('Clear Activity Log error:',e);
+    msg.textContent='Gagal membersihkan riwayat: '+e.message;
+    alert('Sebagian atau seluruh riwayat gagal dihapus. Periksa izin Supabase/RLS.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🗑 Bersihkan Riwayat';}
+  }
+}
+
 const previousOpenPanel=openPanel;
 openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')loadMasterActivity();};
 </script>
