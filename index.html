@@ -311,12 +311,38 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
         <div class="quick-arrow">›</div>
       </button>
 
-      <div class="banner">
-        <div class="group">◢ ADIIMASA<br>&nbsp;&nbsp;&nbsp;GROUP</div>
-        <h2>Bersama Membangun<br>Ekosistem yang Lebih Besar</h2>
-        <p>Integrasi · Inovasi · Pertumbuhan · Kebermanfaatan</p>
-        <div class="building"></div>
-      </div>
+      <!-- BANNER EKOSISTEM -->
+<div class="banner">
+
+    <div class="banner-text">
+        <h2>
+            Bersama Membangun<br>
+            Ekosistem yang Lebih Besar
+        </h2>
+
+        <p>
+            Integrasi · Inovasi · Pertumbuhan · Kebermanfaatan
+        </p>
+    </div>
+
+    <!-- GAMBAR GEDUNG -->
+    <img 
+        src="gedung-core.png"
+        alt="Gedung Adiimasa"
+        class="banner-building"
+    >
+
+    <!-- LOGO ADIIMASA GROUP -->
+    <div class="group">
+        <div class="group-logo">◢</div>
+
+        <div class="group-text">
+            <strong>ADIIMASA</strong>
+            <span>GROUP</span>
+        </div>
+    </div>
+
+</div>
     </section>
 
     <!-- CLIENT SELECT -->
@@ -713,7 +739,146 @@ openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') 
 })();
 </script>
 
+/* =========================================
+   BANNER EKOSISTEM CORE ADIIMASA
+========================================= */
 
+.core-banner {
+    position: relative;
+    width: 100%;
+    min-height: 210px;
+    margin-top: 24px;
+    overflow: hidden;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(231, 240, 250, 0.98) 0%,
+            rgba(220, 234, 247, 0.94) 45%,
+            rgba(202, 222, 240, 0.80) 100%
+        );
+
+    border: 1px solid rgba(130, 160, 190, 0.25);
+
+    box-shadow:
+        0 12px 35px rgba(30, 60, 100, 0.10);
+
+    display: flex;
+    align-items: center;
+}
+
+
+/* KONTEN TEKS */
+
+.core-banner-content {
+    position: relative;
+    z-index: 3;
+
+    width: 52%;
+
+    padding: 38px 36px;
+}
+
+
+.core-banner-content h2 {
+    margin: 0 0 12px;
+
+    font-size: 29px;
+    line-height: 1.18;
+
+    font-weight: 800;
+
+    color: #243e60;
+
+    letter-spacing: -0.4px;
+}
+
+
+.core-banner-content p {
+    margin: 0;
+
+    font-size: 16px;
+
+    color: #405a78;
+
+    font-weight: 500;
+}
+
+
+/* GAMBAR GEDUNG */
+
+.core-building {
+    position: absolute;
+
+    right: 0;
+    bottom: 0;
+
+    width: 62%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
+
+    z-index: 1;
+}
+
+
+/* EFEK GRADIENT AGAR GEDUNG MENYATU DENGAN BANNER */
+
+.core-banner::after {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+    left: 35%;
+
+    width: 35%;
+
+    z-index: 2;
+
+    background: linear-gradient(
+        90deg,
+        rgba(225, 237, 249, 1) 0%,
+        rgba(225, 237, 249, 0.85) 25%,
+        rgba(225, 237, 249, 0.35) 60%,
+        rgba(225, 237, 249, 0) 100%
+    );
+
+    pointer-events: none;
+}
+
+
+/* RESPONSIVE HP */
+
+@media (max-width: 768px) {
+
+    .core-banner {
+        min-height: 190px;
+    }
+
+    .core-banner-content {
+        width: 70%;
+        padding: 28px 22px;
+    }
+
+    .core-banner-content h2 {
+        font-size: 23px;
+    }
+
+    .core-banner-content p {
+        font-size: 13px;
+    }
+
+    .core-building {
+        width: 75%;
+        opacity: 0.85;
+    }
+
+}
 <script>
 /* =====================================================
    ACTIVITY LOG — dipindahkan dari sistem yang berjalan
