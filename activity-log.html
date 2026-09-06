@@ -381,7 +381,7 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
       <h2 id="activityTitle">Activity Log</h2>
       <p class="section-sub">Riwayat aktivitas khusus client yang sedang dipilih.</p>
     </div>
-    <button class="overview-refresh" onclick="loadMasterActivityLog()">↻ Perbarui</button>
+    <button class="overview-refresh" id="activityRefreshBtn" onclick="loadMasterActivityLog()">↻ Perbarui</button>
   </div>
   <div id="activityMessage" class="overview-message">Pilih client terlebih dahulu.</div>
   <div style="overflow:auto;margin-top:15px">
@@ -625,6 +625,7 @@ function openPanel(panel,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   if(el) el.classList.add('active');
   document.getElementById('panel-'+panel).classList.add('active');
+  if(panel==='activity' && typeof loadMasterActivityLog==='function'){ setTimeout(loadMasterActivityLog,0); }
 }
 </script>
 
@@ -651,6 +652,8 @@ function openPanel(panel,el){
 
 
 /* ACTIVITY LOG DARI SISTEM LAMA */
+function getHeaders(){ return authHeaders(); }
+
 function getActivityActorEmail(log){
 
     const description = String(log?.description || "");
@@ -809,48 +812,64 @@ async function loadMasterActivityLog(){
   const tbody=document.getElementById("logBody");
   const title=document.getElementById("activityTitle");
   const msg=document.getElementById("activityMessage");
-  const client=(document.getElementById("dashClient")?.textContent||"").trim();
-  const module=(document.getElementById("dashModule")?.textContent||"").split("·")[0].trim().toUpperCase();
+  const refreshBtn=document.getElementById("activityRefreshBtn");
+  const client=(document.getElementById("dashClient")?.textContent||"GEPARU").trim();
+  const module=((document.getElementById("dashModule")?.textContent||"SOSIAL").split("·")[0]).trim().toUpperCase();
 
   if(!tbody) return;
-  if(title) title.textContent="Riwayat Aktivitas — "+module+(client?" / "+client:"");
+  if(title) title.textContent="Riwayat Aktivitas — "+module+" / "+client;
   if(msg) msg.textContent="Memuat Activity Log...";
+  if(refreshBtn){ refreshBtn.disabled=true; refreshBtn.textContent="⏳ Memuat..."; }
   tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Memuat Activity Log...</td></tr>';
 
   try{
     if(!coreAccessToken) throw new Error("Sesi login Core tidak ditemukan. Silakan login ulang.");
 
-    const url=SUPABASE_URL+"/rest/v1/activity_logs?select=*&module=eq."+encodeURIComponent(module)+"&order=created_at.desc";
-    const response=await fetch(url,{headers:authHeaders(),cache:"no-store"});
-    if(!response.ok){
-      const detail=await response.text().catch(()=> "");
-      throw new Error("HTTP "+response.status+(detail?" — "+detail:""));
+    // 1. Cari ID client yang benar di platform_clients.
+    const clientUrl=SUPABASE_URL+"/rest/v1/platform_clients?select=id,client_name,module_slug&client_name=eq."+
+      encodeURIComponent(client)+"&module_slug=eq."+encodeURIComponent(module)+"&limit=1";
+    const clientRes=await fetch(clientUrl,{headers:authHeaders(),cache:"no-store"});
+    if(!clientRes.ok) throw new Error("Gagal membaca data client (HTTP "+clientRes.status+").");
+    const clients=await clientRes.json();
+    const clientId=clients?.[0]?.id || null;
+
+    // 2. Ambil log berdasarkan client_id. Jika client_id lama tidak ditemukan,
+    //    fallback ke module agar log lama tetap tampil.
+    let logs=[];
+    if(clientId){
+      const logUrl=SUPABASE_URL+"/rest/v1/activity_logs?select=*&client_id=eq."+
+        encodeURIComponent(clientId)+"&order=created_at.desc";
+      const logRes=await fetch(logUrl,{headers:authHeaders(),cache:"no-store"});
+      if(!logRes.ok){
+        const detail=await logRes.text().catch(()=>"");
+        throw new Error("Gagal membaca Activity Log (HTTP "+logRes.status+") "+detail);
+      }
+      logs=await logRes.json();
     }
 
-    let logs=await response.json();
-    logs=await resolveLegacyActivityActors(logs);
+    if(!logs.length){
+      const fallbackUrl=SUPABASE_URL+"/rest/v1/activity_logs?select=*&or=(module.eq."+
+        encodeURIComponent(module)+",module_slug.eq."+encodeURIComponent(module)+")&order=created_at.desc";
+      const fallbackRes=await fetch(fallbackUrl,{headers:authHeaders(),cache:"no-store"});
+      if(fallbackRes.ok) logs=await fallbackRes.json();
+    }
 
     if(!Array.isArray(logs)||!logs.length){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk '+masterEscapeHtml(module)+(client?" / "+masterEscapeHtml(client):"")+'.</td></tr>';
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk '+masterEscapeHtml(module)+' / '+masterEscapeHtml(client)+'.</td></tr>';
       if(msg) msg.textContent="Belum ada data Activity Log.";
       return;
     }
 
     tbody.innerHTML=logs.map(log=>{
       const waktu=log.created_at ? new Intl.DateTimeFormat("id-ID",{dateStyle:"medium",timeStyle:"medium"}).format(new Date(log.created_at)) : "-";
-      const aktivitas=getCleanActivityDescription(log);
-      const status=String(log.status||log.action_type||log.type||"-").toUpperCase();
-      const aksi=String(log.action||log.activity||log.event||"-");
-      const modul=String(log.module||module||"-").toUpperCase();
-
-      return `<tr>
-        <td>${masterEscapeHtml(waktu)}</td>
-        <td>${getActivityActorDisplay(log)}</td>
-        <td>${masterEscapeHtml(aktivitas)}</td>
-        <td>${masterEscapeHtml(modul)}</td>
-        <td>${masterEscapeHtml(status)}</td>
-        <td>${masterEscapeHtml(aksi)}</td>
-      </tr>`;
+      const adminName=log.actor_name || log.admin_name || log.name || "-";
+      const adminEmail=log.actor_email || getActivityActorEmail(log) || "";
+      const adminHtml=masterEscapeHtml(adminName)+(adminEmail?'<br><small style="color:#64748b">'+masterEscapeHtml(adminEmail)+'</small>':'');
+      const aktivitas=log.description || getCleanActivityDescription(log) || "-";
+      const modul=String(log.module_slug||log.module||module||"-").toUpperCase();
+      const status=String(log.status||"SUCCESS").toUpperCase();
+      const aksi=String(log.action||"-").toUpperCase();
+      return `<tr><td>${masterEscapeHtml(waktu)}</td><td>${adminHtml}</td><td>${masterEscapeHtml(aktivitas)}</td><td>${masterEscapeHtml(modul)}</td><td>${masterEscapeHtml(status)}</td><td>${masterEscapeHtml(aksi)}</td></tr>`;
     }).join("");
 
     if(msg) msg.textContent=logs.length+" Activity Log berhasil dimuat.";
@@ -858,6 +877,8 @@ async function loadMasterActivityLog(){
     console.error("Activity Log error:",error);
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:35px">Gagal memuat Activity Log: '+masterEscapeHtml(error.message)+'</td></tr>';
     if(msg) msg.textContent="Terjadi kesalahan saat memuat Activity Log.";
+  }finally{
+    if(refreshBtn){ refreshBtn.disabled=false; refreshBtn.textContent="↻ Perbarui"; }
   }
 }
 
