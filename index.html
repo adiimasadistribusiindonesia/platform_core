@@ -358,7 +358,7 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
             <h2 id="overviewTitle">Overview GEPARU</h2>
             <p class="section-sub">Ringkasan akses dan kondisi client yang sedang dipilih.</p>
           </div>
-          <button id="overviewRefreshBtn" class="overview-refresh" type="button" onclick="refreshOverviewNow()">↻ Perbarui</button>
+          <button class="overview-refresh" onclick="loadClientOverview()">↻ Perbarui</button>
         </div>
 
         <div class="overview-grid">
@@ -610,7 +610,7 @@ async function loadClientOverview(){
     msg.textContent='Memuat data overview...';
     let url = SUPABASE_URL + '/rest/v1/geparu_admin_access?select=approval_status,client_name';
     if(client) url += '&client_name=eq.' + encodeURIComponent(client);
-    const r = await fetch(url,{headers:authHeaders(),cache:'no-store'});
+    const r = await fetch(url,{headers:authHeaders()});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows = await r.json();
     const count={PENDING:0,APPROVED:0,REJECTED:0,SUSPENDED:0};
@@ -623,23 +623,6 @@ async function loadClientOverview(){
     msg.textContent='Terakhir diperbarui: '+new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date());
   }catch(e){
     msg.textContent='Data overview belum dapat dimuat: '+e.message;
-  }
-}
-
-async function refreshOverviewNow(){
-  const btn=document.getElementById('overviewRefreshBtn');
-  const msg=document.getElementById('overviewMessage');
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='↻ Memperbarui...';
-  }
-  try{
-    await loadClientOverview();
-  }finally{
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='↻ Perbarui';
-    }
   }
 }
 
@@ -733,20 +716,123 @@ openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') 
 function activityEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 function activityHeaders(){return {apikey:SUPABASE_KEY,Authorization:'Bearer '+coreAccessToken,'Content-Type':'application/json'};}
 function activityActorEmail(log){
-  const m=String(log?.description||'').match(/\[\[ACTOR_EMAIL:([^\]]+)\]\]/);
-  return log?._actorEmail||log?.email||log?.admin_email||m?.[1]||'';
-}
-async function resolveMasterActors(logs){
-  const ids=[...new Set(logs.map(x=>String(x?.user_id||x?.auth_user_id||x?.created_by||'').trim()).filter(Boolean))];
-  if(!ids.length)return logs;
-  const dir=new Map();
-  for(const table of ['geparu_admin_access','core_adiimasa_admins']){
-    try{const r=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?select=*',{headers:activityHeaders(),cache:'no-store'});if(r.ok){(await r.json()).forEach(row=>{const id=String(row.id||row.user_id||row.auth_user_id||'').trim();if(id)dir.set(id,{email:row.email,name:row.name||row.full_name||row.admin_name});});}}catch(e){}
+  const description=String(log?.description||'');
+  const m=description.match(/\[\[ACTOR_EMAIL:([^\]]+)\]\]/);
+
+  if(m?.[1]){
+    try{return decodeURIComponent(m[1]).trim().toLowerCase();}
+    catch(e){return String(m[1]).trim().toLowerCase();}
   }
-  return logs.map(log=>{const a=dir.get(String(log?.user_id||log?.auth_user_id||log?.created_by||'').trim());if(a){log._actorEmail=a.email||'';log._actorName=a.name||'';}return log;});
+
+  return String(
+    log?._actorEmail ||
+    log?.actor_email ||
+    log?.admin_email ||
+    log?.user_email ||
+    log?.performed_by_email ||
+    log?.created_by_email ||
+    log?.email ||
+    log?.actor?.email ||
+    log?.user?.email ||
+    log?.metadata?.actor_email ||
+    log?.metadata?.email ||
+    ''
+  ).trim().toLowerCase();
 }
-function cleanActivityDescription(log){return String(log?.description||log?.action||'-').replace(/\[\[ACTOR_EMAIL:[^\]]+\]\]\s*/,'').trim();}
-function activityActor(log){const email=activityActorEmail(log);const name=log?._actorName||log?.admin_name||log?.full_name||log?.nama||'';return name?(activityEsc(name)+(email?'<br><small class="actor-email">'+activityEsc(email)+'</small>':'')):(email?'<b>'+activityEsc(email)+'</b>':'<b>Tidak diketahui</b>');}
+
+async function resolveMasterActors(logs){
+  if(!Array.isArray(logs)||!logs.length)return logs;
+
+  const dir=new Map();
+
+  const addRow=(row)=>{
+    if(!row||typeof row!=='object')return;
+
+    const email=String(
+      row.email||row.admin_email||row.user_email||row.gmail||row.username_email||''
+    ).trim().toLowerCase();
+
+    const name=String(
+      row.full_name||row.admin_name||row.nama||row.name||row.nama_admin||row.company_name||''
+    ).trim();
+
+    const ids=[
+      row.user_id,row.auth_user_id,row.id,row.uid,row.admin_id
+    ].filter(Boolean).map(String);
+
+    if(!email&&!name)return;
+    ids.forEach(id=>dir.set(id,{email,name}));
+  };
+
+  for(const table of ['geparu_admin_access','core_adiimasa_admins']){
+    try{
+      const r=await fetch(
+        SUPABASE_URL+'/rest/v1/'+table+'?select=*',
+        {headers:activityHeaders(),cache:'no-store'}
+      );
+      if(r.ok){
+        const rows=await r.json().catch(()=>[]);
+        if(Array.isArray(rows))rows.forEach(addRow);
+      }
+    }catch(e){
+      console.warn('Direktori admin tidak dapat dibaca dari '+table,e);
+    }
+  }
+
+  return logs.map(log=>{
+    const uid=String(log?.user_id||log?.auth_user_id||log?.created_by||'').trim();
+    const actor=uid?dir.get(uid):null;
+
+    if(actor){
+      if(actor.email)log._actorEmail=actor.email;
+      if(actor.name)log._actorName=actor.name;
+    }
+    return log;
+  });
+}
+
+function cleanActivityDescription(log){
+  return String(log?.description||log?.action||'-')
+    .replace(/\[\[ACTOR_EMAIL:[^\]]+\]\]\s*/,'')
+    .trim();
+}
+
+function isPublicNewsRead(log){
+  const action=String(log?.action||'').trim().toUpperCase();
+  const text=cleanActivityDescription(log).toLowerCase();
+
+  return (
+    action==='READ' &&
+    (text.includes('membaca berita')||text.includes('membaca'))
+  ) || text.includes('membaca berita');
+}
+
+function activityActor(log){
+  const email=activityActorEmail(log);
+  const name=String(
+    log?._actorName||log?.admin_name||log?.full_name||log?.nama||log?.actor?.name||''
+  ).trim();
+
+  // Pembaca berita dari website publik tidak login sebagai admin.
+  if(!email&&!name&&isPublicNewsRead(log)){
+    return '<b>Warga Umum</b>';
+  }
+
+  if(name&&email){
+    return '<b>'+activityEsc(name)+'</b><br><small class="actor-email">'+activityEsc(email)+'</small>';
+  }
+
+  if(email){
+    return '<b>'+activityEsc(email)+'</b>';
+  }
+
+  if(name){
+    return '<b>'+activityEsc(name)+'</b>';
+  }
+
+  return '<b>Tidak diketahui</b>';
+}
+
 function activityDate(v){if(!v)return '-';try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date(v));}catch(e){return v;}}
 function activityStatusClass(v){return String(v||'SUCCESS').toLowerCase().replace(/[^a-z0-9_-]/g,'');}
 async function loadMasterActivity(){
