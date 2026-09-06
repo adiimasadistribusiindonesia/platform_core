@@ -327,37 +327,55 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 
 .group {
     position: absolute;
-    top: 32px;
-    right: 40px;
-    z-index: 5;
+    top: 28px;
+    right: 38px;
+
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
+
+    z-index: 10;
 }
 
+/* Logo kecil */
 .group-logo-img {
-    width: 120px;
-    height: auto;
-    display: block;
+    width: 42px;
+    height: 42px;
+
     object-fit: contain;
-}
-.group-text strong{
-    font-size:18px;
+    display: block;
 
-    font-weight:700;
-}
-
-
-.group-text span{
-    margin-top:5px;
-
-    font-size:11px;
-
-    font-weight:600;
-
-    letter-spacing:4px;
+    /* Membantu menyatu dengan banner */
+    mix-blend-mode: multiply;
 }
 
+/* Tulisan di samping logo */
+.group-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    line-height: 1;
+    color: #29405b;
+}
+
+/* ADIIMASA */
+.group-text strong {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+/* GROUP */
+.group-text span {
+    margin-top: 6px;
+
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 4px;
+
+    text-align: center;
+}
 
 /* =========================
    MOBILE
@@ -516,10 +534,15 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
     <!-- LOGO ADIIMASA GROUP -->
 <div class="group">
     <img 
-        src="logo-adiimasa.png"
-        alt="ADIIMASA GROUP"
+        src="logo-adiimasa.png" 
+        alt="Adiimasa"
         class="group-logo-img"
     >
+
+    <div class="group-text">
+        <strong>ADIIMASA</strong>
+        <span>GROUP</span>
+    </div>
 </div>
     </section>
 
