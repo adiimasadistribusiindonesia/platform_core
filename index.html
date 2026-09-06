@@ -384,6 +384,95 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 .banner .group-text span {
     font-size: 8px !important;
 }
+  /* ================================
+   RESPONSIVE MOBILE
+================================ */
+
+@media screen and (max-width: 768px){
+
+    body{
+        width:100%;
+        overflow-x:hidden;
+    }
+
+    .container,
+    main,
+    .main-content{
+        width:100%;
+        max-width:100%;
+        padding-left:16px;
+        padding-right:16px;
+    }
+
+    /* HEADER */
+
+    .header,
+    .top-header{
+        padding:18px 16px;
+    }
+
+    /* GRID MODUL */
+
+    .module-grid,
+    .modules-grid{
+        grid-template-columns:1fr !important;
+        gap:16px;
+    }
+
+    /* KARTU MODUL */
+
+    .module-card{
+        width:100% !important;
+        min-width:0 !important;
+        min-height:auto !important;
+    }
+
+    /* CARD BESAR */
+
+    .module-card,
+    .dashboard-card,
+    .client-card,
+    .feature-card{
+        padding:22px !important;
+        border-radius:24px;
+    }
+
+    /* JUDUL */
+
+    h1{
+        font-size:28px;
+    }
+
+    h2{
+        font-size:25px;
+    }
+
+    h3{
+        font-size:22px;
+    }
+
+    /* TEKS */
+
+    p{
+        line-height:1.5;
+    }
+
+    /* FLEX LAYOUT */
+
+    .row,
+    .flex-row,
+    .header-content{
+        flex-wrap:wrap;
+    }
+
+    /* TOMBOL */
+
+    button,
+    .btn{
+        max-width:100%;
+    }
+
+}
 </style>
 </head>
 
