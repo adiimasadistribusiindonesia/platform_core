@@ -473,7 +473,43 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
     }
 
 }
-  
+  /* =========================================
+   TAMBAHAN: CEGAH HALAMAN ANALYTICS MELEBAR
+   DI HP KARENA JUDUL BERITA PANJANG
+========================================= */
+
+@media (max-width: 700px){
+
+    .analysis-list-item{
+        min-width:0;
+        max-width:100%;
+        overflow:hidden;
+    }
+
+    .analysis-content-title{
+        min-width:0 !important;
+        max-width:100%;
+        flex:1 1 auto;
+    }
+
+    .analysis-content-title b,
+    .analysis-content-title span{
+        display:block;
+        max-width:100%;
+        white-space:normal !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+    }
+
+    .analysis-panel,
+    .analysis-list,
+    #analysisTopNews,
+    #analysisPopularPages{
+        min-width:0;
+        max-width:100%;
+        overflow:hidden;
+    }
+}
 </style>
 </head>
 
