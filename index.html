@@ -1249,6 +1249,1242 @@ async function clearMasterActivity(){
 const previousOpenPanel=openPanel;
 openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')loadMasterActivity();};
 </script>
+<!-- =====================================================
+     PLATFORM ANALYSIS - CORE ADIIMASA
+     Tambahan mandiri - tidak mengubah fungsi lain
+===================================================== -->
 
+<style>
+
+#platformAnalysisPage{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:none;
+    overflow-y:auto;
+
+    background:#f1f4f8;
+    color:#243447;
+}
+
+#platformAnalysisPage.show{
+    display:block;
+}
+
+.platform-analysis-header{
+    position:sticky;
+    top:0;
+    z-index:10;
+
+    background:#17324d;
+    color:white;
+
+    padding:20px;
+
+    box-shadow:0 3px 15px rgba(0,0,0,.15);
+}
+
+.platform-analysis-header-inner{
+    max-width:1200px;
+    margin:auto;
+
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.platform-analysis-back{
+    width:45px;
+    height:45px;
+
+    border:none;
+    border-radius:12px;
+
+    background:rgba(255,255,255,.12);
+    color:white;
+
+    font-size:24px;
+    cursor:pointer;
+}
+
+.platform-analysis-title{
+    flex:1;
+}
+
+.platform-analysis-title small{
+    display:block;
+
+    color:#b9c9d8;
+
+    font-size:12px;
+
+    margin-bottom:5px;
+
+    letter-spacing:1px;
+}
+
+.platform-analysis-title h2{
+    margin:0;
+
+    font-size:24px;
+}
+
+.platform-analysis-body{
+    max-width:1200px;
+
+    margin:auto;
+
+    padding:25px 20px 50px;
+}
+
+/* CLIENT INFO */
+
+.analysis-client{
+    background:white;
+
+    border-radius:18px;
+
+    padding:22px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 5px 20px rgba(15,40,65,.08);
+
+    border:1px solid #dce4ec;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:15px;
+}
+
+.analysis-client-left{
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+}
+
+.analysis-client-icon{
+    width:58px;
+    height:58px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:16px;
+
+    background:#e9f1f8;
+
+    font-size:28px;
+}
+
+.analysis-client h3{
+    margin:0 0 5px;
+
+    font-size:20px;
+
+    color:#17324d;
+}
+
+.analysis-client p{
+    margin:0;
+
+    color:#718096;
+
+    font-size:14px;
+}
+
+.analysis-status{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    color:#16803c;
+
+    font-size:13px;
+
+    font-weight:bold;
+}
+
+.analysis-status-dot{
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    box-shadow:0 0 0 5px rgba(34,197,94,.12);
+}
+
+
+/* FILTER */
+
+.analysis-filter{
+    background:white;
+
+    padding:15px;
+
+    border-radius:16px;
+
+    margin-bottom:20px;
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    box-shadow:0 4px 15px rgba(15,40,65,.06);
+
+    border:1px solid #e1e7ed;
+}
+
+.analysis-filter span{
+    font-size:13px;
+
+    color:#64748b;
+
+    font-weight:bold;
+}
+
+.analysis-filter button{
+    border:1px solid #d7e0e8;
+
+    background:white;
+
+    color:#526577;
+
+    border-radius:10px;
+
+    padding:9px 14px;
+
+    cursor:pointer;
+
+    font-size:13px;
+}
+
+.analysis-filter button.active{
+    background:#17324d;
+
+    color:white;
+
+    border-color:#17324d;
+}
+
+
+/* STATISTIC */
+
+.analysis-stat-grid{
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+
+    gap:15px;
+
+    margin-bottom:20px;
+}
+
+.analysis-stat-card{
+    background:white;
+
+    border-radius:18px;
+
+    padding:20px;
+
+    border:1px solid #dfe7ee;
+
+    box-shadow:0 5px 18px rgba(15,40,65,.06);
+
+    min-height:150px;
+}
+
+.analysis-stat-icon{
+    width:45px;
+    height:45px;
+
+    border-radius:13px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    background:#edf3f8;
+
+    font-size:21px;
+
+    margin-bottom:15px;
+}
+
+.analysis-stat-label{
+    color:#718096;
+
+    font-size:13px;
+
+    margin-bottom:8px;
+}
+
+.analysis-stat-value{
+    color:#17324d;
+
+    font-size:30px;
+
+    font-weight:bold;
+}
+
+.analysis-stat-note{
+    margin-top:8px;
+
+    color:#94a3b8;
+
+    font-size:11px;
+}
+
+
+/* PANEL */
+
+.analysis-grid{
+    display:grid;
+
+    grid-template-columns:
+        1.4fr .9fr;
+
+    gap:20px;
+}
+
+.analysis-panel{
+    background:white;
+
+    border-radius:18px;
+
+    padding:20px;
+
+    border:1px solid #dfe7ee;
+
+    box-shadow:0 5px 18px rgba(15,40,65,.06);
+}
+
+.analysis-panel h3{
+    margin:0 0 6px;
+
+    color:#17324d;
+
+    font-size:18px;
+}
+
+.analysis-panel-sub{
+    margin-bottom:20px;
+
+    color:#718096;
+
+    font-size:12px;
+}
+
+
+/* GRAPH MOCKUP */
+
+.analysis-chart{
+    height:260px;
+
+    display:flex;
+
+    align-items:flex-end;
+
+    gap:10px;
+
+    padding:20px 5px 0;
+
+    border-bottom:1px solid #dfe7ee;
+}
+
+.analysis-bar-wrap{
+    flex:1;
+
+    height:100%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:flex-end;
+
+    align-items:center;
+
+    gap:8px;
+}
+
+.analysis-bar{
+    width:100%;
+
+    max-width:45px;
+
+    border-radius:8px 8px 0 0;
+
+    background:linear-gradient(
+        180deg,
+        #3c7bb5,
+        #17324d
+    );
+
+    min-height:8px;
+}
+
+.analysis-bar-label{
+    font-size:10px;
+
+    color:#7b8794;
+}
+
+
+/* TOP CONTENT */
+
+.analysis-list{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+}
+
+.analysis-list-item{
+    padding:14px;
+
+    border:1px solid #e5ebf0;
+
+    border-radius:13px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+.analysis-rank{
+    width:32px;
+    height:32px;
+
+    flex:none;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:10px;
+
+    background:#edf3f8;
+
+    color:#17324d;
+
+    font-size:12px;
+
+    font-weight:bold;
+}
+
+.analysis-content-title{
+    flex:1;
+
+    min-width:0;
+}
+
+.analysis-content-title b{
+    display:block;
+
+    color:#33475b;
+
+    font-size:13px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+.analysis-content-title span{
+    display:block;
+
+    margin-top:4px;
+
+    color:#94a3b8;
+
+    font-size:11px;
+}
+
+.analysis-view{
+    color:#17324d;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    white-space:nowrap;
+}
+
+
+/* BOTTOM INFO */
+
+.analysis-bottom{
+    margin-top:20px;
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:20px;
+}
+
+.analysis-empty{
+    text-align:center;
+
+    padding:35px 15px;
+
+    color:#94a3b8;
+
+    font-size:13px;
+}
+
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+    .analysis-stat-grid{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .analysis-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:600px){
+
+    .platform-analysis-header{
+        padding:15px;
+    }
+
+    .platform-analysis-header-inner{
+        gap:10px;
+    }
+
+    .platform-analysis-title h2{
+        font-size:18px;
+    }
+
+    .platform-analysis-title small{
+        font-size:10px;
+    }
+
+    .platform-analysis-back{
+        width:42px;
+        height:42px;
+    }
+
+    .platform-analysis-body{
+        padding:16px;
+    }
+
+    .analysis-client{
+        padding:16px;
+    }
+
+    .analysis-client h3{
+        font-size:17px;
+    }
+
+    .analysis-client p{
+        font-size:12px;
+    }
+
+    .analysis-status{
+        display:none;
+    }
+
+    .analysis-stat-grid{
+        gap:10px;
+    }
+
+    .analysis-stat-card{
+        padding:15px;
+
+        min-height:135px;
+    }
+
+    .analysis-stat-value{
+        font-size:24px;
+    }
+
+    .analysis-stat-label{
+        font-size:12px;
+    }
+
+    .analysis-chart{
+        height:220px;
+    }
+
+    .analysis-panel{
+        padding:16px;
+    }
+
+    .analysis-bottom{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+
+<div id="platformAnalysisPage">
+
+    <div class="platform-analysis-header">
+
+        <div class="platform-analysis-header-inner">
+
+            <button
+                class="platform-analysis-back"
+                onclick="closePlatformAnalysis()"
+            >
+                ←
+            </button>
+
+
+            <div class="platform-analysis-title">
+
+                <small>
+                    CORE ADIIMASA · PLATFORM ANALYSIS
+                </small>
+
+                <h2 id="platformAnalysisClientTitle">
+                    Analisis Platform
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="platform-analysis-body">
+
+
+        <!-- CLIENT -->
+
+        <div class="analysis-client">
+
+            <div class="analysis-client-left">
+
+                <div class="analysis-client-icon">
+                    📊
+                </div>
+
+
+                <div>
+
+                    <h3 id="analysisClientName">
+                        GEPARU
+                    </h3>
+
+                    <p>
+                        Generasi Padjajaran Baru
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="analysis-status">
+
+                <span class="analysis-status-dot"></span>
+
+                Platform Aktif
+
+            </div>
+
+        </div>
+
+
+
+        <!-- FILTER -->
+
+        <div class="analysis-filter">
+
+            <span>Periode:</span>
+
+            <button class="active">
+                Hari Ini
+            </button>
+
+            <button>
+                7 Hari
+            </button>
+
+            <button>
+                30 Hari
+            </button>
+
+            <button>
+                Semua
+            </button>
+
+        </div>
+
+
+
+        <!-- STATISTIC -->
+
+        <div class="analysis-stat-grid">
+
+
+            <div class="analysis-stat-card">
+
+                <div class="analysis-stat-icon">
+                    👁️
+                </div>
+
+                <div class="analysis-stat-label">
+                    Total Pengunjung
+                </div>
+
+                <div
+                    class="analysis-stat-value"
+                    id="analysisTotalVisitors"
+                >
+                    0
+                </div>
+
+                <div class="analysis-stat-note">
+                    Total kunjungan platform
+                </div>
+
+            </div>
+
+
+
+            <div class="analysis-stat-card">
+
+                <div class="analysis-stat-icon">
+                    👥
+                </div>
+
+                <div class="analysis-stat-label">
+                    Pengunjung Hari Ini
+                </div>
+
+                <div
+                    class="analysis-stat-value"
+                    id="analysisTodayVisitors"
+                >
+                    0
+                </div>
+
+                <div class="analysis-stat-note">
+                    Kunjungan hari ini
+                </div>
+
+            </div>
+
+
+
+            <div class="analysis-stat-card">
+
+                <div class="analysis-stat-icon">
+                    📰
+                </div>
+
+                <div class="analysis-stat-label">
+                    Total Pembaca Berita
+                </div>
+
+                <div
+                    class="analysis-stat-value"
+                    id="analysisNewsViews"
+                >
+                    0
+                </div>
+
+                <div class="analysis-stat-note">
+                    Total view seluruh berita
+                </div>
+
+            </div>
+
+
+
+            <div class="analysis-stat-card">
+
+                <div class="analysis-stat-icon">
+                    🔥
+                </div>
+
+                <div class="analysis-stat-label">
+                    Konten Terpopuler
+                </div>
+
+                <div
+                    class="analysis-stat-value"
+                    id="analysisTopContent"
+                >
+                    —
+                </div>
+
+                <div class="analysis-stat-note">
+                    Berdasarkan jumlah pembaca
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- GRAPH + TOP CONTENT -->
+
+        <div class="analysis-grid">
+
+
+            <div class="analysis-panel">
+
+                <h3>
+                    Aktivitas Pengunjung
+                </h3>
+
+                <div class="analysis-panel-sub">
+                    Pergerakan kunjungan platform GEPARU
+                </div>
+
+
+                <div class="analysis-chart">
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:25%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Sen
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:40%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Sel
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:30%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Rab
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:60%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Kam
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:45%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Jum
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:75%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Sab
+                        </span>
+
+                    </div>
+
+
+                    <div class="analysis-bar-wrap">
+
+                        <div
+                            class="analysis-bar"
+                            style="height:55%"
+                        ></div>
+
+                        <span class="analysis-bar-label">
+                            Min
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            <div class="analysis-panel">
+
+                <h3>
+                    Berita Terpopuler
+                </h3>
+
+                <div class="analysis-panel-sub">
+                    Konten dengan pembaca terbanyak
+                </div>
+
+
+                <div
+                    class="analysis-list"
+                    id="analysisTopNews"
+                >
+
+                    <div class="analysis-empty">
+
+                        Belum ada data statistik berita.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- BOTTOM -->
+
+        <div class="analysis-bottom">
+
+
+            <div class="analysis-panel">
+
+                <h3>
+                    Halaman Populer
+                </h3>
+
+                <div class="analysis-panel-sub">
+                    Halaman yang paling banyak dikunjungi
+                </div>
+
+
+                <div
+                    class="analysis-list"
+                    id="analysisPopularPages"
+                >
+
+                    <div class="analysis-empty">
+
+                        Statistik halaman belum tersedia.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="analysis-panel">
+
+                <h3>
+                    Status Analytics
+                </h3>
+
+                <div class="analysis-panel-sub">
+                    Informasi sistem pengumpulan statistik
+                </div>
+
+
+                <div class="analysis-list">
+
+                    <div class="analysis-list-item">
+
+                        <div class="analysis-rank">
+                            ✓
+                        </div>
+
+                        <div class="analysis-content-title">
+
+                            <b>
+                                Platform Analysis
+                            </b>
+
+                            <span>
+                                Siap menerima data statistik
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-list-item">
+
+                        <div class="analysis-rank">
+                            ⟳
+                        </div>
+
+                        <div class="analysis-content-title">
+
+                            <b>
+                                Sinkronisasi Data
+                            </b>
+
+                            <span>
+                                Menunggu koneksi statistik GEPARU
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* =====================================================
+   PLATFORM ANALYSIS - CORE ADIIMASA
+===================================================== */
+
+
+/* BUKA ANALYSIS */
+
+function openPlatformAnalysis(clientName){
+
+    const page =
+        document.getElementById(
+            "platformAnalysisPage"
+        );
+
+    if(!page) return;
+
+
+    document.getElementById(
+        "analysisClientName"
+    ).textContent =
+        clientName || "GEPARU";
+
+
+    document.getElementById(
+        "platformAnalysisClientTitle"
+    ).textContent =
+        "Platform Analysis · " +
+        (clientName || "GEPARU");
+
+
+    page.classList.add("show");
+
+
+    document.body.style.overflow =
+        "hidden";
+
+
+    /*
+       NANTI DI SINI KITA HUBUNGKAN
+       KE DATA ASLI SUPABASE
+    */
+
+}
+
+
+/* TUTUP ANALYSIS */
+
+function closePlatformAnalysis(){
+
+    const page =
+        document.getElementById(
+            "platformAnalysisPage"
+        );
+
+    if(!page) return;
+
+
+    page.classList.remove("show");
+
+
+    document.body.style.overflow = "";
+
+}
+
+
+/* =====================================================
+   DETEKSI KARTU PLATFORM ANALYSIS
+   Tidak perlu mengubah HTML kartu yang sudah ada.
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const allElements =
+            document.querySelectorAll(
+                "div, button, a"
+            );
+
+
+        allElements.forEach(
+            function(el){
+
+                const text =
+                    (
+                        el.textContent ||
+                        ""
+                    )
+                    .trim()
+                    .toLowerCase();
+
+
+                /*
+                   Cari elemen yang benar-benar
+                   merupakan kartu Platform Analysis
+                */
+
+                if(
+                    text ===
+                    "platform analysis"
+                ){
+
+                    el.style.cursor =
+                        "pointer";
+
+
+                    el.addEventListener(
+                        "click",
+                        function(e){
+
+                            e.preventDefault();
+
+                            e.stopPropagation();
+
+
+                            /*
+                               Ambil nama client aktif.
+
+                               Saat ini default GEPARU.
+                               Nanti bisa otomatis dari
+                               sistem pilihan client.
+                            */
+
+                            let clientName =
+                                "GEPARU";
+
+
+                            const selectedClient =
+                                document.querySelector(
+                                    ".selected-client, [data-client].active"
+                                );
+
+
+                            if(
+                                selectedClient
+                            ){
+
+                                const possibleName =
+                                    selectedClient.getAttribute(
+                                        "data-client"
+                                    );
+
+                                if(
+                                    possibleName
+                                ){
+
+                                    clientName =
+                                        possibleName;
+
+                                }
+
+                            }
+
+
+                            openPlatformAnalysis(
+                                clientName
+                            );
+
+                        }
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+</script>
 </body>
 </html>
