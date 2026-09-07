@@ -2330,36 +2330,50 @@ function openPlatformAnalysis(clientName){
             "platformAnalysisPage"
         );
 
+
     if(!page) return;
+
+
+    const activeClient =
+        clientName || "GEPARU";
 
 
     document.getElementById(
         "analysisClientName"
     ).textContent =
-        clientName || "GEPARU";
+        activeClient;
 
 
     document.getElementById(
         "platformAnalysisClientTitle"
     ).textContent =
         "Platform Analysis · " +
-        (clientName || "GEPARU");
+        activeClient;
 
 
-    page.classList.add("show");
+    page.classList.add(
+        "show"
+    );
 
 
     document.body.style.overflow =
         "hidden";
 
 
-    /*
-       NANTI DI SINI KITA HUBUNGKAN
-       KE DATA ASLI SUPABASE
-    */
+    /* LOAD DATA ANALYTICS ASLI */
+
+    if(
+        typeof loadPlatformAnalysisData
+        === "function"
+    ){
+
+        loadPlatformAnalysisData(
+            activeClient
+        );
+
+    }
 
 }
-
 
 /* TUTUP ANALYSIS */
 
@@ -2550,15 +2564,183 @@ function openPlatformAnalysisFromDashboard(button){
    LOAD DATA PLATFORM ANALYSIS
 ===================================================== */
 
+<script>
+
+/* =====================================================
+   PLATFORM ANALYSIS
+   REAL SUPABASE ANALYTICS
+===================================================== */
+
+let currentAnalysisPeriod = "today";
+
+
+/* =====================================================
+   FORMAT ANGKA
+===================================================== */
+
+function formatAnalysisNumber(value){
+
+    return new Intl.NumberFormat(
+        "id-ID"
+    ).format(Number(value || 0));
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeAnalysisHTML(value){
+
+    return String(value ?? "")
+
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+/* =====================================================
+   AMBIL BATAS PERIODE
+===================================================== */
+
+function getAnalysisDateRange(period){
+
+    const now = new Date();
+
+
+    if(period === "today"){
+
+        const start = new Date();
+
+        start.setHours(
+            0,0,0,0
+        );
+
+        return {
+            start:start,
+            end:now
+        };
+
+    }
+
+
+    if(period === "7days"){
+
+        const start = new Date();
+
+        start.setDate(
+            start.getDate() - 6
+        );
+
+        start.setHours(
+            0,0,0,0
+        );
+
+        return {
+            start:start,
+            end:now
+        };
+
+    }
+
+
+    if(period === "30days"){
+
+        const start = new Date();
+
+        start.setDate(
+            start.getDate() - 29
+        );
+
+        start.setHours(
+            0,0,0,0
+        );
+
+        return {
+            start:start,
+            end:now
+        };
+
+    }
+
+
+    return {
+
+        start:null,
+        end:now
+
+    };
+
+}
+
+
+
+/* =====================================================
+   HELPER FETCH SUPABASE
+===================================================== */
+
+async function fetchAnalyticsTable(
+    table,
+    params = ""
+){
+
+    const url =
+        SUPABASE_URL +
+        "/rest/v1/" +
+        table +
+        "?select=*" +
+        params;
+
+
+    const response =
+        await fetch(
+            url,
+            {
+                headers:authHeaders(),
+                cache:"no-store"
+            }
+        );
+
+
+    if(!response.ok){
+
+        const errorText =
+            await response.text();
+
+
+        throw new Error(
+            table +
+            " HTTP " +
+            response.status +
+            " : " +
+            errorText
+        );
+
+    }
+
+
+    return await response.json();
+
+}
+
+
+
+/* =====================================================
+   LOAD PLATFORM ANALYSIS
+===================================================== */
+
 async function loadPlatformAnalysisData(clientName){
 
     console.log(
-        "Memuat Platform Analysis:",
+        "Memuat Analytics asli:",
         clientName
     );
 
-
-    /* Pastikan user sudah login */
 
     if(!coreAccessToken){
 
@@ -2571,12 +2753,15 @@ async function loadPlatformAnalysisData(clientName){
     }
 
 
-    /* Update nama client */
+    /* =============================================
+       UPDATE NAMA CLIENT
+    ============================================= */
 
     const clientNameElement =
         document.getElementById(
             "analysisClientName"
         );
+
 
     if(clientNameElement){
 
@@ -2591,6 +2776,7 @@ async function loadPlatformAnalysisData(clientName){
             "platformAnalysisClientTitle"
         );
 
+
     if(titleElement){
 
         titleElement.textContent =
@@ -2602,217 +2788,447 @@ async function loadPlatformAnalysisData(clientName){
 
     try{
 
-        /*
-        ============================================
-        AMBIL ACTIVITY LOG
-        ============================================
-        */
 
-        const module =
+        /* =============================================
+           MODULE
+        ============================================= */
+
+        const moduleSlug =
             (
                 typeof currentModule !== "undefined"
-                && currentModule
+                &&
+                currentModule
             )
+
             ? currentModule.toUpperCase()
+
             : "SOSIAL";
 
 
-        const activityURL =
-            SUPABASE_URL +
-            "/rest/v1/activity_logs?select=*" +
-            "&module=eq." +
-            encodeURIComponent(module) +
-            "&order=created_at.desc";
+        /* =============================================
+           DATE RANGE
+        ============================================= */
 
-
-        const response =
-            await fetch(
-                activityURL,
-                {
-                    headers: authHeaders(),
-                    cache: "no-store"
-                }
+        const range =
+            getAnalysisDateRange(
+                currentAnalysisPeriod
             );
 
 
-        let logs = [];
+        const clientFilter =
+            "&client_name=eq." +
+            encodeURIComponent(clientName);
 
 
-        if(response.ok){
+        const moduleFilter =
+            "&module_slug=eq." +
+            encodeURIComponent(moduleSlug);
 
-            logs =
-                await response.json();
+
+        let dateFilter = "";
+
+
+        if(range.start){
+
+            dateFilter =
+                "&viewed_at=gte." +
+                encodeURIComponent(
+                    range.start.toISOString()
+                );
 
         }
 
 
-        /*
-        ============================================
-        TOTAL AKTIVITAS
-        ============================================
-        */
+        /* =============================================
+           AMBIL DATA PARALEL
+        ============================================= */
 
-        const totalVisitors =
+        const [
+
+            visitors,
+            sessions,
+            pageviews
+
+        ] = await Promise.all([
+
+
+            /* UNIQUE VISITORS */
+
+            fetchAnalyticsTable(
+
+                "analytics_visitors",
+
+                clientFilter +
+                moduleFilter
+
+            ),
+
+
+            /* SESSIONS */
+
+            fetchAnalyticsTable(
+
+                "analytics_sessions",
+
+                clientFilter +
+                moduleFilter +
+                "&order=started_at.desc"
+
+            ),
+
+
+            /* PAGE VIEWS */
+
+            fetchAnalyticsTable(
+
+                "analytics_pageviews",
+
+                clientFilter +
+                moduleFilter +
+                dateFilter +
+                "&order=viewed_at.desc"
+
+            )
+
+        ]);
+
+
+        /* =============================================
+           FILTER SESSION BERDASARKAN PERIODE
+        ============================================= */
+
+        const filteredSessions =
+            sessions.filter(session=>{
+
+                if(!range.start){
+
+                    return true;
+
+                }
+
+
+                return new Date(
+                    session.started_at
+                ) >= range.start;
+
+            });
+
+
+        /* =============================================
+           FILTER PAGEVIEW BERDASARKAN PERIODE
+        ============================================= */
+
+        const filteredPageviews =
+            pageviews.filter(pageview=>{
+
+                if(!range.start){
+
+                    return true;
+
+                }
+
+
+                return new Date(
+                    pageview.viewed_at
+                ) >= range.start;
+
+            });
+
+
+        /* =============================================
+           TOTAL PENGUNJUNG
+
+           Menggunakan UNIQUE VISITOR
+           dari SESSION pada periode aktif
+        ============================================= */
+
+        const uniqueVisitors =
+            new Set(
+
+                filteredSessions.map(
+                    item=>item.visitor_id
+                )
+
+            );
+
+
+        const totalVisitorCount =
+            uniqueVisitors.size;
+
+
+        /* =============================================
+           PENGUNJUNG HARI INI
+        ============================================= */
+
+        const todayStart =
+            new Date();
+
+        todayStart.setHours(
+            0,0,0,0
+        );
+
+
+        const todayVisitors =
+            new Set(
+
+                sessions
+                .filter(item=>
+
+                    new Date(
+                        item.started_at
+                    ) >= todayStart
+
+                )
+                .map(
+                    item=>item.visitor_id
+                )
+
+            );
+
+
+        /* =============================================
+           UPDATE CARD
+        ============================================= */
+
+        const totalVisitorsEl =
             document.getElementById(
                 "analysisTotalVisitors"
             );
 
 
-        if(totalVisitors){
+        if(totalVisitorsEl){
 
-            totalVisitors.textContent =
-                logs.length;
+            totalVisitorsEl.textContent =
+                formatAnalysisNumber(
+                    totalVisitorCount
+                );
 
         }
 
 
-        /*
-        ============================================
-        AKTIVITAS HARI INI
-        ============================================
-        */
-
-        const today =
-            new Date()
-            .toISOString()
-            .slice(0,10);
-
-
-        const todayLogs =
-            logs.filter(log=>{
-
-                const date =
-                    String(
-                        log.created_at || ""
-                    )
-                    .slice(0,10);
-
-                return date === today;
-
-            });
-
-
-        const todayVisitors =
+        const todayVisitorsEl =
             document.getElementById(
                 "analysisTodayVisitors"
             );
 
 
-        if(todayVisitors){
+        if(todayVisitorsEl){
 
-            todayVisitors.textContent =
-                todayLogs.length;
+            todayVisitorsEl.textContent =
+                formatAnalysisNumber(
+                    todayVisitors.size
+                );
 
         }
 
 
-        /*
-        ============================================
-        TOTAL BERITA / KONTEN
-        Berdasarkan aktivitas yang mengandung berita
-        ============================================
-        */
+        /* =============================================
+           DETEKSI BERITA
 
-        const newsLogs =
-            logs.filter(log=>{
+           URL berita mengandung /berita/
+           dan ?slug=
+        ============================================= */
 
-                const text =
-                    (
-                        String(log.action || "") +
-                        " " +
-                        String(log.description || "")
-                    )
-                    .toLowerCase();
+        const newsViews =
+            filteredPageviews.filter(page=>{
+
+                const path =
+                    String(
+                        page.page_path || ""
+                    ).toLowerCase();
 
 
                 return (
-                    text.includes("berita") ||
-                    text.includes("news") ||
-                    text.includes("artikel")
+                    path.includes("/berita/")
+                    &&
+                    (
+                        path.includes("?slug=")
+                        ||
+                        String(
+                            page.page_url || ""
+                        ).includes("slug=")
+                    )
                 );
 
             });
 
 
-        const newsViews =
+        const newsViewsEl =
             document.getElementById(
                 "analysisNewsViews"
             );
 
 
-        if(newsViews){
+        if(newsViewsEl){
 
-            newsViews.textContent =
-                newsLogs.length;
+            newsViewsEl.textContent =
+                formatAnalysisNumber(
+                    newsViews.length
+                );
 
         }
 
 
-        /*
-        ============================================
-        ANALISIS KONTEN TERPOPULER
-        ============================================
-        */
+        /* =============================================
+           HITUNG HALAMAN POPULER
+        ============================================= */
 
-        const contentCounter = {};
+        const pageCounter = {};
 
 
-        logs.forEach(log=>{
+        filteredPageviews.forEach(page=>{
 
-            const name =
-                String(
-                    log.description ||
-                    log.action ||
-                    "Aktivitas Platform"
-                )
-                .replace(
-                    /\[\[ACTOR_EMAIL:[^\]]+\]\]/g,
-                    ""
-                )
-                .trim();
+            const path =
+                page.page_path ||
+                page.page_title ||
+                "Halaman tidak diketahui";
 
 
-            if(!name) return;
-
-
-            contentCounter[name] =
-                (contentCounter[name] || 0) + 1;
+            pageCounter[path] =
+                (
+                    pageCounter[path] || 0
+                ) + 1;
 
         });
 
 
-        const sortedContent =
-            Object.entries(contentCounter)
-            .sort((a,b)=>b[1]-a[1]);
+        const popularPages =
+            Object.entries(pageCounter)
+
+            .sort(
+                (a,b)=>b[1]-a[1]
+            );
 
 
-        const topContent =
+        /* =============================================
+           HITUNG BERITA TERPOPULER
+        ============================================= */
+
+        const newsCounter = {};
+
+
+        newsViews.forEach(page=>{
+
+
+            let title =
+                String(
+                    page.page_title || ""
+                ).trim();
+
+
+            let path =
+                String(
+                    page.page_path || ""
+                );
+
+
+            /* fallback ambil slug */
+
+            if(!title){
+
+                const match =
+                    path.match(
+                        /[?&]slug=([^&]+)/
+                    );
+
+
+                if(match){
+
+                    title =
+                        decodeURIComponent(
+                            match[1]
+                        )
+
+                        .replace(
+                            /[-_]/g,
+                            " "
+                        );
+
+                }
+
+            }
+
+
+            if(!title){
+
+                title =
+                    "Berita tanpa judul";
+
+            }
+
+
+            newsCounter[title] =
+                (
+                    newsCounter[title] || 0
+                ) + 1;
+
+        });
+
+
+        const popularNews =
+            Object.entries(newsCounter)
+
+            .sort(
+                (a,b)=>b[1]-a[1]
+            );
+
+
+        /* =============================================
+           KONTEN TERPOPULER
+        ============================================= */
+
+        const topContentEl =
             document.getElementById(
                 "analysisTopContent"
             );
 
 
-        if(topContent){
+        if(topContentEl){
 
-            if(sortedContent.length){
+            if(popularNews.length){
 
-                topContent.textContent =
-                    sortedContent[0][0];
+                let title =
+                    popularNews[0][0];
 
-            }else{
 
-                topContent.textContent = "—";
+                /* Batasi agar tidak merusak card */
+
+                if(title.length > 35){
+
+                    title =
+                        title.substring(
+                            0,
+                            35
+                        ) + "...";
+
+                }
+
+
+                topContentEl.textContent =
+                    title;
+
+            }
+
+            else if(popularPages.length){
+
+                topContentEl.textContent =
+                    popularPages[0][0];
+
+            }
+
+            else{
+
+                topContentEl.textContent =
+                    "—";
 
             }
 
         }
 
 
-        /*
-        ============================================
-        TAMPILKAN TOP ACTIVITY / CONTENT
-        ============================================
-        */
+        /* =============================================
+           TAMPILKAN BERITA TERPOPULER
+        ============================================= */
 
         const topNewsContainer =
             document.getElementById(
@@ -2822,42 +3238,67 @@ async function loadPlatformAnalysisData(clientName){
 
         if(topNewsContainer){
 
-            if(sortedContent.length === 0){
+            if(!popularNews.length){
 
                 topNewsContainer.innerHTML = `
+
                     <div class="analysis-empty">
-                        Belum ada data aktivitas.
+
+                        Belum ada data pembaca berita.
+
                     </div>
+
                 `;
 
-            }else{
+            }
+
+            else{
 
                 topNewsContainer.innerHTML =
-                    sortedContent
+                    popularNews
                     .slice(0,5)
-                    .map((item,index)=>`
+
+                    .map(
+                        (item,index)=>`
 
                         <div class="analysis-list-item">
 
                             <div class="analysis-rank">
+
                                 ${index + 1}
+
                             </div>
+
 
                             <div class="analysis-content-title">
 
                                 <b>
-                                    ${escapeAnalysisHTML(item[0])}
+
+                                    ${escapeAnalysisHTML(
+                                        item[0]
+                                    )}
+
                                 </b>
 
+
                                 <span>
-                                    ${item[1]} aktivitas tercatat
+
+                                    ${formatAnalysisNumber(
+                                        item[1]
+                                    )}
+
+                                    pembaca
+
                                 </span>
 
                             </div>
 
                         </div>
 
-                    `)
+                    `
+
+                    )
+
                     .join("");
 
             }
@@ -2865,56 +3306,79 @@ async function loadPlatformAnalysisData(clientName){
         }
 
 
-        /*
-        ============================================
-        HALAMAN / AKTIVITAS POPULER
-        ============================================
-        */
+        /* =============================================
+           TAMPILKAN HALAMAN POPULER
+        ============================================= */
 
-        const popularPages =
+        const popularPagesContainer =
             document.getElementById(
                 "analysisPopularPages"
             );
 
 
-        if(popularPages){
+        if(popularPagesContainer){
 
-            if(sortedContent.length === 0){
+            if(!popularPages.length){
 
-                popularPages.innerHTML = `
+                popularPagesContainer.innerHTML = `
+
                     <div class="analysis-empty">
-                        Belum ada statistik aktivitas.
+
+                        Belum ada data kunjungan.
+
                     </div>
+
                 `;
 
-            }else{
+            }
 
-                popularPages.innerHTML =
-                    sortedContent
+            else{
+
+                popularPagesContainer.innerHTML =
+                    popularPages
                     .slice(0,5)
-                    .map((item,index)=>`
+
+                    .map(
+                        (item,index)=>`
 
                         <div class="analysis-list-item">
 
                             <div class="analysis-rank">
+
                                 ${index + 1}
+
                             </div>
+
 
                             <div class="analysis-content-title">
 
                                 <b>
-                                    ${escapeAnalysisHTML(item[0])}
+
+                                    ${escapeAnalysisHTML(
+                                        item[0]
+                                    )}
+
                                 </b>
 
+
                                 <span>
-                                    Digunakan ${item[1]} kali
+
+                                    ${formatAnalysisNumber(
+                                        item[1]
+                                    )}
+
+                                    kunjungan
+
                                 </span>
 
                             </div>
 
                         </div>
 
-                    `)
+                    `
+
+                    )
+
                     .join("");
 
             }
@@ -2922,27 +3386,266 @@ async function loadPlatformAnalysisData(clientName){
         }
 
 
+        /* =============================================
+           GRAFIK AKTIVITAS
+
+           Update 7 bar yang sudah ada
+        ============================================= */
+
+        updateAnalysisChart(
+            filteredSessions
+        );
+
+
         console.log(
-            "Platform Analysis berhasil dimuat",
+            "✓ Platform Analytics berhasil dimuat",
             {
                 client:clientName,
-                totalActivity:logs.length,
-                todayActivity:todayLogs.length
+                visitors:totalVisitorCount,
+                today:todayVisitors.size,
+                pageviews:filteredPageviews.length,
+                news:newsViews.length
             }
         );
 
 
-    }catch(error){
+    }
+
+    catch(error){
 
         console.error(
-            "Platform Analysis Error:",
+            "Platform Analytics Error:",
             error
+        );
+
+
+        console.warn(
+            "Pastikan policy SELECT Analytics sudah dibuat."
         );
 
     }
 
 }
 
+
+
+/* =====================================================
+   UPDATE GRAFIK AKTIVITAS
+===================================================== */
+
+function updateAnalysisChart(sessions){
+
+    const chart =
+        document.querySelector(
+            ".analysis-chart"
+        );
+
+
+    if(!chart){
+
+        return;
+
+    }
+
+
+    const labels = [
+
+        "Min",
+        "Sen",
+        "Sel",
+        "Rab",
+        "Kam",
+        "Jum",
+        "Sab"
+
+    ];
+
+
+    const data = [];
+
+
+    for(let i=6;i>=0;i--){
+
+        const date =
+            new Date();
+
+
+        date.setDate(
+            date.getDate() - i
+        );
+
+
+        date.setHours(
+            0,0,0,0
+        );
+
+
+        const nextDate =
+            new Date(date);
+
+
+        nextDate.setDate(
+            nextDate.getDate() + 1
+        );
+
+
+        const count =
+            sessions.filter(session=>{
+
+                const started =
+                    new Date(
+                        session.started_at
+                    );
+
+
+                return (
+                    started >= date
+                    &&
+                    started < nextDate
+                );
+
+            }).length;
+
+
+        data.push(count);
+
+    }
+
+
+    const max =
+        Math.max(
+            ...data,
+            1
+        );
+
+
+    chart.innerHTML =
+        data.map(
+            (value,index)=>`
+
+            <div class="analysis-bar-wrap">
+
+                <div
+                    class="analysis-bar"
+                    style="
+                        height:${
+                            Math.max(
+                                (value / max) * 100,
+                                value ? 8 : 2
+                            )
+                        }%
+                    "
+                    title="${value} kunjungan"
+                ></div>
+
+
+                <span class="analysis-bar-label">
+
+                    ${labels[index]}
+
+                </span>
+
+            </div>
+
+        `
+        )
+        .join("");
+
+}
+
+
+
+/* =====================================================
+   AKTIFKAN FILTER PERIODE
+===================================================== */
+
+function initAnalysisFilters(){
+
+    const buttons =
+        document.querySelectorAll(
+            ".analysis-filter button"
+        );
+
+
+    const periodMap = {
+
+        "Hari Ini":"today",
+
+        "7 Hari":"7days",
+
+        "30 Hari":"30days",
+
+        "Semua":"all"
+
+    };
+
+
+    buttons.forEach(button=>{
+
+        button.addEventListener(
+            "click",
+            function(){
+
+                buttons.forEach(btn=>{
+
+                    btn.classList.remove(
+                        "active"
+                    );
+
+                });
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                const label =
+                    button.textContent.trim();
+
+
+                currentAnalysisPeriod =
+                    periodMap[label] ||
+                    "today";
+
+
+                const clientName =
+                    document.getElementById(
+                        "analysisClientName"
+                    )
+                    ?.textContent
+                    ?.trim()
+                    ||
+                    "GEPARU";
+
+
+                loadPlatformAnalysisData(
+                    clientName
+                );
+
+            }
+
+        );
+
+    });
+
+}
+
+
+
+/* =====================================================
+   INIT FILTER
+===================================================== */
+
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    initAnalysisFilters
+
+);
+
+</script>
 
 
 /* =====================================================
