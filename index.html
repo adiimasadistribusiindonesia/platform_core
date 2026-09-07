@@ -2009,12 +2009,10 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
 
             <button>
                 Semua
-            </button>
-
-          <button
+            <button
     type="button"
+    id="analysisRefreshBtn"
     class="analysis-refresh-btn"
-    onclick="refreshPlatformAnalysis()"
 >
     ↻ Perbarui
 </button>
@@ -2702,6 +2700,15 @@ async function loadPlatformAnalysisData(clientName){
     });
 
 }
+  document.addEventListener("click", function(event) {
+
+    if (event.target.closest("#analysisRefreshBtn")) {
+
+        refreshPlatformAnalysis();
+
+    }
+
+});
 
 
     /* ============================================
