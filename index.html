@@ -1913,6 +1913,66 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
     }
 
 }
+
+/* =====================================================
+   TAMBAHAN: ACTION BUTTON RESET ANALYTICS
+===================================================== */
+
+.analysis-action-buttons{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.analysis-reset-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:10px 18px;
+
+    border:1px solid #e5bcbc;
+    border-radius:12px;
+
+    background:#ffffff;
+    color:#a52b2b;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s ease;
+}
+
+.analysis-reset-btn:hover{
+    transform:translateY(-1px);
+    background:#fff5f5;
+    border-color:#a52b2b;
+}
+
+.analysis-reset-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
+
+@media(max-width:700px){
+
+    .analysis-action-buttons{
+        width:100%;
+        display:flex;
+    }
+
+    .analysis-refresh-btn,
+    .analysis-reset-btn{
+        flex:1;
+        width:auto;
+    }
+
+}
+
 </style>
 
 
@@ -1993,29 +2053,49 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
 
         <div class="analysis-filter">
 
-            <span>Periode:</span>
+            <div class="analysis-filters">
 
-            <button class="active">
-                Hari Ini
-            </button>
+                <span>Periode:</span>
 
-            <button>
-                7 Hari
-            </button>
+                <button class="analysis-period-btn active">
+                    Hari Ini
+                </button>
 
-            <button>
-                30 Hari
-            </button>
+                <button class="analysis-period-btn">
+                    7 Hari
+                </button>
 
-            <button>
-                Semua
-            <button
-    type="button"
-    id="analysisRefreshBtn"
-    class="analysis-refresh-btn"
->
-    ↻ Perbarui
-</button>
+                <button class="analysis-period-btn">
+                    30 Hari
+                </button>
+
+                <button class="analysis-period-btn">
+                    Semua
+                </button>
+
+            </div>
+
+
+            <div class="analysis-action-buttons">
+
+                <button
+                    type="button"
+                    id="analysisRefreshBtn"
+                    class="analysis-refresh-btn"
+                >
+                    ↻ Perbarui
+                </button>
+
+
+                <button
+                    type="button"
+                    id="analysisResetBtn"
+                    class="analysis-reset-btn"
+                >
+                    🗑 Reset Data
+                </button>
+
+            </div>
 
         </div>
 
@@ -3596,7 +3676,7 @@ async function loadPlatformAnalysisData(clientName){
 
         const filterButtons =
             document.querySelectorAll(
-                ".analysis-filter button"
+                ".analysis-period-btn"
             );
 
 
@@ -3743,5 +3823,259 @@ function escapeAnalysisHTML(value){
 }
 
 </script>
+
+
+<!-- =====================================================
+     TAMBAHAN BARU: RESET DATA PLATFORM ANALYTICS
+     Tidak menghapus fungsi lama.
+===================================================== -->
+<script>
+
+async function resetPlatformAnalytics(){
+
+    const button =
+        document.getElementById(
+            "analysisResetBtn"
+        );
+
+
+    const clientName =
+        document.getElementById(
+            "analysisClientName"
+        )?.textContent?.trim()
+        || "GEPARU";
+
+
+    const module =
+        (
+            typeof currentModule !== "undefined" &&
+            currentModule
+        )
+        ? String(currentModule).toUpperCase()
+        : "SOSIAL";
+
+
+    if(!coreAccessToken){
+
+        alert(
+            "Sesi Core tidak ditemukan. Silakan login ulang."
+        );
+
+        return;
+
+    }
+
+
+    const confirmReset =
+        confirm(
+            "⚠️ RESET DATA ANALYTICS\n\n" +
+            "Anda yakin ingin menghapus seluruh data Analytics yang sedang ditampilkan?\n\n" +
+            "Client: " + clientName + "\n" +
+            "Modul: " + module + "\n\n" +
+            "Data yang dihapus:\n" +
+            "• Data pengunjung unik\n" +
+            "• Data sesi pengunjung\n" +
+            "• Pageview halaman dan aktivitas\n\n" +
+            "Tindakan ini tidak dapat dibatalkan."
+        );
+
+
+    if(!confirmReset){
+        return;
+    }
+
+
+    if(button){
+
+        button.disabled = true;
+        button.innerHTML = "⏳ Menghapus...";
+
+    }
+
+
+    try{
+
+        const filter =
+            "?client_name=eq." +
+            encodeURIComponent(clientName) +
+            "&module_slug=eq." +
+            encodeURIComponent(module);
+
+
+        /*
+        ============================================
+           HAPUS PAGEVIEW TERLEBIH DAHULU
+        ============================================
+        */
+
+        const pageviewsResponse =
+            await fetch(
+                SUPABASE_URL +
+                "/rest/v1/analytics_pageviews" +
+                filter,
+                {
+                    method:"DELETE",
+                    headers:{
+                        ...authHeaders(),
+                        Prefer:"return=minimal"
+                    }
+                }
+            );
+
+
+        if(!pageviewsResponse.ok){
+
+            const errorText =
+                await pageviewsResponse.text();
+
+            throw new Error(
+                "Gagal menghapus pageview: " +
+                pageviewsResponse.status +
+                " " +
+                errorText
+            );
+
+        }
+
+
+        /*
+        ============================================
+           HAPUS SESSION
+        ============================================
+        */
+
+        const sessionsResponse =
+            await fetch(
+                SUPABASE_URL +
+                "/rest/v1/analytics_sessions" +
+                filter,
+                {
+                    method:"DELETE",
+                    headers:{
+                        ...authHeaders(),
+                        Prefer:"return=minimal"
+                    }
+                }
+            );
+
+
+        if(!sessionsResponse.ok){
+
+            const errorText =
+                await sessionsResponse.text();
+
+            throw new Error(
+                "Gagal menghapus sesi: " +
+                sessionsResponse.status +
+                " " +
+                errorText
+            );
+
+        }
+
+
+        /*
+        ============================================
+           HAPUS UNIQUE VISITORS
+        ============================================
+        */
+
+        const visitorsResponse =
+            await fetch(
+                SUPABASE_URL +
+                "/rest/v1/analytics_visitors" +
+                filter,
+                {
+                    method:"DELETE",
+                    headers:{
+                        ...authHeaders(),
+                        Prefer:"return=minimal"
+                    }
+                }
+            );
+
+
+        if(!visitorsResponse.ok){
+
+            const errorText =
+                await visitorsResponse.text();
+
+            throw new Error(
+                "Gagal menghapus pengunjung: " +
+                visitorsResponse.status +
+                " " +
+                errorText
+            );
+
+        }
+
+
+        /*
+        ============================================
+           MUAT ULANG DATA ANALYTICS
+        ============================================
+        */
+
+        await loadPlatformAnalysisData(
+            clientName
+        );
+
+
+        alert(
+            "✓ Data Analytics berhasil direset.\n\n" +
+            "Platform sekarang siap mencatat data pengunjung baru."
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Reset Analytics Error:",
+            error
+        );
+
+
+        alert(
+            "Gagal mereset Data Analytics.\n\n" +
+            error.message
+        );
+
+    }finally{
+
+        if(button){
+
+            button.disabled = false;
+            button.innerHTML = "🗑 Reset Data";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   EVENT TOMBOL RESET
+===================================================== */
+
+document.addEventListener(
+    "click",
+    function(event){
+
+        if(
+            event.target.closest(
+                "#analysisResetBtn"
+            )
+        ){
+
+            resetPlatformAnalytics();
+
+        }
+
+    }
+);
+
+</script>
+
 </body>
 </html>
