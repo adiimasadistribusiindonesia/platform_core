@@ -1848,7 +1848,71 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
     }
 
 }
+.analysis-filter-section{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    width:100%;
+}
 
+
+.analysis-filters{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+
+.analysis-refresh-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:10px 18px;
+
+    border:1px solid #cbd7e1;
+    border-radius:12px;
+
+    background:#ffffff;
+    color:#29445a;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s ease;
+}
+
+
+.analysis-refresh-btn:hover{
+    transform:translateY(-1px);
+    border-color:#2c6e9c;
+}
+
+
+.analysis-refresh-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
+
+
+@media(max-width:700px){
+
+    .analysis-filter-section{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+
+    .analysis-refresh-btn{
+        width:100%;
+    }
+
+}
 </style>
 
 
@@ -1946,6 +2010,14 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
             <button>
                 Semua
             </button>
+
+          <button
+    type="button"
+    class="analysis-refresh-btn"
+    onclick="refreshPlatformAnalysis()"
+>
+    ↻ Perbarui
+</button>
 
         </div>
 
@@ -2567,6 +2639,69 @@ async function loadPlatformAnalysisData(clientName){
         return;
 
     }
+  function refreshPlatformAnalysis(){
+
+    const button =
+        document.querySelector(
+            ".analysis-refresh-btn"
+        );
+
+
+    const clientName =
+        document.getElementById(
+            "analysisClientName"
+        )?.textContent?.trim()
+        || "GEPARU";
+
+
+    if(button){
+
+        button.disabled = true;
+
+        button.innerHTML =
+            "↻ Memperbarui...";
+
+    }
+
+
+    loadPlatformAnalysisData(
+        clientName
+    )
+
+    .then(() => {
+
+        if(button){
+
+            button.innerHTML =
+                "✓ Diperbarui";
+
+            setTimeout(() => {
+
+                button.disabled = false;
+
+                button.innerHTML =
+                    "↻ Perbarui";
+
+            }, 1200);
+
+        }
+
+    })
+
+    .catch(() => {
+
+        if(button){
+
+            button.disabled = false;
+
+            button.innerHTML =
+                "↻ Perbarui";
+
+        }
+
+    });
+
+}
 
 
     /* ============================================
