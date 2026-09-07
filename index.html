@@ -630,7 +630,7 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
         <button class="feature-tab active" data-panel="overview" onclick="openPanel('overview',this)"><span class="ft-icon">⌂</span><strong>Overview</strong><small>Ringkasan client</small></button>
         <button class="feature-tab" data-panel="approval" onclick="openPanel('approval',this)"><span class="ft-icon">✓</span><strong>Approval Akses</strong><small>Kelola permintaan</small></button>
         <button class="feature-tab" data-panel="activity" onclick="openPanel('activity',this)"><span class="ft-icon">☷</span><strong>Activity Log</strong><small>Riwayat aktivitas</small></button>
-        <button class="feature-tab" data-panel="analysis" onclick="openPanel('analysis',this)"><span class="ft-icon">▥</span><strong>Platform Analysis</strong><small>Statistik & insight</small></button>
+        <button class="feature-tab"data-panel="analysis"onclick="openPlatformAnalysisFromDashboard(this)"><span class="ft-icon">▥</span><strong>Platform Analysis</strong><small>Statistik & insight</small></button>
       </div>
 
       <div class="panel active" id="panel-overview">
@@ -2484,6 +2484,482 @@ document.addEventListener(
 
     }
 );
+
+</script>
+  <script>
+
+/* =====================================================
+   AKTIFKAN PLATFORM ANALYSIS
+   CORE ADIIMASA
+===================================================== */
+
+function openPlatformAnalysisFromDashboard(button){
+
+    /* Ambil client yang sedang aktif */
+
+    const clientName =
+        document.getElementById("dashClient")
+        ?.textContent
+        ?.trim() || "GEPARU";
+
+
+    /* Aktifkan tab */
+
+    document
+        .querySelectorAll(".feature-tab")
+        .forEach(tab=>{
+            tab.classList.remove("active");
+        });
+
+
+    if(button){
+        button.classList.add("active");
+    }
+
+
+    /* Jika halaman Platform Analysis besar tersedia */
+
+    const analysisPage =
+        document.getElementById("platformAnalysisPage");
+
+
+    if(analysisPage){
+
+        openPlatformAnalysis(clientName);
+
+        loadPlatformAnalysisData(clientName);
+
+        return;
+    }
+
+
+    /* Fallback ke panel analysis bawaan */
+
+    openPanel(
+        "analysis",
+        button
+    );
+
+    loadPlatformAnalysisData(clientName);
+
+}
+
+
+
+/* =====================================================
+   LOAD DATA PLATFORM ANALYSIS
+===================================================== */
+
+async function loadPlatformAnalysisData(clientName){
+
+    console.log(
+        "Memuat Platform Analysis:",
+        clientName
+    );
+
+
+    /* Pastikan user sudah login */
+
+    if(!coreAccessToken){
+
+        console.warn(
+            "Core Access Token tidak tersedia"
+        );
+
+        return;
+
+    }
+
+
+    /* Update nama client */
+
+    const clientNameElement =
+        document.getElementById(
+            "analysisClientName"
+        );
+
+    if(clientNameElement){
+
+        clientNameElement.textContent =
+            clientName;
+
+    }
+
+
+    const titleElement =
+        document.getElementById(
+            "platformAnalysisClientTitle"
+        );
+
+    if(titleElement){
+
+        titleElement.textContent =
+            "Platform Analysis · " +
+            clientName;
+
+    }
+
+
+    try{
+
+        /*
+        ============================================
+        AMBIL ACTIVITY LOG
+        ============================================
+        */
+
+        const module =
+            (
+                typeof currentModule !== "undefined"
+                && currentModule
+            )
+            ? currentModule.toUpperCase()
+            : "SOSIAL";
+
+
+        const activityURL =
+            SUPABASE_URL +
+            "/rest/v1/activity_logs?select=*" +
+            "&module=eq." +
+            encodeURIComponent(module) +
+            "&order=created_at.desc";
+
+
+        const response =
+            await fetch(
+                activityURL,
+                {
+                    headers: authHeaders(),
+                    cache: "no-store"
+                }
+            );
+
+
+        let logs = [];
+
+
+        if(response.ok){
+
+            logs =
+                await response.json();
+
+        }
+
+
+        /*
+        ============================================
+        TOTAL AKTIVITAS
+        ============================================
+        */
+
+        const totalVisitors =
+            document.getElementById(
+                "analysisTotalVisitors"
+            );
+
+
+        if(totalVisitors){
+
+            totalVisitors.textContent =
+                logs.length;
+
+        }
+
+
+        /*
+        ============================================
+        AKTIVITAS HARI INI
+        ============================================
+        */
+
+        const today =
+            new Date()
+            .toISOString()
+            .slice(0,10);
+
+
+        const todayLogs =
+            logs.filter(log=>{
+
+                const date =
+                    String(
+                        log.created_at || ""
+                    )
+                    .slice(0,10);
+
+                return date === today;
+
+            });
+
+
+        const todayVisitors =
+            document.getElementById(
+                "analysisTodayVisitors"
+            );
+
+
+        if(todayVisitors){
+
+            todayVisitors.textContent =
+                todayLogs.length;
+
+        }
+
+
+        /*
+        ============================================
+        TOTAL BERITA / KONTEN
+        Berdasarkan aktivitas yang mengandung berita
+        ============================================
+        */
+
+        const newsLogs =
+            logs.filter(log=>{
+
+                const text =
+                    (
+                        String(log.action || "") +
+                        " " +
+                        String(log.description || "")
+                    )
+                    .toLowerCase();
+
+
+                return (
+                    text.includes("berita") ||
+                    text.includes("news") ||
+                    text.includes("artikel")
+                );
+
+            });
+
+
+        const newsViews =
+            document.getElementById(
+                "analysisNewsViews"
+            );
+
+
+        if(newsViews){
+
+            newsViews.textContent =
+                newsLogs.length;
+
+        }
+
+
+        /*
+        ============================================
+        ANALISIS KONTEN TERPOPULER
+        ============================================
+        */
+
+        const contentCounter = {};
+
+
+        logs.forEach(log=>{
+
+            const name =
+                String(
+                    log.description ||
+                    log.action ||
+                    "Aktivitas Platform"
+                )
+                .replace(
+                    /\[\[ACTOR_EMAIL:[^\]]+\]\]/g,
+                    ""
+                )
+                .trim();
+
+
+            if(!name) return;
+
+
+            contentCounter[name] =
+                (contentCounter[name] || 0) + 1;
+
+        });
+
+
+        const sortedContent =
+            Object.entries(contentCounter)
+            .sort((a,b)=>b[1]-a[1]);
+
+
+        const topContent =
+            document.getElementById(
+                "analysisTopContent"
+            );
+
+
+        if(topContent){
+
+            if(sortedContent.length){
+
+                topContent.textContent =
+                    sortedContent[0][0];
+
+            }else{
+
+                topContent.textContent = "—";
+
+            }
+
+        }
+
+
+        /*
+        ============================================
+        TAMPILKAN TOP ACTIVITY / CONTENT
+        ============================================
+        */
+
+        const topNewsContainer =
+            document.getElementById(
+                "analysisTopNews"
+            );
+
+
+        if(topNewsContainer){
+
+            if(sortedContent.length === 0){
+
+                topNewsContainer.innerHTML = `
+                    <div class="analysis-empty">
+                        Belum ada data aktivitas.
+                    </div>
+                `;
+
+            }else{
+
+                topNewsContainer.innerHTML =
+                    sortedContent
+                    .slice(0,5)
+                    .map((item,index)=>`
+
+                        <div class="analysis-list-item">
+
+                            <div class="analysis-rank">
+                                ${index + 1}
+                            </div>
+
+                            <div class="analysis-content-title">
+
+                                <b>
+                                    ${escapeAnalysisHTML(item[0])}
+                                </b>
+
+                                <span>
+                                    ${item[1]} aktivitas tercatat
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    `)
+                    .join("");
+
+            }
+
+        }
+
+
+        /*
+        ============================================
+        HALAMAN / AKTIVITAS POPULER
+        ============================================
+        */
+
+        const popularPages =
+            document.getElementById(
+                "analysisPopularPages"
+            );
+
+
+        if(popularPages){
+
+            if(sortedContent.length === 0){
+
+                popularPages.innerHTML = `
+                    <div class="analysis-empty">
+                        Belum ada statistik aktivitas.
+                    </div>
+                `;
+
+            }else{
+
+                popularPages.innerHTML =
+                    sortedContent
+                    .slice(0,5)
+                    .map((item,index)=>`
+
+                        <div class="analysis-list-item">
+
+                            <div class="analysis-rank">
+                                ${index + 1}
+                            </div>
+
+                            <div class="analysis-content-title">
+
+                                <b>
+                                    ${escapeAnalysisHTML(item[0])}
+                                </b>
+
+                                <span>
+                                    Digunakan ${item[1]} kali
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    `)
+                    .join("");
+
+            }
+
+        }
+
+
+        console.log(
+            "Platform Analysis berhasil dimuat",
+            {
+                client:clientName,
+                totalActivity:logs.length,
+                todayActivity:todayLogs.length
+            }
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Platform Analysis Error:",
+            error
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   SECURITY HTML ESCAPE
+===================================================== */
+
+function escapeAnalysisHTML(value){
+
+    return String(value ?? "")
+
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
 
 </script>
 </body>
