@@ -2375,6 +2375,42 @@ function openPlatformAnalysis(clientName){
 
 }
 
+    const page =
+        document.getElementById(
+            "platformAnalysisPage"
+        );
+
+    if(!page) return;
+
+
+    document.getElementById(
+        "analysisClientName"
+    ).textContent =
+        clientName || "GEPARU";
+
+
+    document.getElementById(
+        "platformAnalysisClientTitle"
+    ).textContent =
+        "Platform Analysis · " +
+        (clientName || "GEPARU");
+
+
+    page.classList.add("show");
+
+
+    document.body.style.overflow =
+        "hidden";
+
+
+    /*
+       NANTI DI SINI KITA HUBUNGKAN
+       KE DATA ASLI SUPABASE
+    */
+
+}
+
+
 /* TUTUP ANALYSIS */
 
 function closePlatformAnalysis(){
@@ -2559,10 +2595,6 @@ function openPlatformAnalysisFromDashboard(button){
 }
 
 
-
-/* =====================================================
-   LOAD DATA PLATFORM ANALYSIS
-===================================================== */
 
 <script>
 
@@ -3646,8 +3678,6 @@ document.addEventListener(
 );
 
 </script>
-
-
 /* =====================================================
    SECURITY HTML ESCAPE
 ===================================================== */
