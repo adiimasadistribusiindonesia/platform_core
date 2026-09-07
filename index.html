@@ -474,40 +474,90 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
 
 }
   /* =========================================
-   TAMBAHAN: CEGAH HALAMAN ANALYTICS MELEBAR
-   DI HP KARENA JUDUL BERITA PANJANG
+   FIX MOBILE - CEGAH CORE ANALYSIS
+   MELEBAR KE SAMPING
+   TAMBAHAN CSS SAJA - KODE LAIN TIDAK DIUBAH
 ========================================= */
 
-@media (max-width: 700px){
+@media screen and (max-width: 700px){
 
-    .analysis-list-item{
-        min-width:0;
-        max-width:100%;
-        overflow:hidden;
+    html,
+    body{
+        width:100% !important;
+        max-width:100% !important;
+        overflow-x:hidden !important;
     }
 
+    *{
+        box-sizing:border-box;
+    }
+
+    .app,
+    .main,
+    main,
+    .content,
+    .dashboard,
+    .analysis-page,
+    .analysis-container{
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+    }
+
+    /* Semua container analytics */
+    .analysis-panel,
+    .analysis-card,
+    .analysis-list,
+    .analysis-list-item{
+        min-width:0 !important;
+        max-width:100% !important;
+        width:100% !important;
+    }
+
+    /* Judul berita panjang */
     .analysis-content-title{
         min-width:0 !important;
-        max-width:100%;
-        flex:1 1 auto;
+        max-width:100% !important;
+        width:auto !important;
+        flex:1 1 0 !important;
+        overflow:hidden !important;
     }
 
-    .analysis-content-title b,
-    .analysis-content-title span{
-        display:block;
-        max-width:100%;
-        white-space:normal !important;
+    .analysis-content-title,
+    .analysis-content-title *,
+    #analysisTopNews,
+    #analysisTopNews *,
+    #analysisPopularPages,
+    #analysisPopularPages *{
         overflow-wrap:anywhere !important;
         word-break:break-word !important;
+        white-space:normal !important;
     }
 
-    .analysis-panel,
-    .analysis-list,
+    /* Container berita & halaman populer */
     #analysisTopNews,
     #analysisPopularPages{
-        min-width:0;
-        max-width:100%;
-        overflow:hidden;
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        overflow:hidden !important;
+    }
+
+    /* Item dalam daftar */
+    #analysisTopNews > *,
+    #analysisPopularPages > *{
+        min-width:0 !important;
+        max-width:100% !important;
+        width:100% !important;
+        overflow:hidden !important;
+    }
+
+    /* Header */
+    .header-content,
+    .top-header,
+    header{
+        max-width:100% !important;
+        min-width:0 !important;
     }
 }
 </style>
