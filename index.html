@@ -560,6 +560,29 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
         min-width:0 !important;
     }
 }
+
+/* =====================================
+MODUL MBI
+===================================== */
+
+.module-card.mbi{
+background:linear-gradient(
+135deg,
+#312e81,
+#4338ca
+);
+color:#ffffff;
+}
+
+.module-card.mbi .card-footer{
+border-top:1px solid rgba(255,255,255,.18);
+}
+
+.module-card.mbi:hover{
+transform:translateY(-4px);
+box-shadow:0 18px 35px rgba(67,56,202,.25);
+}
+
 </style>
 </head>
 
@@ -642,6 +665,9 @@ h1{font-size:34px;line-height:1.15;margin-bottom:10px}
           <div class="card-top"><span class="module-icon-big">📦</span><h3>PRODUCT</h3><p>Modul katalog, informasi<br>dan identitas produk.</p><span class="arrow-round">›</span></div>
           <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
         </button>
+        <button class="module-card mbi" onclick="openModule('MBI')"><div class="card-top"><span class="module-icon-big">📊</span><h3>MBI</h3><p>Modul Business Intelligence,<br>sistem dan program digital.</p>
+       <span class="arrow-round">›</span></div><div class="card-footer"><span>♟ &nbsp; 1 Program</span><span>→</span></div></button>
+
       </div>
 
       <h2 class="quick-title">Akses Cepat</h2>
@@ -930,7 +956,8 @@ const moduleClients = {
   FOOD: [],
   MARKETPLACE: [],
   COMPANY: [],
-  PRODUCT: []
+  PRODUCT: [],
+  MBI    : []
 };
 
 function activateNav(id){
