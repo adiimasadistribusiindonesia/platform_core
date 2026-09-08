@@ -4173,7 +4173,258 @@ document.addEventListener(
 .analysis-chart.analysis-real-bars .analysis-bar.is-zero{
     min-height:0 !important;
 }
+/* =========================================
+   FIX BANNER KHUSUS MOBILE
+   TAMBAHAN CSS - TIDAK MENGUBAH CSS LAMA
+========================================= */
 
+@media screen and (max-width: 700px){
+
+    /* CONTAINER BANNER */
+    .banner{
+        width:100% !important;
+        max-width:100% !important;
+        min-height:260px !important;
+        height:260px !important;
+
+        position:relative !important;
+        overflow:hidden !important;
+
+        border-radius:24px !important;
+    }
+
+
+    /* =========================
+       TEKS BANNER
+    ========================= */
+
+    .banner-content,
+    .banner-text{
+        position:absolute !important;
+
+        left:24px !important;
+        right:auto !important;
+
+        top:50% !important;
+
+        transform:translateY(-50%) !important;
+
+        width:58% !important;
+        max-width:58% !important;
+
+        padding:0 !important;
+
+        z-index:10 !important;
+    }
+
+
+    /* JUDUL */
+
+    .banner-content h1,
+    .banner-content h2,
+    .banner-title,
+    .banner-text h1,
+    .banner-text h2{
+
+        font-size:24px !important;
+
+        line-height:1.2 !important;
+
+        margin:0 !important;
+
+        word-break:normal !important;
+
+        overflow-wrap:break-word !important;
+    }
+
+
+    /* SUB JUDUL */
+
+    .banner-content p,
+    .banner-subtitle,
+    .banner-text p{
+
+        font-size:14px !important;
+
+        line-height:1.5 !important;
+
+        margin-top:10px !important;
+
+        max-width:100% !important;
+    }
+
+
+    /* =========================
+       GAMBAR GEDUNG
+    ========================= */
+
+    .banner-building,
+    .building{
+
+        position:absolute !important;
+
+        right:-35px !important;
+        left:auto !important;
+
+        bottom:0 !important;
+        top:auto !important;
+
+        width:72% !important;
+
+        height:100% !important;
+
+        max-width:none !important;
+
+        object-fit:contain !important;
+
+        object-position:right bottom !important;
+
+        opacity:.65 !important;
+
+        z-index:2 !important;
+
+        transform:none !important;
+    }
+
+
+    /* =========================
+       ADIIMASA GROUP / LOGO
+    ========================= */
+
+    .banner .group,
+    .group-logo{
+
+        position:absolute !important;
+
+        top:14px !important;
+        right:16px !important;
+
+        left:auto !important;
+        bottom:auto !important;
+
+        width:auto !important;
+        max-width:65% !important;
+
+        margin:0 !important;
+        padding:0 !important;
+
+        z-index:20 !important;
+
+        transform:none !important;
+    }
+
+
+    /* LOGO GAMBAR */
+
+    .group-logo img{
+
+        width:105px !important;
+
+        max-width:100% !important;
+
+        height:auto !important;
+
+        object-fit:contain !important;
+    }
+
+
+    /* =========================
+       GROUP TEXT
+    ========================= */
+
+    .banner .group-text{
+
+        max-width:100% !important;
+
+        white-space:nowrap !important;
+
+        overflow:hidden !important;
+    }
+
+
+    .banner .group-text p{
+
+        font-size:11px !important;
+
+        line-height:1.2 !important;
+
+        margin:0 !important;
+
+        padding:0 !important;
+    }
+
+
+    .banner .group-text span{
+
+        font-size:7px !important;
+    }
+
+}
+
+
+/* =========================================
+   MOBILE KECIL
+========================================= */
+
+@media screen and (max-width:480px){
+
+    .banner{
+
+        min-height:230px !important;
+
+        height:230px !important;
+    }
+
+
+    .banner-content,
+    .banner-text{
+
+        left:20px !important;
+
+        width:62% !important;
+
+        max-width:62% !important;
+    }
+
+
+    .banner-content h1,
+    .banner-content h2,
+    .banner-title,
+    .banner-text h1,
+    .banner-text h2{
+
+        font-size:21px !important;
+    }
+
+
+    .banner-content p,
+    .banner-subtitle,
+    .banner-text p{
+
+        font-size:12px !important;
+    }
+
+
+    .banner-building,
+    .building{
+
+        width:78% !important;
+
+        right:-45px !important;
+
+        opacity:.55 !important;
+    }
+
+
+    .banner .group,
+    .group-logo{
+
+        top:10px !important;
+
+        right:12px !important;
+    }
+
+}
 </style>
 
 
