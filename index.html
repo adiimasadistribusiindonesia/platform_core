@@ -666,7 +666,7 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
           <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
         </button>
         <button class="module-card mbi" onclick="openModule('MBI')"><div class="card-top"><span class="module-icon-big">📊</span><h3>MBI</h3><p>Modul Business Intelligence,<br>sistem dan program digital.</p>
-       <span class="arrow-round">›</span></div><div class="card-footer"><span>♟ &nbsp; 1 Program</span><span>→</span></div></button>
+       <span class="arrow-round">›</span></div><div class="card-footer"><span>♟ &nbsp; 1 Client</span><span>→</span></div></button>
 
       </div>
 
@@ -957,7 +957,7 @@ const moduleClients = {
   MARKETPLACE: [],
   COMPANY: [],
   PRODUCT: [],
-  MBI    : []
+  MBI    : [{name:'SELLERBOOKS',desc:'Sistem pembukuan dan manajemen penjualan marketplace',icon:'📊',meta:'Client aktif · Modul MBI'}]
 };
 
 function activateNav(id){
@@ -1005,11 +1005,22 @@ async function loadClientOverview(){
   if(!coreAccessToken){ msg.textContent='Silakan login ulang untuk memuat data overview.'; return; }
   try{
     msg.textContent='Memuat data overview...';
-    let url = SUPABASE_URL + '/rest/v1/geparu_admin_access?select=approval_status,client_name';
-    if(client) url += '&client_name=eq.' + encodeURIComponent(client);
-    const r = await fetch(url,{headers:authHeaders()});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const rows = await r.json();
+    let rows=[];
+
+    if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+      const url = SUPABASE_URL + '/rest/v1/sellerbooks_profiles?select=user_id,email,owner_name,status,approved_at,created_at,updated_at&order=created_at.desc';
+      const r = await fetch(url,{headers:authHeaders(),cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const profiles = await r.json();
+      rows = profiles.map(x=>({approval_status:String(x.status||'').toUpperCase(),client_name:'SELLERBOOKS'}));
+    }else{
+      let url = SUPABASE_URL + '/rest/v1/geparu_admin_access?select=approval_status,client_name';
+      if(client) url += '&client_name=eq.' + encodeURIComponent(client);
+      const r = await fetch(url,{headers:authHeaders()});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      rows = await r.json();
+    }
+
     const count={PENDING:0,APPROVED:0,REJECTED:0,SUSPENDED:0};
     rows.forEach(x=>{if(count[x.approval_status]!==undefined) count[x.approval_status]++});
     document.getElementById('ovPending').textContent=count.PENDING;
@@ -1048,11 +1059,34 @@ async function loadApprovalData(){
   try{
     msg.textContent='Memuat permintaan akses...';
     body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px">Memuat...</td></tr>';
-    let url=SUPABASE_URL+'/rest/v1/geparu_admin_access?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&order=created_at.desc';
-    if(client) url+='&client_name=eq.'+encodeURIComponent(client);
-    const r=await fetch(url,{headers:authHeaders()});
-    if(!r.ok) throw new Error(await r.text());
-    approvalData=await r.json(); renderApproval();
+
+    if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+      const url=SUPABASE_URL+'/rest/v1/sellerbooks_profiles?select=user_id,email,owner_name,status,approved_at,created_at,updated_at&order=created_at.desc';
+      const r=await fetch(url,{headers:authHeaders(),cache:'no-store'});
+      if(!r.ok) throw new Error(await r.text());
+      const profiles=await r.json();
+      approvalData=profiles.map(x=>({
+        id:x.user_id,
+        email:x.email||'-',
+        core_name:'PT ADIIMASA DISTRIBUSI INDONESIA',
+        module_slug:'MBI',
+        client_name:'SELLERBOOKS',
+        approval_status:String(x.status||'').toUpperCase(),
+        is_active:String(x.status||'').toUpperCase()==='APPROVED',
+        created_at:x.created_at,
+        approved_at:x.approved_at,
+        rejected_at:null,
+        approval_note:x.owner_name ? 'Owner: '+x.owner_name : ''
+      }));
+    }else{
+      let url=SUPABASE_URL+'/rest/v1/geparu_admin_access?select=id,email,core_name,module_slug,client_name,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&order=created_at.desc';
+      if(client) url+='&client_name=eq.'+encodeURIComponent(client);
+      const r=await fetch(url,{headers:authHeaders()});
+      if(!r.ok) throw new Error(await r.text());
+      approvalData=await r.json();
+    }
+
+    renderApproval();
     msg.textContent='Data berhasil diperbarui.';
   }catch(e){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#a52b2b">Gagal memuat data.</td></tr>';msg.textContent='Error: '+e.message;}
 }
@@ -1066,18 +1100,39 @@ function renderApproval(){
 }
 async function changeApproval(id,status){
  if(!confirm('Yakin mengubah status menjadi '+status+'?')) return;
- const body={approval_status:status,is_active:status==='APPROVED'};
- if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
- if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
- if(status==='SUSPENDED') body.approved_at=null;
- const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
- if(!r.ok){alert('Gagal mengubah status: '+await r.text());return;}
+
+ if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
+   const body={status:String(status||'').toLowerCase()};
+   if(status==='APPROVED') body.approved_at=new Date().toISOString();
+   const r=await fetch(SUPABASE_URL+'/rest/v1/sellerbooks_profiles?user_id=eq.'+encodeURIComponent(id),{
+     method:'PATCH',
+     headers:{...authHeaders(),Prefer:'return=minimal'},
+     body:JSON.stringify(body)
+   });
+   if(!r.ok){alert('Gagal mengubah status SellerBooks: '+await r.text());return;}
+ }else{
+   const body={approval_status:status,is_active:status==='APPROVED'};
+   if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
+   if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
+   if(status==='SUSPENDED') body.approved_at=null;
+   const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
+   if(!r.ok){alert('Gagal mengubah status: '+await r.text());return;}
+ }
  await loadApprovalData(); await loadClientOverview();
 }
 async function deleteApproval(id){
  if(!confirm('Yakin ingin menghapus data akses ini?')) return;
- const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});
- if(!r.ok){alert('Gagal menghapus data: '+await r.text());return;}
+
+ if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
+   const r=await fetch(SUPABASE_URL+'/rest/v1/sellerbooks_profiles?user_id=eq.'+encodeURIComponent(id),{
+     method:'DELETE',
+     headers:{...authHeaders(),Prefer:'return=minimal'}
+   });
+   if(!r.ok){alert('Gagal menghapus profile SellerBooks: '+await r.text());return;}
+ }else{
+   const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});
+   if(!r.ok){alert('Gagal menghapus data: '+await r.text());return;}
+ }
  await loadApprovalData(); await loadClientOverview();
 }
 const originalOpenPanel=openPanel;
