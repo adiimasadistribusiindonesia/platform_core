@@ -1308,8 +1308,66 @@ async function loadMasterActivity(){
   try{
     // Menggunakan pola yang sama dengan Activity Log lama yang sudah berjalan.
     const base=SUPABASE_URL+'/rest/v1/activity_logs?select=*';
-    let url=base+'&module=eq.'+encodeURIComponent(module)+'&order=created_at.desc';
-    let response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
+    let url;
+    let response;
+
+    /*
+       MBI / SELLERBOOKS menggunakan Activity Log yang sama dengan GEPARU,
+       tetapi sumber identitas modul dapat tersimpan pada kolom module
+       atau module_slug. Khusus SELLERBOOKS, baca keduanya tanpa
+       mengubah jalur Activity Log GEPARU.
+    */
+    if(module==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+      const [byModule,bySlug]=await Promise.all([
+        fetch(base+'&module=eq.MBI&order=created_at.desc',{headers:activityHeaders(),cache:'no-store'}),
+        fetch(base+'&module_slug=eq.MBI&order=created_at.desc',{headers:activityHeaders(),cache:'no-store'})
+      ]);
+
+      if(!byModule.ok && !bySlug.ok){
+        const e1=await byModule.text().catch(()=> '');
+        const e2=await bySlug.text().catch(()=> '');
+        throw new Error('HTTP '+byModule.status+'/'+bySlug.status+' — '+(e1||e2));
+      }
+
+      const logsA=byModule.ok?await byModule.json().catch(()=>[]):[];
+      const logsB=bySlug.ok?await bySlug.json().catch(()=>[]):[];
+      const seen=new Set();
+      let logs=[...logsA,...logsB].filter(log=>{
+        const key=String(log?.id||'');
+        if(!key || seen.has(key))return false;
+        seen.add(key);
+        return true;
+      }).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+
+      logs=await resolveMasterActors(logs);
+      window.currentActivityLogs=Array.isArray(logs)?logs:[];
+
+      if(!logs.length){
+        tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk client '+activityEsc(client)+'.</td></tr>';
+        msg.textContent='Tidak ditemukan data log untuk '+client+'.';
+        return;
+      }
+
+      tbody.innerHTML=logs.map(log=>{
+        const action=log.action||log.activity||'-';
+        const description=cleanActivityDescription(log);
+        const logModule=log.module||log.module_slug||module;
+        return '<tr>'+
+          '<td>'+activityDate(log.created_at||log.createdAt)+'</td>'+
+          '<td>'+activityActor(log)+'</td>'+
+          '<td>'+activityEsc(description)+'</td>'+
+          '<td>'+activityEsc(logModule)+'</td>'+
+          '<td><span class="activity-status '+activityStatusClass(log.status)+'">'+activityEsc(log.status||'SUCCESS')+'</span></td>'+
+          '<td>'+activityEsc(action)+'</td>'+
+        '</tr>';
+      }).join('');
+
+      msg.textContent='Menampilkan '+logs.length+' riwayat aktivitas.';
+      return;
+    }
+
+    url=base+'&module=eq.'+encodeURIComponent(module)+'&order=created_at.desc';
+    response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
 
     if(!response.ok){
       const errorText=await response.text();
