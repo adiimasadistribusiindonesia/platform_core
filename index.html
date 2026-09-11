@@ -2629,6 +2629,100 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
 
 
 
+
+        <!-- =====================================================
+             SELLERBOOKS — APK vs WEBSITE KOMPUTER
+        ===================================================== -->
+        <div
+            class="sellerbooks-access-analysis"
+            id="sellerbooksAccessAnalysis"
+        >
+
+            <div class="sellerbooks-access-title">
+                Akses SELLERBOOKS
+            </div>
+
+            <div class="sellerbooks-access-subtitle">
+                Perbandingan penggunaan aplikasi APK dan website komputer.
+            </div>
+
+            <div class="sellerbooks-access-grid">
+
+                <div class="sellerbooks-access-card">
+                    <div class="sellerbooks-access-icon">📱</div>
+                    <div class="sellerbooks-access-label">
+                        Dibuka dari APK
+                    </div>
+                    <div
+                        class="sellerbooks-access-value"
+                        id="sellerbooksApkViews"
+                    >
+                        0
+                    </div>
+                    <div class="sellerbooks-access-note">
+                        Total pembukaan / pageview dari APK.
+                    </div>
+                </div>
+
+                <div class="sellerbooks-access-card">
+                    <div class="sellerbooks-access-icon">🖥️</div>
+                    <div class="sellerbooks-access-label">
+                        Website Komputer
+                    </div>
+                    <div
+                        class="sellerbooks-access-value"
+                        id="sellerbooksWebViews"
+                    >
+                        0
+                    </div>
+                    <div class="sellerbooks-access-note">
+                        Total pageview dari perangkat desktop/laptop.
+                    </div>
+                </div>
+
+                <div class="sellerbooks-access-card">
+                    <div class="sellerbooks-access-icon">👥</div>
+                    <div class="sellerbooks-access-label">
+                        Pengunjung Unik APK
+                    </div>
+                    <div
+                        class="sellerbooks-access-value"
+                        id="sellerbooksApkVisitors"
+                    >
+                        0
+                    </div>
+                    <div class="sellerbooks-access-note">
+                        Visitor unik yang menggunakan APK.
+                    </div>
+                </div>
+
+                <div class="sellerbooks-access-card">
+                    <div class="sellerbooks-access-icon">👤</div>
+                    <div class="sellerbooks-access-label">
+                        Pengunjung Unik Website
+                    </div>
+                    <div
+                        class="sellerbooks-access-value"
+                        id="sellerbooksWebVisitors"
+                    >
+                        0
+                    </div>
+                    <div class="sellerbooks-access-note">
+                        Visitor unik dari komputer/laptop.
+                    </div>
+                </div>
+
+            </div>
+
+            <div
+                class="sellerbooks-access-footnote"
+                id="sellerbooksAccessFootnote"
+            >
+                Data mengikuti pageview yang tercatat di Analytics.
+            </div>
+
+        </div>
+
         <!-- GRAPH + TOP CONTENT -->
 
         <div class="analysis-grid">
@@ -3381,6 +3475,20 @@ async function loadPlatformAnalysisData(clientName){
         const pageviews =
             await pageviewsResponse.json();
 
+
+        /* ============================================
+           SELLERBOOKS — APK vs WEBSITE KOMPUTER
+        ============================================ */
+
+        if(
+            typeof updateSellerBooksAccessStats ===
+            "function"
+        ){
+            updateSellerBooksAccessStats(
+                clientName,
+                pageviews
+            );
+        }
 
 
         /* ============================================
@@ -4759,6 +4867,91 @@ document.addEventListener(
     }
 
 }
+
+/* =====================================================
+   SELLERBOOKS — STATISTIK APK vs WEBSITE KOMPUTER
+   Tambahan khusus MBI / SELLERBOOKS
+===================================================== */
+
+.sellerbooks-access-analysis{
+    margin-top:20px;
+    display:none;
+}
+
+.sellerbooks-access-analysis.show{
+    display:block;
+}
+
+.sellerbooks-access-title{
+    font-size:18px;
+    font-weight:800;
+    color:#17324d;
+    margin-bottom:5px;
+}
+
+.sellerbooks-access-subtitle{
+    color:#718296;
+    font-size:13px;
+    margin-bottom:14px;
+}
+
+.sellerbooks-access-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+}
+
+.sellerbooks-access-card{
+    background:#fff;
+    border:1px solid #dfe8f1;
+    border-radius:15px;
+    padding:18px;
+    box-shadow:0 6px 18px rgba(24,50,71,.05);
+}
+
+.sellerbooks-access-icon{
+    font-size:25px;
+    margin-bottom:10px;
+}
+
+.sellerbooks-access-label{
+    font-size:12px;
+    color:#687b90;
+    font-weight:700;
+}
+
+.sellerbooks-access-value{
+    font-size:30px;
+    font-weight:800;
+    color:#17324d;
+    margin:7px 0 4px;
+}
+
+.sellerbooks-access-note{
+    font-size:11px;
+    color:#8a98a6;
+    line-height:1.4;
+}
+
+.sellerbooks-access-footnote{
+    margin-top:12px;
+    font-size:11px;
+    color:#718296;
+    line-height:1.5;
+}
+
+@media(max-width:900px){
+    .sellerbooks-access-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:600px){
+    .sellerbooks-access-grid{
+        grid-template-columns:1fr;
+    }
+}
+
 </style>
 
 
@@ -5176,6 +5369,177 @@ document.addEventListener(
        GRAFIK DAN STATUS
     ===================================================== */
 
+
+    /* =====================================================
+       SELLERBOOKS — HITUNG AKSES APK vs WEBSITE KOMPUTER
+       APK dikenali dari marker SellerBooksAPK pada User-Agent.
+       Website komputer dikenali dari device_type / OS desktop.
+    ===================================================== */
+
+    function updateSellerBooksAccessStats(
+        clientName,
+        pageviews
+    ){
+
+        const panel =
+            document.getElementById(
+                "sellerbooksAccessAnalysis"
+            );
+
+        if(!panel) return;
+
+        if(
+            String(clientName || "")
+                .trim()
+                .toUpperCase() !== "SELLERBOOKS"
+        ){
+            panel.classList.remove("show");
+            return;
+        }
+
+        panel.classList.add("show");
+
+        const apkPages = [];
+        const webPages = [];
+        const otherPages = [];
+
+        pageviews.forEach(page => {
+
+            const browser =
+                String(page.browser || "");
+
+            const device =
+                String(page.device_type || "")
+                    .toLowerCase();
+
+            const os =
+                String(page.operating_system || "")
+                    .toLowerCase();
+
+            const url =
+                String(page.page_url || "");
+
+            /*
+               Marker utama dari APK Android.
+               URL source=apk juga diterima sebagai fallback.
+            */
+            const isAPK =
+                browser.includes("SellerBooksAPK") ||
+                url.includes("source=apk") ||
+                device.includes("apk");
+
+            if(isAPK){
+                apkPages.push(page);
+                return;
+            }
+
+            /*
+               Website komputer/laptop.
+               Gunakan device_type jika tersedia,
+               lalu fallback ke OS desktop.
+            */
+            const isDesktop =
+                device.includes("desktop") ||
+                device.includes("computer") ||
+                device.includes("laptop") ||
+                os.includes("windows") ||
+                os.includes("mac os") ||
+                os.includes("macos") ||
+                os.includes("linux") ||
+                os.includes("chrome os");
+
+            if(isDesktop){
+                webPages.push(page);
+                return;
+            }
+
+            otherPages.push(page);
+
+        });
+
+        const apkVisitors =
+            new Set(
+                apkPages
+                    .map(page => page.visitor_id)
+                    .filter(Boolean)
+            );
+
+        const webVisitors =
+            new Set(
+                webPages
+                    .map(page => page.visitor_id)
+                    .filter(Boolean)
+            );
+
+        const apkViews =
+            document.getElementById(
+                "sellerbooksApkViews"
+            );
+
+        const webViews =
+            document.getElementById(
+                "sellerbooksWebViews"
+            );
+
+        const apkUnique =
+            document.getElementById(
+                "sellerbooksApkVisitors"
+            );
+
+        const webUnique =
+            document.getElementById(
+                "sellerbooksWebVisitors"
+            );
+
+        if(apkViews){
+            apkViews.textContent =
+                apkPages.length;
+        }
+
+        if(webViews){
+            webViews.textContent =
+                webPages.length;
+        }
+
+        if(apkUnique){
+            apkUnique.textContent =
+                apkVisitors.size;
+        }
+
+        if(webUnique){
+            webUnique.textContent =
+                webVisitors.size;
+        }
+
+        const footnote =
+            document.getElementById(
+                "sellerbooksAccessFootnote"
+            );
+
+        if(footnote){
+
+            if(otherPages.length){
+
+                footnote.textContent =
+                    otherPages.length +
+                    " pageview SELLERBOOKS tidak dimasukkan " +
+                    "ke APK atau website komputer " +
+                    "(misalnya browser HP biasa).";
+
+            }else{
+
+                footnote.textContent =
+                    "Seluruh pageview SELLERBOOKS yang terbaca " +
+                    "berhasil diklasifikasikan sebagai APK atau " +
+                    "website komputer.";
+
+            }
+
+        }
+
+    }
+
+
     async function refreshRealChartAndStatus(
         clientName
     ){
@@ -5272,6 +5636,15 @@ document.addEventListener(
             const pageviews =
                 await response.json();
 
+
+            /* ==========================================
+               SELLERBOOKS — APK vs WEBSITE KOMPUTER
+            ========================================== */
+
+            updateSellerBooksAccessStats(
+                clientName,
+                pageviews
+            );
 
 
             /* ==========================================
