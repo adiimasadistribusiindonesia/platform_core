@@ -2477,19 +2477,23 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
 
                 <span>Periode:</span>
 
-                <button class="analysis-period-btn active">
+                <button class="analysis-period-btn active" data-period="day">
                     Hari Ini
                 </button>
 
-                <button class="analysis-period-btn">
-                    7 Hari
+                <button class="analysis-period-btn" data-period="week">
+                    Minggu Ini
                 </button>
 
-                <button class="analysis-period-btn">
-                    30 Hari
+                <button class="analysis-period-btn" data-period="month">
+                    Bulan Ini
                 </button>
 
-                <button class="analysis-period-btn">
+                <button class="analysis-period-btn" data-period="year">
+                    Tahun Ini
+                </button>
+
+                <button class="analysis-period-btn" data-period="all">
                     Semua
                 </button>
 
@@ -2544,7 +2548,7 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
                 </div>
 
                 <div class="analysis-stat-note">
-                    Total kunjungan platform
+                    Pengunjung unik pada periode terpilih
                 </div>
 
             </div>
@@ -2568,8 +2572,8 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
                     0
                 </div>
 
-                <div class="analysis-stat-note">
-                    Kunjungan hari ini
+                <div class="analysis-stat-note" id="analysisPeriodNote">
+                    Pengunjung unik hari ini (WIB)
                 </div>
 
             </div>
@@ -5929,6 +5933,293 @@ document.addEventListener(
 
 })();
 
+</script>
+<script>
+/* =====================================================
+   PLATFORM ANALYSIS v2
+   - Periode Hari / Minggu / Bulan / Tahun / Semua
+   - Semua batas hari menggunakan WIB (Asia/Jakarta)
+   - Data TIDAK dihapus saat 00:00; hanya filter "Hari Ini"
+     yang otomatis kembali ke nol sampai ada kunjungan baru.
+   - Riwayat pageview tetap tersimpan di analytics_pageviews.
+   - SELLERBOOKS: APK vs Website dihitung dari pageview periode aktif.
+===================================================== */
+(function(){
+    const WIB = "Asia/Jakarta";
+    let analysisPeriod = "day";
+    let analysisCache = [];
+    let analysisLoadedClient = "";
+
+    function partsWIB(date){
+        const parts = new Intl.DateTimeFormat("en-US",{
+            timeZone:WIB,
+            year:"numeric",month:"2-digit",day:"2-digit",
+            hour:"2-digit",minute:"2-digit",second:"2-digit",
+            hourCycle:"h23"
+        }).formatToParts(new Date(date));
+        const o={};
+        parts.forEach(p=>{if(p.type!=="literal") o[p.type]=p.value;});
+        return {
+            y:Number(o.year), m:Number(o.month), d:Number(o.day),
+            h:Number(o.hour), min:Number(o.minute), sec:Number(o.second)
+        };
+    }
+
+    function wibKey(date){
+        const p=partsWIB(date);
+        return `${p.y}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
+    }
+
+    function keyDate(key){
+        const [y,m,d]=key.split("-").map(Number);
+        return new Date(Date.UTC(y,m-1,d));
+    }
+
+    function keyFromDateUTC(d){
+        return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;
+    }
+
+    function addDaysKey(key,n){
+        const d=keyDate(key); d.setUTCDate(d.getUTCDate()+n); return keyFromDateUTC(d);
+    }
+
+    function mondayOf(key){
+        const d=keyDate(key);
+        const dow=d.getUTCDay();
+        const diff=(dow+6)%7;
+        d.setUTCDate(d.getUTCDate()-diff);
+        return keyFromDateUTC(d);
+    }
+
+    function monthKey(key){ return key.slice(0,7); }
+    function yearKey(key){ return key.slice(0,4); }
+
+    function currentWIBKey(){ return wibKey(new Date()); }
+
+    function periodInfo(period){
+        const today=currentWIBKey();
+        if(period==="day") return {start:today,end:today,type:"day"};
+        if(period==="week") return {start:mondayOf(today),end:addDaysKey(mondayOf(today),6),type:"week"};
+        if(period==="month"){
+            const [y,m]=today.split("-").map(Number);
+            const first=`${y}-${String(m).padStart(2,"0")}-01`;
+            const lastDate=new Date(Date.UTC(y,m,0));
+            return {start:first,end:keyFromDateUTC(lastDate),type:"month"};
+        }
+        if(period==="year") return {start:today.slice(0,4)+"-01-01",end:today.slice(0,4)+"-12-31",type:"year"};
+        return {start:null,end:null,type:"all"};
+    }
+
+    function inPeriod(page,info){
+        if(!page || !page.viewed_at) return false;
+        if(info.type==="all") return true;
+        const k=wibKey(page.viewed_at);
+        return k>=info.start && k<=info.end;
+    }
+
+    async function fetchAllPageviews(clientName,moduleName){
+        const rows=[];
+        const pageSize=1000;
+        let offset=0;
+        while(true){
+            const url=SUPABASE_URL+
+                "/rest/v1/analytics_pageviews?select=*"+
+                "&client_name=eq."+encodeURIComponent(clientName)+
+                "&module_slug=eq."+encodeURIComponent(moduleName)+
+                "&order=viewed_at.asc"+
+                "&limit="+pageSize+
+                "&offset="+offset;
+            const r=await fetch(url,{headers:authHeaders(),cache:"no-store"});
+            if(!r.ok) throw new Error("Gagal mengambil Analytics (HTTP "+r.status+")");
+            const batch=await r.json();
+            rows.push(...batch);
+            if(batch.length<pageSize) break;
+            offset+=pageSize;
+            if(offset>100000) break;
+        }
+        return rows;
+    }
+
+    function classifySellerBooks(page){
+        const browser=String(page.browser||"");
+        const device=String(page.device_type||"").toLowerCase();
+        const os=String(page.operating_system||"").toLowerCase();
+        const url=String(page.page_url||"");
+        const apk=browser.includes("SellerBooksAPK") || url.includes("source=apk") || device.includes("apk");
+        if(apk) return "apk";
+        const desktop=device.includes("desktop") || device.includes("computer") || device.includes("laptop") ||
+            os.includes("windows") || os.includes("mac os") || os.includes("macos") ||
+            os.includes("linux") || os.includes("chrome os");
+        if(desktop) return "web";
+        return "other";
+    }
+
+    function periodLabel(period){
+        return ({day:"Hari Ini",week:"Minggu Ini",month:"Bulan Ini",year:"Tahun Ini",all:"Semua"})[period]||"Hari Ini";
+    }
+
+    function updateStats(filtered,allRows){
+        const unique=new Set(filtered.map(x=>x.visitor_id).filter(Boolean)).size;
+        const totalEl=document.getElementById("analysisTotalVisitors");
+        const todayEl=document.getElementById("analysisTodayVisitors");
+        const noteEl=document.getElementById("analysisPeriodNote");
+        if(totalEl) totalEl.textContent=unique;
+        if(todayEl) todayEl.textContent=filtered.length;
+        if(noteEl) noteEl.textContent=`Total view / masuk pada ${periodLabel(analysisPeriod).toLowerCase()} (WIB)`;
+
+        const newsCard=document.getElementById("analysisNewsViews")?.closest(".analysis-stat-card");
+        const topCard=document.getElementById("analysisTopContent")?.closest(".analysis-stat-card");
+        const topPanel=document.getElementById("analysisTopNews")?.closest(".analysis-panel");
+        const client=(document.getElementById("analysisClientName")?.textContent||"").trim().toUpperCase();
+        const seller=client==="SELLERBOOKS";
+        if(newsCard) newsCard.style.display=seller?"none":"";
+        if(topCard) topCard.style.display=seller?"none":"";
+        if(topPanel) topPanel.style.display=seller?"none":"";
+
+        if(seller){
+            let apk=0,web=0,other=0,apkU=new Set(),webU=new Set();
+            filtered.forEach(p=>{
+                const c=classifySellerBooks(p);
+                if(c==="apk"){apk++; if(p.visitor_id) apkU.add(p.visitor_id);}
+                else if(c==="web"){web++; if(p.visitor_id) webU.add(p.visitor_id);}
+                else other++;
+            });
+            const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+            set("sellerbooksApkViews",apk);
+            set("sellerbooksWebViews",web);
+            set("sellerbooksApkVisitors",apkU.size);
+            set("sellerbooksWebVisitors",webU.size);
+            const foot=document.getElementById("sellerbooksAccessFootnote");
+            if(foot){
+                foot.textContent=other
+                    ? `${other} pageview tidak masuk kategori APK atau website komputer (misalnya browser HP biasa). Periode: ${periodLabel(analysisPeriod)}.`
+                    : `Seluruh pageview yang terbaca masuk kategori APK atau website komputer. Periode: ${periodLabel(analysisPeriod)}.`;
+            }
+        }
+    }
+
+    function renderPeriodChart(filtered){
+        const chart=document.querySelector(".analysis-chart");
+        if(!chart) return;
+        chart.classList.add("analysis-real-bars","analysis-period-chart");
+        const info=periodInfo(analysisPeriod);
+        const buckets=[];
+
+        if(info.type==="day"){
+            for(let h=0;h<24;h++) buckets.push({key:String(h).padStart(2,"0"),label:String(h).padStart(2,"0"),value:0});
+            filtered.forEach(p=>{
+                const pp=partsWIB(p.viewed_at);
+                buckets[pp.h].value++;
+            });
+        }else if(info.type==="week" || info.type==="month"){
+            let cur=info.start;
+            while(cur<=info.end){
+                const d=keyDate(cur);
+                const names=["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+                const label=info.type==="week" ? names[d.getUTCDay()] : String(d.getUTCDate());
+                buckets.push({key:cur,label,value:0});
+                cur=addDaysKey(cur,1);
+            }
+            filtered.forEach(p=>{
+                const k=wibKey(p.viewed_at), b=buckets.find(x=>x.key===k); if(b)b.value++;
+            });
+        }else{
+            // Tahun dan Semua: tampilkan per bulan agar grafik tetap terbaca.
+            const map={};
+            filtered.forEach(p=>{const k=monthKey(wibKey(p.viewed_at)); if(k) map[k]=(map[k]||0)+1;});
+            if(info.type==="year"){
+                for(let m=1;m<=12;m++){
+                    const k=info.start.slice(0,4)+"-"+String(m).padStart(2,"0");
+                    buckets.push({key:k,label:new Intl.DateTimeFormat("id-ID",{timeZone:WIB,month:"short"}).format(new Date(Date.UTC(Number(info.start.slice(0,4)),m-1,1))),value:map[k]||0});
+                }
+            }else{
+                Object.keys(map).sort().forEach(k=>buckets.push({key:k,label:k.slice(5),value:map[k]}));
+            }
+        }
+
+        const max=Math.max(...buckets.map(b=>b.value),0);
+        const scale=Math.max(1,max);
+        chart.innerHTML=buckets.map(b=>{
+            const h=b.value?Math.max(4,Math.min(100,b.value/scale*100)):0;
+            return `<div class="analysis-bar-wrap" style="min-width:${buckets.length>20?"18px":"0"}" title="${b.value} view">
+                <div class="analysis-bar ${b.value===0?"is-zero":""}" style="height:${h}%" title="${b.value} view"></div>
+                <span class="analysis-bar-label">${b.label}</span>
+            </div>`;
+        }).join("");
+
+        const subtitle=Array.from(document.querySelectorAll(".analysis-panel .analysis-panel-sub"))
+            .find(el=>String(el.textContent||"").toLowerCase().includes("pergerakan kunjungan"));
+        if(subtitle) subtitle.textContent=`Pergerakan kunjungan · ${periodLabel(analysisPeriod)} · WIB`;
+    }
+
+    async function renderAnalysis(clientName,force=false){
+        clientName=String(clientName||"GEPARU").trim();
+        const module=(typeof currentModule!=="undefined"&&currentModule)?String(currentModule).toUpperCase():"SOSIAL";
+        const analyticsModule=clientName.toUpperCase()==="SELLERBOOKS"?"SELLERBOOKS":module;
+        if(!force && analysisLoadedClient===clientName && analysisCache.length) return applyAnalysis();
+        if(!coreAccessToken) return;
+        const page=document.getElementById("platformAnalysisPage");
+        if(page) page.classList.add("analysis-loading");
+        try{
+            analysisCache=await fetchAllPageviews(clientName,analyticsModule);
+            analysisLoadedClient=clientName;
+            applyAnalysis();
+        }catch(e){
+            console.error("Platform Analysis v2:",e);
+            const msg=document.getElementById("sellerbooksAccessFootnote");
+            if(msg) msg.textContent="Gagal memuat Analytics: "+e.message;
+        }finally{
+            if(page) page.classList.remove("analysis-loading");
+        }
+    }
+
+    function applyAnalysis(){
+        const info=periodInfo(analysisPeriod);
+        const filtered=analysisCache.filter(p=>inPeriod(p,info));
+        updateStats(filtered,analysisCache);
+        renderPeriodChart(filtered);
+    }
+
+    function bindPeriodButtons(){
+        document.querySelectorAll(".analysis-period-btn").forEach(btn=>{
+            if(btn.dataset.periodBound==="1") return;
+            btn.dataset.periodBound="1";
+            btn.addEventListener("click",async function(){
+                document.querySelectorAll(".analysis-period-btn").forEach(b=>b.classList.remove("active"));
+                this.classList.add("active");
+                analysisPeriod=this.dataset.period || "day";
+                const client=(document.getElementById("analysisClientName")?.textContent||"GEPARU").trim();
+                await renderAnalysis(client,false);
+            });
+        });
+    }
+
+    // Ganti fungsi global terakhir agar seluruh pemanggilan Analysis memakai filter baru.
+    window.loadPlatformAnalysisData=async function(clientName){
+        bindPeriodButtons();
+        const name=String(clientName||document.getElementById("analysisClientName")?.textContent||"GEPARU").trim();
+        await renderAnalysis(name,true);
+        return true;
+    };
+
+    document.addEventListener("click",function(e){
+        if(e.target.closest("#analysisRefreshBtn")){
+            const client=(document.getElementById("analysisClientName")?.textContent||"GEPARU").trim();
+            renderAnalysis(client,true);
+        }
+    });
+
+    // Setiap 30 detik cek data baru. Pergantian 00:00 WIB otomatis membuat
+    // "Hari Ini" kosong karena filter tanggal, tanpa menghapus riwayat.
+    setInterval(function(){
+        const page=document.getElementById("platformAnalysisPage");
+        if(!page || !page.classList.contains("show")) return;
+        const client=(document.getElementById("analysisClientName")?.textContent||"GEPARU").trim();
+        renderAnalysis(client,true);
+    },30000);
+
+    bindPeriodButtons();
+})();
 </script>
 </body>
 </html>
