@@ -3470,9 +3470,19 @@ async function loadPlatformAnalysisData(clientName){
             encodeURIComponent(clientName);
 
 
+        /* =====================================================
+           MODULE ANALYTICS SESUAI CLIENT
+           SELLERBOOKS memakai module_slug = SELLERBOOKS.
+           Client lain tetap memakai module_slug masing-masing.
+        ===================================================== */
+        const analyticsModule =
+            String(clientName || "").trim().toUpperCase() === "SELLERBOOKS"
+                ? "SELLERBOOKS"
+                : module;
+
         const moduleFilter =
             "&module_slug=eq." +
-            encodeURIComponent(module);
+            encodeURIComponent(analyticsModule);
 
 
         const visitorsURL =
@@ -5668,6 +5678,13 @@ document.addEventListener(
 
                 : "SOSIAL";
 
+            /* SELLERBOOKS membaca Analytics dengan module_slug SELLERBOOKS.
+               Client lain tetap menggunakan module_slug masing-masing. */
+            const analyticsModule =
+                clientName.toUpperCase() === "SELLERBOOKS"
+                    ? "SELLERBOOKS"
+                    : module;
+
 
             if(
                 !SUPABASE_URL ||
@@ -5698,7 +5715,7 @@ document.addEventListener(
                 "&module_slug=eq." +
 
                 encodeURIComponent(
-                    module
+                    analyticsModule
                 ) +
 
                 "&order=viewed_at.desc";
