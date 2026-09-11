@@ -4493,6 +4493,16 @@ async function resetPlatformAnalytics(){
         ? String(currentModule).toUpperCase()
         : "SOSIAL";
 
+    /* =====================================================
+       RESET ANALYTICS SESUAI CLIENT
+       SELLERBOOKS harus menghapus module_slug SELLERBOOKS.
+       Client lain tetap menggunakan module_slug masing-masing.
+    ===================================================== */
+    const analyticsModule =
+        clientName.toUpperCase() === "SELLERBOOKS"
+            ? "SELLERBOOKS"
+            : module;
+
 
     if(!coreAccessToken){
 
@@ -4538,7 +4548,7 @@ async function resetPlatformAnalytics(){
             "?client_name=eq." +
             encodeURIComponent(clientName) +
             "&module_slug=eq." +
-            encodeURIComponent(module);
+            encodeURIComponent(analyticsModule);
 
 
         /*
