@@ -2997,17 +2997,68 @@ function openPlatformAnalysis(clientName){
     if(!page) return;
 
 
+    const analysisClient =
+        String(clientName || "GEPARU").trim();
+
+    const isSellerBooks =
+        analysisClient.toUpperCase() === "SELLERBOOKS";
+
     document.getElementById(
         "analysisClientName"
-    ).textContent =
-        clientName || "GEPARU";
-
+    ).textContent = analysisClient;
 
     document.getElementById(
         "platformAnalysisClientTitle"
     ).textContent =
-        "Platform Analysis · " +
-        (clientName || "GEPARU");
+        "Platform Analysis · " + analysisClient;
+
+    const analysisClientDesc =
+        document.querySelector("#analysisClientName + p");
+
+    if(analysisClientDesc){
+        analysisClientDesc.textContent =
+            isSellerBooks
+                ? "Sistem pembukuan dan manajemen penjualan marketplace"
+                : "Generasi Padjajaran Baru";
+    }
+
+    /* SELLERBOOKS tidak menggunakan komponen berita GEPARU. */
+    const newsStatCard =
+        document.getElementById("analysisNewsViews")
+        ?.closest(".analysis-stat-card");
+
+    const topContentCard =
+        document.getElementById("analysisTopContent")
+        ?.closest(".analysis-stat-card");
+
+    const topNewsPanel =
+        document.getElementById("analysisTopNews")
+        ?.closest(".analysis-panel");
+
+    if(newsStatCard)
+        newsStatCard.style.display = isSellerBooks ? "none" : "";
+
+    if(topContentCard)
+        topContentCard.style.display = isSellerBooks ? "none" : "";
+
+    if(topNewsPanel)
+        topNewsPanel.style.display = isSellerBooks ? "none" : "";
+
+    const activitySubtitle =
+        Array.from(
+            document.querySelectorAll(".analysis-panel .analysis-panel-sub")
+        ).find(el =>
+            String(el.textContent || "")
+                .toLowerCase()
+                .includes("pergerakan kunjungan")
+        );
+
+    if(activitySubtitle){
+        activitySubtitle.textContent =
+            isSellerBooks
+                ? "Pergerakan kunjungan platform SELLERBOOKS"
+                : "Pergerakan kunjungan platform GEPARU";
+    }
 
 
     page.classList.add("show");
@@ -3356,6 +3407,56 @@ async function loadPlatformAnalysisData(clientName){
 
     }
 
+    /* Pastikan UI SellerBooks tetap bersih setelah refresh. */
+    const isSellerBooksClient =
+        String(clientName || "").trim().toUpperCase() === "SELLERBOOKS";
+
+    const newsStatCard =
+        document.getElementById("analysisNewsViews")
+        ?.closest(".analysis-stat-card");
+
+    const topContentCard =
+        document.getElementById("analysisTopContent")
+        ?.closest(".analysis-stat-card");
+
+    const topNewsPanel =
+        document.getElementById("analysisTopNews")
+        ?.closest(".analysis-panel");
+
+    if(newsStatCard)
+        newsStatCard.style.display = isSellerBooksClient ? "none" : "";
+
+    if(topContentCard)
+        topContentCard.style.display = isSellerBooksClient ? "none" : "";
+
+    if(topNewsPanel)
+        topNewsPanel.style.display = isSellerBooksClient ? "none" : "";
+
+    const analysisClientDesc =
+        document.querySelector("#analysisClientName + p");
+
+    if(analysisClientDesc){
+        analysisClientDesc.textContent =
+            isSellerBooksClient
+                ? "Sistem pembukuan dan manajemen penjualan marketplace"
+                : "Generasi Padjajaran Baru";
+    }
+
+    const activitySubtitle =
+        Array.from(
+            document.querySelectorAll(".analysis-panel .analysis-panel-sub")
+        ).find(el =>
+            String(el.textContent || "")
+                .toLowerCase()
+                .includes("pergerakan kunjungan")
+        );
+
+    if(activitySubtitle){
+        activitySubtitle.textContent =
+            isSellerBooksClient
+                ? "Pergerakan kunjungan platform SELLERBOOKS"
+                : "Pergerakan kunjungan platform GEPARU";
+    }
 
     try{
 
