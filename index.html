@@ -1288,109 +1288,330 @@ function activityActor(log){
 function activityDate(v){if(!v)return '-';try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date(v));}catch(e){return v;}}
 function activityStatusClass(v){return String(v||'SUCCESS').toLowerCase().replace(/[^a-z0-9_-]/g,'');}
 async function loadMasterActivity(){
+
   const tbody=document.getElementById('masterActivityBody');
   const msg=document.getElementById('activityMessage');
   const title=document.getElementById('activityTitle');
-  const module=(typeof currentModule!=='undefined'&&currentModule?currentModule:'SOSIAL').toUpperCase();
-  const client=(document.getElementById('dashClient')?.textContent||'').trim();
 
-  if(title) title.textContent='Riwayat Aktivitas — '+module+(client?' / '+client:'');
+  const module=(
+    typeof currentModule!=='undefined' &&
+    currentModule
+      ? currentModule
+      : 'SOSIAL'
+  ).toUpperCase();
+
+  const client=(
+    document.getElementById('dashClient')?.textContent||''
+  ).trim();
+
+  if(title){
+    title.textContent=
+      'Riwayat Aktivitas — '+
+      module+
+      (client?' / '+client:'');
+  }
+
   if(!coreAccessToken){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">Silakan login ulang.</td></tr>';
+
+    tbody.innerHTML=
+      '<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">'+
+      'Silakan login ulang.'+
+      '</td></tr>';
+
     msg.textContent='Sesi Core tidak ditemukan.';
     return;
   }
 
   window.currentActivityLogs=[];
-  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:35px">Memuat Activity Log...</td></tr>';
+
+  tbody.innerHTML=
+    '<tr><td colspan="6" style="text-align:center;padding:35px">'+
+    'Memuat Activity Log...'+
+    '</td></tr>';
+
   msg.textContent='Menghubungkan ke Activity Log...';
 
   try{
-    // MBI / SELLERBOOKS mengikuti pola Activity Log GEPARU:
-    // log dibaca dari activity_logs berdasarkan client dan modul.
-    const base=SUPABASE_URL+'/rest/v1/activity_logs?select=*';
+
+    const base=
+      SUPABASE_URL+
+      '/rest/v1/activity_logs?select=*';
+
     let url;
     let response;
 
-    if(module==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+    /*
+     * KHUSUS MBI / SELLERBOOKS
+     * Mengikuti pola Activity Log GEPARU.
+     */
+    if(
+      module==='MBI' &&
+      client.toUpperCase()==='SELLERBOOKS'
+    ){
+
       const clientResponse=await fetch(
-        SUPABASE_URL+'/rest/v1/platform_clients?select=id&client_name=eq.SELLERBOOKS&module_slug=eq.MBI&is_active=eq.true&limit=1',
-        {headers:activityHeaders(),cache:'no-store'}
+
+        SUPABASE_URL+
+        '/rest/v1/platform_clients?select=id,client_name,module_slug'+
+        '&client_name=eq.SELLERBOOKS'+
+        '&module_slug=eq.MBI'+
+        '&limit=1',
+
+        {
+          headers:activityHeaders(),
+          cache:'no-store'
+        }
       );
 
       if(!clientResponse.ok){
-        throw new Error('HTTP '+clientResponse.status+' saat membaca client SELLERBOOKS');
+
+        const errorText=
+          await clientResponse.text().catch(()=>'');
+
+        throw new Error(
+          'HTTP '+
+          clientResponse.status+
+          ' saat membaca client SELLERBOOKS'+
+          (errorText ? ' — '+errorText : '')
+        );
       }
 
-      const clientRows=await clientResponse.json();
-      const clientId=clientRows[0]?.id;
+      const clientRows=
+        await clientResponse.json();
+
+      const clientId=
+        clientRows[0]?.id;
 
       if(!clientId){
-        tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Client SELLERBOOKS belum terdaftar pada sistem Activity Log.</td></tr>';
-        msg.textContent='Client SELLERBOOKS belum memiliki konfigurasi Activity Log.';
+
+        tbody.innerHTML=
+          '<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">'+
+          'Client SELLERBOOKS belum terdaftar pada sistem Activity Log.'+
+          '</td></tr>';
+
+        msg.textContent=
+          'Client SELLERBOOKS belum memiliki konfigurasi Activity Log.';
+
         return;
       }
 
-      url=base+
-        '&client_id=eq.'+encodeURIComponent(clientId)+
+      /*
+       * Ambil Activity Log berdasarkan client_id.
+       */
+      url=
+        base+
+        '&client_id=eq.'+
+        encodeURIComponent(clientId)+
         '&module=eq.MBI'+
         '&order=created_at.desc';
 
-      response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
+      response=
+        await fetch(
+          url,
+          {
+            headers:activityHeaders(),
+            cache:'no-store'
+          }
+        );
+
     }else{
-      url=base+'&module=eq.'+encodeURIComponent(module)+'&order=created_at.desc';
-      response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
+
+      /*
+       * Modul selain MBI / SELLERBOOKS
+       */
+      url=
+        base+
+        '&module=eq.'+
+        encodeURIComponent(module)+
+        '&order=created_at.desc';
+
+      response=
+        await fetch(
+          url,
+          {
+            headers:activityHeaders(),
+            cache:'no-store'
+          }
+        );
     }
 
     if(!response.ok){
-      const errorText=await response.text();
-      throw new Error('HTTP '+response.status+' — '+errorText);
+
+      const errorText=
+        await response.text();
+
+      throw new Error(
+        'HTTP '+
+        response.status+
+        ' — '+
+        errorText
+      );
     }
 
-    let logs=await response.json();
+    let logs=
+      await response.json();
 
-    // Fallback aman: beberapa log lama dapat memakai module_slug,
-    // atau tidak memiliki nilai module yang konsisten.
+    /*
+     * Fallback untuk log lama.
+     */
     if(!logs.length){
-      const fallback=await fetch(base+'&order=created_at.desc',{headers:activityHeaders(),cache:'no-store'});
+
+      const fallback=
+        await fetch(
+          base+'&order=created_at.desc',
+          {
+            headers:activityHeaders(),
+            cache:'no-store'
+          }
+        );
+
       if(fallback.ok){
-        const allLogs=await fallback.json();
-        logs=allLogs.filter(log=>{
-          const logModule=String(log.module||log.module_slug||'').trim().toUpperCase();
-          const logClient=String(log.client_name||log.client||'').trim().toUpperCase();
-          return logModule===module || (client && logClient===client.toUpperCase());
-        });
+
+        const allLogs=
+          await fallback.json();
+
+        logs=
+          allLogs.filter(log=>{
+
+            const logModule=
+              String(
+                log.module||
+                log.module_slug||
+                ''
+              )
+              .trim()
+              .toUpperCase();
+
+            const logClient=
+              String(
+                log.client_name||
+                log.client||
+                ''
+              )
+              .trim()
+              .toUpperCase();
+
+            return(
+              logModule===module ||
+              (
+                client &&
+                logClient===client.toUpperCase()
+              )
+            );
+
+          });
       }
     }
 
-    logs=await resolveMasterActors(logs);
-    window.currentActivityLogs=Array.isArray(logs)?logs:[];
+    logs=
+      await resolveMasterActors(logs);
 
-    if(!logs || logs.length===0){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada Activity Log untuk client '+activityEsc(client||module)+'.</td></tr>';
-      msg.textContent='Tidak ditemukan data log untuk '+(client||module)+'.';
+    window.currentActivityLogs=
+      Array.isArray(logs)
+        ? logs
+        : [];
+
+    if(
+      !logs ||
+      logs.length===0
+    ){
+
+      tbody.innerHTML=
+        '<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">'+
+        'Belum ada Activity Log untuk client '+
+        activityEsc(client||module)+
+        '.'+
+        '</td></tr>';
+
+      msg.textContent=
+        'Tidak ditemukan data log untuk '+
+        (client||module)+
+        '.';
+
       return;
     }
 
-    tbody.innerHTML=logs.map(log=>{
-      const action=log.action||log.activity||'-';
-      const description=cleanActivityDescription(log);
-      const logModule=log.module||log.module_slug||module;
-      return '<tr>'+
-        '<td>'+activityDate(log.created_at||log.createdAt)+'</td>'+
-        '<td>'+activityActor(log)+'</td>'+
-        '<td>'+activityEsc(description)+'</td>'+
-        '<td>'+activityEsc(logModule)+'</td>'+
-        '<td><span class="activity-status '+activityStatusClass(log.status)+'">'+activityEsc(log.status||'SUCCESS')+'</span></td>'+
-        '<td>'+activityEsc(action)+'</td>'+
-      '</tr>';
-    }).join('');
+    tbody.innerHTML=
+      logs.map(log=>{
 
-    msg.textContent='Menampilkan '+logs.length+' riwayat aktivitas.';
+        const action=
+          log.action||
+          log.activity||
+          '-';
+
+        const description=
+          cleanActivityDescription(log);
+
+        const logModule=
+          log.module||
+          log.module_slug||
+          module;
+
+        return(
+          '<tr>'+
+
+          '<td>'+
+          activityDate(
+            log.created_at||
+            log.createdAt
+          )+
+          '</td>'+
+
+          '<td>'+
+          activityActor(log)+
+          '</td>'+
+
+          '<td>'+
+          activityEsc(description)+
+          '</td>'+
+
+          '<td>'+
+          activityEsc(logModule)+
+          '</td>'+
+
+          '<td>'+
+          '<span class="activity-status '+
+          activityStatusClass(log.status)+
+          '">'+
+          activityEsc(
+            log.status||
+            'SUCCESS'
+          )+
+          '</span>'+
+          '</td>'+
+
+          '<td>'+
+          activityEsc(action)+
+          '</td>'+
+
+          '</tr>'
+        );
+
+      }).join('');
+
+    msg.textContent=
+      'Menampilkan '+
+      logs.length+
+      ' riwayat aktivitas.';
+
   }catch(e){
-    console.error('Activity Log error:',e);
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px"><b>Gagal memuat Activity Log.</b><br><small>'+activityEsc(e.message)+'</small></td></tr>';
-    msg.textContent='Error: '+e.message;
+
+    console.error(
+      'Activity Log error:',
+      e
+    );
+
+    tbody.innerHTML=
+      '<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">'+
+      '<b>Gagal memuat Activity Log.</b><br>'+
+      '<small>'+
+      activityEsc(e.message)+
+      '</small>'+
+      '</td></tr>';
+
+    msg.textContent=
+      'Error: '+
+      e.message;
   }
 }
 
