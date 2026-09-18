@@ -6221,5 +6221,295 @@ document.addEventListener(
     bindPeriodButtons();
 })();
 </script>
+
+<!-- =====================================================
+     SELLERBOOKS OPERATOR — CORE APPROVAL
+     TAMBAHAN SAJA — KODE CORE SEBELUMNYA TIDAK DIUBAH
+===================================================== -->
+<style>
+.sb-operator-core-box{
+  margin-top:24px;
+  border:1px solid #dbe5ef;
+  border-radius:18px;
+  background:#fff;
+  padding:22px;
+  box-shadow:0 8px 22px rgba(44,80,120,.05);
+}
+.sb-operator-core-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:16px;
+}
+.sb-operator-core-head h3{font-size:20px;margin:0 0 6px}
+.sb-operator-core-head p{color:#708297;font-size:13px;line-height:1.45;margin:0}
+.sb-operator-core-refresh{
+  border:1px solid #d9e3ed;
+  background:#fff;
+  color:#17324d;
+  border-radius:10px;
+  padding:9px 13px;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.sb-operator-core-table-wrap{overflow:auto}
+.sb-operator-core-table{width:100%;border-collapse:collapse;min-width:820px}
+.sb-operator-core-table th,.sb-operator-core-table td{
+  padding:12px 10px;
+  border-bottom:1px solid #e7edf3;
+  text-align:left;
+  font-size:13px;
+  vertical-align:middle;
+}
+.sb-operator-core-table th{color:#62758a;background:#f7faff}
+.sb-operator-core-note{font-size:12px;color:#718296;margin-top:12px;line-height:1.45}
+.sb-operator-core-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sb-operator-core-actions button{
+  border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;
+}
+.sb-op-ok{background:#19734a;color:#fff}
+.sb-op-no{background:#a52b2b;color:#fff}
+.sb-op-warn{background:#e8edf2;color:#334155}
+.sb-op-delete{background:#7f1d1d;color:#fff}
+.sb-op-status{
+  display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:700;
+}
+.sb-op-status.pending{background:#fff3d5;color:#9a6500}
+.sb-op-status.approved{background:#e3f5eb;color:#19734a}
+.sb-op-status.rejected{background:#fae5e5;color:#a52b2b}
+.sb-op-status.suspended{background:#e9e9e9;color:#555}
+@media(max-width:700px){
+  .sb-operator-core-head{flex-direction:column}
+  .sb-operator-core-refresh{width:100%}
+}
+</style>
+
+<script>
+(function(){
+  const SB_OPERATOR_TABLE = 'sellerbooks_operator_access';
+
+  function sbOperatorEsc(v){
+    return String(v ?? '').replace(/[&<>'"]/g,m=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+    }[m]));
+  }
+
+  function sbOperatorStatus(s){
+    const v=String(s||'').toUpperCase();
+    return '<span class="sb-op-status '+v.toLowerCase()+'">'+sbOperatorEsc(v||'-')+'</span>';
+  }
+
+  function sbOperatorEnsureBox(){
+    const panel=document.getElementById('panel-approval');
+    if(!panel) return null;
+
+    let box=document.getElementById('sbOperatorCoreBox');
+    if(box) return box;
+
+    box=document.createElement('div');
+    box.id='sbOperatorCoreBox';
+    box.className='sb-operator-core-box';
+    box.innerHTML=
+      '<div class="sb-operator-core-head">'+
+        '<div>'+
+          '<h3>Operator SellerBooks</h3>'+
+          '<p>Kelola persetujuan Operator yang masuk menggunakan Google/Gmail. '+
+          'Persetujuan Core dilakukan terlebih dahulu; Nama Pemilik ditentukan oleh Operator setelah disetujui.</p>'+
+        '</div>'+
+        '<button class="sb-operator-core-refresh" id="sbOperatorCoreRefresh">↻ Perbarui</button>'+
+      '</div>'+
+      '<div class="sb-operator-core-table-wrap">'+
+        '<table class="sb-operator-core-table">'+
+          '<thead><tr>'+
+            '<th>Email Operator</th>'+
+            '<th>Core</th>'+
+            '<th>Modul</th>'+
+            '<th>Client</th>'+
+            '<th>Owner</th>'+
+            '<th>Status</th>'+
+            '<th>Aksi</th>'+
+          '</tr></thead>'+
+          '<tbody id="sbOperatorCoreBody">'+
+            '<tr><td colspan="7" style="text-align:center;color:#8190a0;padding:30px">Belum dimuat.</td></tr>'+
+          '</tbody>'+
+        '</table>'+
+      '</div>'+
+      '<div id="sbOperatorCoreMessage" class="sb-operator-core-note"></div>';
+
+    panel.appendChild(box);
+
+    document.getElementById('sbOperatorCoreRefresh')?.addEventListener('click',function(){
+      sbOperatorCoreLoad(true);
+    });
+
+    return box;
+  }
+
+  async function sbOperatorCoreLoad(force){
+    const client=(document.getElementById('dashClient')?.textContent||'').trim().toUpperCase();
+    const module=(typeof currentModule!=='undefined' ? String(currentModule) : '').toUpperCase();
+
+    if(module!=='MBI' || client!=='SELLERBOOKS'){
+      const old=document.getElementById('sbOperatorCoreBox');
+      if(old) old.style.display='none';
+      return;
+    }
+
+    const box=sbOperatorEnsureBox();
+    if(!box) return;
+    box.style.display='block';
+
+    const body=document.getElementById('sbOperatorCoreBody');
+    const msg=document.getElementById('sbOperatorCoreMessage');
+
+    if(!coreAccessToken){
+      if(msg) msg.textContent='Sesi Core tidak ditemukan. Silakan login ulang.';
+      return;
+    }
+
+    if(body) body.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px">Memuat Operator SellerBooks...</td></tr>';
+    if(msg) msg.textContent='';
+
+    try{
+      const url=SUPABASE_URL+
+        '/rest/v1/'+SB_OPERATOR_TABLE+
+        '?select=id,operator_email,owner_user_id,owner_name,core_name,module_slug,client_name,approval_status,is_active,approved_at,rejected_at,approval_note,created_at,updated_at'+
+        '&order=created_at.desc';
+
+      const r=await fetch(url,{headers:authHeaders(),cache:'no-store'});
+      if(!r.ok) throw new Error(await r.text());
+
+      const rows=await r.json();
+
+      if(!rows.length){
+        body.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8190a0;padding:35px">Belum ada permintaan Operator SellerBooks.</td></tr>';
+        msg.textContent='Tidak ada data Operator.';
+        return;
+      }
+
+      body.innerHTML=rows.map(x=>{
+        const status=String(x.approval_status||'').toUpperCase();
+        let actions='';
+
+        if(status==='PENDING'){
+          actions=
+            '<button class="sb-op-ok" onclick="window.sbOperatorCoreChange(\''+sbOperatorEsc(x.id)+'\',\'APPROVED\')">SETUJUI</button>'+
+            '<button class="sb-op-no" onclick="window.sbOperatorCoreChange(\''+sbOperatorEsc(x.id)+'\',\'REJECTED\')">TOLAK</button>';
+        }else if(status==='APPROVED'){
+          actions=
+            '<button class="sb-op-warn" onclick="window.sbOperatorCoreChange(\''+sbOperatorEsc(x.id)+'\',\'SUSPENDED\')">SUSPEND</button>';
+        }else if(status==='SUSPENDED'){
+          actions=
+            '<button class="sb-op-ok" onclick="window.sbOperatorCoreChange(\''+sbOperatorEsc(x.id)+'\',\'APPROVED\')">AKTIFKAN</button>';
+        }
+
+        actions +=
+          '<button class="sb-op-delete" onclick="window.sbOperatorCoreDelete(\''+sbOperatorEsc(x.id)+'\')">🗑 HAPUS</button>';
+
+        return '<tr>'+
+          '<td><b>'+sbOperatorEsc(x.operator_email||'-')+'</b></td>'+
+          '<td>'+sbOperatorEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')+'</td>'+
+          '<td>'+sbOperatorEsc(String(x.module_slug||'MBI').toUpperCase())+'</td>'+
+          '<td>'+sbOperatorEsc(x.client_name||'SELLERBOOKS')+'</td>'+
+          '<td>'+sbOperatorEsc(x.owner_name||'Belum ditentukan')+'</td>'+
+          '<td>'+sbOperatorStatus(status)+'</td>'+
+          '<td><div class="sb-operator-core-actions">'+actions+'</div></td>'+
+        '</tr>';
+      }).join('');
+
+      msg.textContent='Menampilkan '+rows.length+' data Operator SellerBooks.';
+    }catch(e){
+      body.innerHTML='<tr><td colspan="7" style="text-align:center;color:#a52b2b;padding:35px">Gagal memuat data Operator.</td></tr>';
+      msg.textContent='Error: '+e.message;
+      console.error('SellerBooks Operator Core error:',e);
+    }
+  }
+
+  window.sbOperatorCoreChange=async function(id,status){
+    const label={
+      APPROVED:'menyetujui',
+      REJECTED:'menolak',
+      SUSPENDED:'menangguhkan'
+    }[status]||('mengubah menjadi '+status);
+
+    if(!confirm('Yakin ingin '+label+' Operator ini?')) return;
+    if(!coreAccessToken){alert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
+
+    const body={
+      approval_status:status,
+      is_active:status==='APPROVED'
+    };
+
+    if(status==='APPROVED'){
+      body.approved_at=new Date().toISOString();
+      body.rejected_at=null;
+    }else if(status==='REJECTED'){
+      body.rejected_at=new Date().toISOString();
+      body.approved_at=null;
+    }else if(status==='SUSPENDED'){
+      body.approved_at=null;
+    }
+
+    try{
+      const r=await fetch(
+        SUPABASE_URL+'/rest/v1/'+SB_OPERATOR_TABLE+
+        '?id=eq.'+encodeURIComponent(id),
+        {
+          method:'PATCH',
+          headers:{...authHeaders(),Prefer:'return=minimal'},
+          body:JSON.stringify(body)
+        }
+      );
+
+      if(!r.ok) throw new Error(await r.text());
+
+      await sbOperatorCoreLoad(true);
+      await loadApprovalData();
+    }catch(e){
+      alert('Gagal mengubah status Operator: '+e.message);
+    }
+  };
+
+  window.sbOperatorCoreDelete=async function(id){
+    if(!confirm('Yakin ingin menghapus data Operator ini?')) return;
+    if(!coreAccessToken){alert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
+
+    try{
+      const r=await fetch(
+        SUPABASE_URL+'/rest/v1/'+SB_OPERATOR_TABLE+
+        '?id=eq.'+encodeURIComponent(id),
+        {
+          method:'DELETE',
+          headers:{...authHeaders(),Prefer:'return=minimal'}
+        }
+      );
+
+      if(!r.ok) throw new Error(await r.text());
+
+      await sbOperatorCoreLoad(true);
+      await loadApprovalData();
+    }catch(e){
+      alert('Gagal menghapus data Operator: '+e.message);
+    }
+  };
+
+  const oldLoadApprovalData=window.loadApprovalData;
+  window.loadApprovalData=async function(){
+    const result=await oldLoadApprovalData.apply(this,arguments);
+    await sbOperatorCoreLoad(false);
+    return result;
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+      sbOperatorEnsureBox();
+      sbOperatorCoreLoad(false);
+    },0);
+  });
+})();
+</script>
+
 </body>
 </html>
