@@ -8,7 +8,6 @@
     <Platforms>x64</Platforms>
     <AssemblyName>Core Adiimasa</AssemblyName>
     <RootNamespace>Core.Adiimasa</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\installer\Core Adiimasa.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
