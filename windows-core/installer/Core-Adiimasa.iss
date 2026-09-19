@@ -4,7 +4,7 @@
 #define MyAppExeName "Core Adiimasa.exe"
 
 [Setup]
-AppId={{D6C8C6E4-9F2B-4B19-9F0C-COREADIIMASA2026}}
+AppId={{D6C8C6E4-9F2B-4B19-9F0C-6A1D4E2F8B31}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
