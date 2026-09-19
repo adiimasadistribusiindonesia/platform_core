@@ -90,7 +90,6 @@ public partial class MainWindow : Window
         web.Settings.AreDevToolsEnabled = false;
         web.Settings.IsStatusBarEnabled = false;
         web.Settings.AreBrowserAcceleratorKeysEnabled = true;
-        web.ScriptDialogOpening += Web_ScriptDialogOpening;
 
         web.AddWebResourceRequestedFilter(
             "https://adiimasadistribusiindonesia.github.io/platform_core/*",
@@ -101,45 +100,6 @@ public partial class MainWindow : Window
         web.NewWindowRequested += Web_NewWindowRequested;
         web.DownloadStarting += Web_DownloadStarting;
         web.ProcessFailed += Web_ProcessFailed;
-    }
-
-    private void Web_ScriptDialogOpening(object? sender, CoreWebView2ScriptDialogOpeningEventArgs e)
-    {
-        e.SuppressDefaultDialog = true;
-
-        Dispatcher.Invoke(() =>
-        {
-            var title = "Core Adiimasa";
-            if (e.Kind == CoreWebView2ScriptDialogKind.Confirm)
-            {
-                var result = MessageBox.Show(
-                    this,
-                    e.Message,
-                    title,
-                    MessageBoxButton.OKCancel,
-                    MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.OK)
-                    e.Accept();
-            }
-            else if (e.Kind == CoreWebView2ScriptDialogKind.Alert)
-            {
-                MessageBox.Show(
-                    this,
-                    e.Message,
-                    title,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-
-                e.Accept();
-            }
-            else
-            {
-                // Prompt dialogs are not used by the Core web application.
-                // Keep the default WebView2 behavior available if one is ever introduced.
-                e.SuppressDefaultDialog = false;
-            }
-        });
     }
 
     private void Web_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
