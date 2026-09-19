@@ -6,6 +6,99 @@
 <title>CORE ADIIMASA | Master Platform</title>
 
 <style>
+/* =====================================================
+   CORE ADIIMASA CUSTOM DIALOG
+   Menghilangkan native browser "coreadiimasa.github.io says"
+===================================================== */
+#coreAdiimasaDialogOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    background:rgba(15,23,42,.55);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+#coreAdiimasaDialogOverlay.show{
+    display:flex;
+}
+.coreadiimasa-dialog{
+    width:min(460px,calc(100vw - 40px));
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 25px 80px rgba(0,0,0,.25);
+    overflow:hidden;
+    animation:coreAdiimasaDialogShow .18s ease;
+}
+@keyframes coreAdiimasaDialogShow{
+    from{opacity:0;transform:translateY(10px) scale(.98)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+.coreadiimasa-dialog-header{
+    padding:18px 20px;
+    border-bottom:1px solid #e2e8f0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.coreadiimasa-dialog-icon{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:17px;
+    flex:0 0 34px;
+}
+.coreadiimasa-dialog-title{
+    font-size:16px;
+    font-weight:700;
+    color:#0f172a;
+}
+.coreadiimasa-dialog-body{
+    padding:20px;
+    color:#334155;
+    font-size:13px;
+    line-height:1.65;
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-height:55vh;
+    overflow:auto;
+}
+.coreadiimasa-dialog-footer{
+    padding:15px 20px;
+    border-top:1px solid #e2e8f0;
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+}
+.coreadiimasa-dialog-button{
+    border:none;
+    border-radius:9px;
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:700;
+}
+.coreadiimasa-dialog-cancel{
+    background:#f1f5f9;
+    color:#334155;
+}
+.coreadiimasa-dialog-ok{
+    background:#2563eb;
+    color:#fff;
+}
+.coreadiimasa-dialog-ok:hover{
+    background:#1d4ed8;
+}
+.coreadiimasa-dialog-cancel:hover{
+    background:#e2e8f0;
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --navy:#102b4b;--navy2:#0b213c;--text:#203653;--muted:#65788e;
@@ -584,9 +677,139 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
 }
 
 </style>
+
+<script>
+/* =====================================================
+   CORE ADIIMASA CUSTOM ALERT / CONFIRM
+   Tidak menggunakan window.alert/window.confirm
+===================================================== */
+(function(){
+    let coreAdiimasaDialogQueue = [];
+    let coreAdiimasaDialogBusy = false;
+
+    function coreAdiimasaShowDialog(message, options){
+        options = options || {};
+        const overlay = document.getElementById("coreAdiimasaDialogOverlay");
+        const title = document.getElementById("coreAdiimasaDialogTitle");
+        const body = document.getElementById("coreAdiimasaDialogMessage");
+        const ok = document.getElementById("coreAdiimasaDialogOk");
+        const cancel = document.getElementById("coreAdiimasaDialogCancel");
+        const icon = document.getElementById("coreAdiimasaDialogIcon");
+
+        if(!overlay || !title || !body || !ok || !cancel){
+            // Fallback hanya jika elemen custom belum tersedia.
+            return Promise.resolve(false);
+        }
+
+        return new Promise(function(resolve){
+            coreAdiimasaDialogQueue.push({
+                message:String(message ?? ""),
+                title:options.title || "SellerBooks",
+                confirm:!!options.confirm,
+                resolve:resolve
+            });
+            coreAdiimasaProcessDialogQueue();
+        });
+    }
+
+    function coreAdiimasaProcessDialogQueue(){
+        if(coreAdiimasaDialogBusy || !coreAdiimasaDialogQueue.length) return;
+
+        coreAdiimasaDialogBusy = true;
+
+        const item = coreAdiimasaDialogQueue.shift();
+        const overlay = document.getElementById("coreAdiimasaDialogOverlay");
+        const title = document.getElementById("coreAdiimasaDialogTitle");
+        const body = document.getElementById("coreAdiimasaDialogMessage");
+        const ok = document.getElementById("coreAdiimasaDialogOk");
+        const cancel = document.getElementById("coreAdiimasaDialogCancel");
+        const icon = document.getElementById("coreAdiimasaDialogIcon");
+
+        title.textContent = item.title;
+        body.textContent = item.message;
+        icon.textContent = item.confirm ? "?" : "✓";
+        cancel.style.display = item.confirm ? "" : "none";
+        ok.textContent = item.confirm ? "Lanjutkan" : "OK";
+
+        overlay.classList.add("show");
+        overlay.setAttribute("aria-hidden","false");
+
+        let finished = false;
+
+        function finish(value){
+            if(finished) return;
+            finished = true;
+
+            overlay.classList.remove("show");
+            overlay.setAttribute("aria-hidden","true");
+
+            ok.removeEventListener("click", onOk);
+            cancel.removeEventListener("click", onCancel);
+            document.removeEventListener("keydown", onKey);
+
+            item.resolve(value);
+            coreAdiimasaDialogBusy = false;
+            setTimeout(coreAdiimasaProcessDialogQueue, 0);
+        }
+
+        function onOk(){
+            finish(true);
+        }
+
+        function onCancel(){
+            finish(false);
+        }
+
+        function onKey(event){
+            if(event.key === "Escape"){
+                finish(false);
+            }else if(event.key === "Enter"){
+                finish(true);
+            }
+        }
+
+        ok.addEventListener("click", onOk);
+        cancel.addEventListener("click", onCancel);
+        document.addEventListener("keydown", onKey);
+
+        setTimeout(function(){
+            (item.confirm ? cancel : ok).focus();
+        }, 0);
+    }
+
+    window.coreAdiimasaAlert = function(message, title){
+        coreAdiimasaShowDialog(message, {
+            title:title || "SellerBooks",
+            confirm:false
+        });
+    };
+
+    window.coreAdiimasaConfirm = function(message, title){
+        return coreAdiimasaShowDialog(message, {
+            title:title || "Konfirmasi",
+            confirm:true
+        });
+    };
+})();
+</script>
 </head>
 
 <body>
+
+<!-- CORE ADIIMASA CUSTOM DIALOG -->
+<div id="coreAdiimasaDialogOverlay" aria-hidden="true">
+    <div class="coreadiimasa-dialog" role="dialog" aria-modal="true" aria-labelledby="coreAdiimasaDialogTitle">
+        <div class="coreadiimasa-dialog-header">
+            <div class="coreadiimasa-dialog-icon" id="coreAdiimasaDialogIcon">!</div>
+            <div class="coreadiimasa-dialog-title" id="coreAdiimasaDialogTitle">SellerBooks</div>
+        </div>
+        <div class="coreadiimasa-dialog-body" id="coreAdiimasaDialogMessage"></div>
+        <div class="coreadiimasa-dialog-footer">
+            <button type="button" class="coreadiimasa-dialog-button coreadiimasa-dialog-cancel" id="coreAdiimasaDialogCancel">Batal</button>
+            <button type="button" class="coreadiimasa-dialog-button coreadiimasa-dialog-ok" id="coreAdiimasaDialogOk">OK</button>
+        </div>
+    </div>
+
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <div class="login-logo">ADIIMASA<br>CORE</div>
@@ -1099,7 +1322,7 @@ function renderApproval(){
  body.innerHTML=list.map(x=>`<tr><td><b>${approvalEsc(x.email)}</b></td><td>${approvalEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')}</td><td>${approvalEsc((x.module_slug||'').toUpperCase())}</td><td>${approvalEsc(x.client_name||'-')}</td><td>${approvalBadge(x.approval_status)}</td><td><div class="approval-actions">${x.approval_status==='PENDING'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">SETUJUI</button><button class="approval-btn no" onclick="changeApproval('${x.id}','REJECTED')">TOLAK</button>`:''}${x.approval_status==='APPROVED'?`<button class="approval-btn warn" onclick="changeApproval('${x.id}','SUSPENDED')">SUSPEND</button>`:''}${x.approval_status==='SUSPENDED'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">AKTIFKAN</button>`:''}<button class="approval-btn delete" onclick="deleteApproval('${x.id}')">🗑 HAPUS</button></div></td></tr>`).join('');
 }
 async function changeApproval(id,status){
- if(!confirm('Yakin mengubah status menjadi '+status+'?')) return;
+ if(!await coreAdiimasaConfirm('Yakin mengubah status menjadi '+status+'?')) return;
 
  if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
    const body={status:String(status||'').toLowerCase()};
@@ -1109,29 +1332,29 @@ async function changeApproval(id,status){
      headers:{...authHeaders(),Prefer:'return=minimal'},
      body:JSON.stringify(body)
    });
-   if(!r.ok){alert('Gagal mengubah status SellerBooks: '+await r.text());return;}
+   if(!r.ok){coreAdiimasaAlert('Gagal mengubah status SellerBooks: '+await r.text());return;}
  }else{
    const body={approval_status:status,is_active:status==='APPROVED'};
    if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
    if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
    if(status==='SUSPENDED') body.approved_at=null;
    const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
-   if(!r.ok){alert('Gagal mengubah status: '+await r.text());return;}
+   if(!r.ok){coreAdiimasaAlert('Gagal mengubah status: '+await r.text());return;}
  }
  await loadApprovalData(); await loadClientOverview();
 }
 async function deleteApproval(id){
- if(!confirm('Yakin ingin menghapus data akses ini?')) return;
+ if(!await coreAdiimasaConfirm('Yakin ingin menghapus data akses ini?')) return;
 
  if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
    const r=await fetch(SUPABASE_URL+'/rest/v1/sellerbooks_profiles?user_id=eq.'+encodeURIComponent(id),{
      method:'DELETE',
      headers:{...authHeaders(),Prefer:'return=minimal'}
    });
-   if(!r.ok){alert('Gagal menghapus profile SellerBooks: '+await r.text());return;}
+   if(!r.ok){coreAdiimasaAlert('Gagal menghapus profile SellerBooks: '+await r.text());return;}
  }else{
    const r=await fetch(SUPABASE_URL+'/rest/v1/geparu_admin_access?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});
-   if(!r.ok){alert('Gagal menghapus data: '+await r.text());return;}
+   if(!r.ok){coreAdiimasaAlert('Gagal menghapus data: '+await r.text());return;}
  }
  await loadApprovalData(); await loadClientOverview();
 }
@@ -1636,7 +1859,7 @@ async function clearMasterActivity(){
     return;
   }
 
-  const ok=confirm('Yakin ingin menghapus '+validLogs.length+' riwayat aktivitas yang sedang ditampilkan untuk '+client+'?\n\nTindakan ini tidak dapat dibatalkan.');
+  const ok=await coreAdiimasaConfirm('Yakin ingin menghapus '+validLogs.length+' riwayat aktivitas yang sedang ditampilkan untuk '+client+'?\n\nTindakan ini tidak dapat dibatalkan.');
   if(!ok) return;
 
   if(btn){btn.disabled=true;btn.textContent='⏳ Membersihkan...';}
@@ -1660,7 +1883,7 @@ async function clearMasterActivity(){
   }catch(e){
     console.error('Clear Activity Log error:',e);
     msg.textContent='Gagal membersihkan riwayat: '+e.message;
-    alert('Sebagian atau seluruh riwayat gagal dihapus. Periksa izin Supabase/RLS.');
+    coreAdiimasaAlert('Sebagian atau seluruh riwayat gagal dihapus. Periksa izin Supabase/RLS.');
   }finally{
     if(btn){btn.disabled=false;btn.textContent='🗑 Bersihkan Riwayat';}
   }
@@ -4510,7 +4733,7 @@ async function resetPlatformAnalytics(){
 
     if(!coreAccessToken){
 
-        alert(
+        coreAdiimasaAlert(
             "Sesi Core tidak ditemukan. Silakan login ulang."
         );
 
@@ -4520,7 +4743,7 @@ async function resetPlatformAnalytics(){
 
 
     const confirmReset =
-        confirm(
+        await coreAdiimasaConfirm(
             "⚠️ RESET DATA ANALYTICS\n\n" +
             "Anda yakin ingin menghapus seluruh data Analytics yang sedang ditampilkan?\n\n" +
             "Client: " + clientName + "\n" +
@@ -4674,7 +4897,7 @@ async function resetPlatformAnalytics(){
         );
 
 
-        alert(
+        coreAdiimasaAlert(
             "✓ Data Analytics berhasil direset.\n\n" +
             "Platform sekarang siap mencatat data pengunjung baru."
         );
@@ -4688,7 +4911,7 @@ async function resetPlatformAnalytics(){
         );
 
 
-        alert(
+        coreAdiimasaAlert(
             "Gagal mereset Data Analytics.\n\n" +
             error.message
         );
@@ -6434,8 +6657,8 @@ document.addEventListener(
       SUSPENDED:'menangguhkan'
     }[status]||('mengubah menjadi '+status);
 
-    if(!confirm('Yakin ingin '+label+' Operator ini?')) return;
-    if(!coreAccessToken){alert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
+    if(!await coreAdiimasaConfirm('Yakin ingin '+label+' Operator ini?')) return;
+    if(!coreAccessToken){coreAdiimasaAlert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
 
     const body={
       approval_status:status,
@@ -6468,13 +6691,13 @@ document.addEventListener(
       await sbOperatorCoreLoad(true);
       await loadApprovalData();
     }catch(e){
-      alert('Gagal mengubah status Operator: '+e.message);
+      coreAdiimasaAlert('Gagal mengubah status Operator: '+e.message);
     }
   };
 
   window.sbOperatorCoreDelete=async function(id){
-    if(!confirm('Yakin ingin menghapus data Operator ini?')) return;
-    if(!coreAccessToken){alert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
+    if(!await coreAdiimasaConfirm('Yakin ingin menghapus data Operator ini?')) return;
+    if(!coreAccessToken){coreAdiimasaAlert('Sesi Core tidak ditemukan. Silakan login ulang.');return;}
 
     try{
       const r=await fetch(
@@ -6491,7 +6714,7 @@ document.addEventListener(
       await sbOperatorCoreLoad(true);
       await loadApprovalData();
     }catch(e){
-      alert('Gagal menghapus data Operator: '+e.message);
+      coreAdiimasaAlert('Gagal menghapus data Operator: '+e.message);
     }
   };
 
