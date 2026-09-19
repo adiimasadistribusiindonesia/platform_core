@@ -1,0 +1,61 @@
+name: Build Core Adiimasa Windows Installer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-core:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare Core Adiimasa icon
+        shell: pwsh
+        run: |
+          choco install imagemagick --no-progress -y
+          magick "logo-core.png" -background none -define icon:auto-resize=256,128,64,48,32,16 "windows-core/installer/Core Adiimasa.ico"
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore windows-core/Core.Adiimasa/Core.Adiimasa.csproj
+
+      - name: Publish self-contained x64
+        run: dotnet publish windows-core/Core.Adiimasa/Core.Adiimasa.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o windows-core/publish-core
+
+      - name: Download WebView2 Evergreen Bootstrapper
+        shell: pwsh
+        run: Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "windows-core/MicrosoftEdgeWebView2Setup.exe"
+
+      - name: Download Visual C++ x64 Runtime
+        shell: pwsh
+        run: Invoke-WebRequest -Uri "https://aka.ms/vc14/vc_redist.x64.exe" -OutFile "windows-core/vc_redist.x64.exe"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force windows-core/artifacts | Out-Null
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "windows-core/installer/Core-Adiimasa.iss"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Core-Adiimasa-Setup
+          path: windows-core/artifacts/Core Adiimasa Setup.exe
+          if-no-files-found: error
+          retention-days: 30
