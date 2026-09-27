@@ -1001,7 +1001,7 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
           <input id="approvalSearch" placeholder="Cari email..." oninput="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;min-width:220px">
           <select id="approvalStatus" onchange="renderApproval()" style="padding:10px 12px;border:1px solid #dbe4ed;border-radius:10px;background:white"><option value="ALL">Semua Status</option><option value="PENDING">PENDING</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option><option value="SUSPENDED">SUSPENDED</option></select>
         </div>
-        <div style="overflow:auto"><table class="log-table"><thead><tr><th>Email</th><th>Core</th><th>Modul</th><th>Client</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="approvalBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Pilih client untuk memuat data.</td></tr></tbody></table></div>
+        <div style="overflow:auto"><table class="log-table"><thead><tr><th>Email</th><th>Core</th><th>Modul</th><th>Client</th><th>Pemilik</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="approvalBody"><tr><td colspan="7" style="text-align:center;color:#8190a0;padding:35px">Pilih client untuk memuat data.</td></tr></tbody></table></div>
         <div id="approvalMessage" class="overview-message"></div>
       </div>
 
@@ -1300,6 +1300,7 @@ async function loadApprovalData(){
         created_at:x.created_at,
         approved_at:x.approved_at,
         rejected_at:null,
+        owner_name:x.owner_name||'',
         approval_note:x.owner_name ? 'Owner: '+x.owner_name : ''
       }));
     }else{
@@ -1312,15 +1313,15 @@ async function loadApprovalData(){
 
     renderApproval();
     msg.textContent='Data berhasil diperbarui.';
-  }catch(e){body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#a52b2b">Gagal memuat data.</td></tr>';msg.textContent='Error: '+e.message;}
+  }catch(e){body.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#a52b2b">Gagal memuat data.</td></tr>';msg.textContent='Error: '+e.message;}
 }
 function renderApproval(){
  const q=(document.getElementById('approvalSearch').value||'').toLowerCase();
  const st=document.getElementById('approvalStatus').value;
- const list=approvalData.filter(x=>(st==='ALL'||x.approval_status===st)&&(!q||[x.email,x.client_name,x.module_slug,x.core_name].join(' ').toLowerCase().includes(q)));
+ const list=approvalData.filter(x=>(st==='ALL'||x.approval_status===st)&&(!q||[x.email,x.client_name,x.module_slug,x.core_name,x.owner_name].join(' ').toLowerCase().includes(q)));
  const body=document.getElementById('approvalBody');
- if(!list.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada data permintaan akses.</td></tr>';return;}
- body.innerHTML=list.map(x=>`<tr><td><b>${approvalEsc(x.email)}</b></td><td>${approvalEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')}</td><td>${approvalEsc((x.module_slug||'').toUpperCase())}</td><td>${approvalEsc(x.client_name||'-')}</td><td>${approvalBadge(x.approval_status)}</td><td><div class="approval-actions">${x.approval_status==='PENDING'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">SETUJUI</button><button class="approval-btn no" onclick="changeApproval('${x.id}','REJECTED')">TOLAK</button>`:''}${x.approval_status==='APPROVED'?`<button class="approval-btn warn" onclick="changeApproval('${x.id}','SUSPENDED')">SUSPEND</button>`:''}${x.approval_status==='SUSPENDED'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">AKTIFKAN</button>`:''}<button class="approval-btn delete" onclick="deleteApproval('${x.id}')">🗑 HAPUS</button></div></td></tr>`).join('');
+ if(!list.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8190a0;padding:35px">Belum ada data permintaan akses.</td></tr>';return;}
+ body.innerHTML=list.map(x=>`<tr><td><b>${approvalEsc(x.email)}</b></td><td>${approvalEsc(x.core_name||'PT ADIIMASA DISTRIBUSI INDONESIA')}</td><td>${approvalEsc((x.module_slug||'').toUpperCase())}</td><td>${approvalEsc(x.client_name||'-')}</td><td>${approvalEsc(x.owner_name||'-')}</td><td>${approvalBadge(x.approval_status)}</td><td><div class="approval-actions">${x.approval_status==='PENDING'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">SETUJUI</button><button class="approval-btn no" onclick="changeApproval('${x.id}','REJECTED')">TOLAK</button>`:''}${x.approval_status==='APPROVED'?`<button class="approval-btn warn" onclick="changeApproval('${x.id}','SUSPENDED')">SUSPEND</button>`:''}${x.approval_status==='SUSPENDED'?`<button class="approval-btn ok" onclick="changeApproval('${x.id}','APPROVED')">AKTIFKAN</button>`:''}<button class="approval-btn delete" onclick="deleteApproval('${x.id}')">🗑 HAPUS</button></div></td></tr>`).join('');
 }
 async function changeApproval(id,status){
  if(!await coreAdiimasaConfirm('Yakin mengubah status menjadi '+status+'?')) return;
