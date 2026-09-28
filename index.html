@@ -1085,6 +1085,11 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
     <div class="admin-form-field"><label for="systemSettingDescInput">Deskripsi</label><input id="systemSettingDescInput" type="text" autocomplete="off" placeholder="Keterangan pengaturan"></div>
     <button type="button" class="admin-primary-btn" id="addSystemSettingBtn">＋ Tambah</button>
   </div>
+  <div id="systemTimezoneStatus" style="margin:0 0 18px;padding:16px 18px;border:1px solid #d8e2ec;border-radius:14px;background:#f7fafc">
+    <div style="font-weight:700;color:#203b57">Zona Waktu Core</div>
+    <div id="systemTimezoneValue" style="margin-top:5px;color:#687b90">Belum dikonfigurasi — gunakan Key <b>timezone</b>, misalnya <b>Asia/Jakarta</b>.</div>
+    <div id="systemTimezoneClock" style="margin-top:8px;font-size:20px;font-weight:700;color:#203b57">—</div>
+  </div>
   <div class="admin-management-note"><b>Catatan:</b> pengaturan yang dinonaktifkan tetap tersimpan dan tidak digunakan sebagai konfigurasi aktif. Jangan menyimpan secret/API key privat di tabel ini.</div>
   <div class="admin-management-table-wrap"><table class="log-table"><thead><tr><th>Key</th><th>Nilai</th><th>Deskripsi</th><th>Status</th><th>Diperbarui</th><th>Aksi</th></tr></thead><tbody id="systemSettingsBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Memuat konfigurasi...</td></tr></tbody></table></div>
   <div id="systemSettingsMessage" class="overview-message"></div>
@@ -7066,7 +7071,19 @@ document.addEventListener(
 (function(){
   let systemRows=[];
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const date=v=>{try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v));}catch(e){return v||'-';}};
+  let systemTimezone='Asia/Jakarta', timezoneClockTimer=null;
+  const date=v=>{try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:systemTimezone}).format(new Date(v));}catch(e){return v||'-';}};
+  function renderTimezoneStatus(){
+    const row=systemRows.find(x=>String(x.setting_key).toLowerCase()==='timezone' && x.is_active);
+    const el=document.getElementById('systemTimezoneValue'),clock=document.getElementById('systemTimezoneClock');
+    if(!el||!clock)return;
+    if(row){
+      try{new Intl.DateTimeFormat('id-ID',{timeZone:row.setting_value}).format(new Date());systemTimezone=row.setting_value;el.textContent='Aktif: '+row.setting_value+' (dibaca langsung dari Konfigurasi Sistem).';}
+      catch(e){systemTimezone='Asia/Jakarta';el.textContent='Nilai timezone tidak valid: '+row.setting_value+'. Contoh yang benar: Asia/Jakarta';}
+    }else{systemTimezone='Asia/Jakarta';el.textContent='Belum dikonfigurasi — gunakan Key timezone, misalnya Asia/Jakarta.';}
+    const tick=()=>{clock.textContent=new Intl.DateTimeFormat('id-ID',{dateStyle:'full',timeStyle:'medium',timeZone:systemTimezone}).format(new Date());};
+    tick(); if(timezoneClockTimer)clearInterval(timezoneClockTimer); timezoneClockTimer=setInterval(tick,1000);
+  }
   const msg=(t,ok=false)=>{const e=document.getElementById('systemSettingsMessage');if(e){e.textContent=t||'';e.style.color=ok?'#19733b':'#687b90';}};
   async function loadSystemSettings(){
     const body=document.getElementById('systemSettingsBody'); if(!body)return;
@@ -7074,12 +7091,12 @@ document.addEventListener(
     try{
       const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings?select=id,setting_key,setting_value,description,is_active,updated_at&order=setting_key.asc',{headers:authHeaders(),cache:'no-store'});
       if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());
-      systemRows=await r.json(); renderSystemSettings(); msg(systemRows.length+' pengaturan tersedia.',true);
+      systemRows=await r.json(); renderTimezoneStatus(); renderSystemSettings(); msg(systemRows.length+' pengaturan tersedia.',true);
     }catch(e){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">Gagal memuat konfigurasi.</td></tr>';msg('Gagal memuat konfigurasi: '+e.message);}
   }
   function renderSystemSettings(){
     const body=document.getElementById('systemSettingsBody'); if(!body)return;
-    if(!systemRows.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada konfigurasi sistem.</td></tr>';return;}
+    if(!systemRows.length){renderTimezoneStatus();body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada konfigurasi sistem.</td></tr>';return;}
     body.innerHTML=systemRows.map(x=>'<tr><td><b>'+esc(x.setting_key)+'</b></td><td>'+esc(x.setting_value||'-')+'</td><td>'+esc(x.description||'-')+'</td><td><span class="platform-module-status '+(x.is_active?'active':'inactive')+'">'+(x.is_active?'AKTIF':'NONAKTIF')+'</span></td><td>'+esc(date(x.updated_at))+'</td><td><div class="platform-module-actions"><button type="button" class="platform-module-action" data-sedit="'+esc(x.id)+'">Edit</button><button type="button" class="platform-module-action warn" data-stoggle="'+esc(x.id)+'">'+(x.is_active?'Nonaktifkan':'Aktifkan')+'</button><button type="button" class="platform-module-action danger" data-sdelete="'+esc(x.id)+'">Hapus</button></div></td></tr>').join('');
   }
   async function addSystemSetting(){
