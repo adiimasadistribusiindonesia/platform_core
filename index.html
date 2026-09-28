@@ -790,6 +790,11 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
     };
 })();
 </script>
+<style>
+#platformModuleManagementPanel .admin-management-table-wrap{overflow-x:auto;width:100%}
+#platformModuleManagementPanel .log-table{min-width:760px}
+#platformModuleGrid .module-card p{white-space:normal;overflow-wrap:anywhere}
+</style>
 </head>
 
 <body>
@@ -866,30 +871,8 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
       <h2 class="section-title">Pilih Modul Platform</h2>
       <p class="section-sub">Pilih modul terlebih dahulu, kemudian pilih client yang ingin dikelola.</p>
 
-      <div class="module-grid">
-        <button class="module-card social" onclick="openModule('SOSIAL')">
-          <div class="card-top"><span class="module-icon-big">👥</span><h3>SOSIAL</h3><p>Modul layanan<br>sosial masyarakat.</p><span class="arrow-round">›</span></div>
-          <div class="card-footer"><span>♟ &nbsp; 1 Client</span><span>→</span></div>
-        </button>
-        <button class="module-card food" onclick="openModule('FOOD')">
-          <div class="card-top"><span class="module-icon-big">🛒</span><h3>FOOD</h3><p>Modul makanan<br>& layanan terkait.</p><span class="arrow-round">›</span></div>
-          <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
-        </button>
-        <button class="module-card market" onclick="openModule('MARKETPLACE')">
-          <div class="card-top"><span class="module-icon-big">🛒</span><h3>MARKETPLACE</h3><p>Modul platform<br>jual-beli.</p><span class="arrow-round">›</span></div>
-          <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
-        </button>
-        <button class="module-card company" onclick="openModule('COMPANY')">
-          <div class="card-top"><span class="module-icon-big">🏢</span><h3>COMPANY</h3><p>Modul profil perusahaan<br>dan identitas bisnis.</p><span class="arrow-round">›</span></div>
-          <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
-        </button>
-        <button class="module-card product" onclick="openModule('PRODUCT')">
-          <div class="card-top"><span class="module-icon-big">📦</span><h3>PRODUCT</h3><p>Modul katalog, informasi<br>dan identitas produk.</p><span class="arrow-round">›</span></div>
-          <div class="card-footer"><span>♟ &nbsp; 0 Client</span><span>→</span></div>
-        </button>
-        <button class="module-card mbi" onclick="openModule('MBI')"><div class="card-top"><span class="module-icon-big">📊</span><h3>MBI</h3><p>Modul Business Intelligence,<br>sistem dan program digital.</p>
-       <span class="arrow-round">›</span></div><div class="card-footer"><span>♟ &nbsp; 1 Client</span><span>→</span></div></button>
-
+      <div class="module-grid" id="platformModuleGrid">
+        <div style="grid-column:1/-1;text-align:center;color:#71839a;padding:25px">Memuat modul platform...</div>
       </div>
 
       <h2 class="quick-title">Akses Cepat</h2>
@@ -1173,6 +1156,7 @@ async function bootCoreAuth(){
     }
     document.getElementById("adminEmail").textContent=user.email;
     document.getElementById("loginOverlay").classList.add("hidden");
+    loadCorePlatformModules();
   }catch(err){
     clearCoreSession();
     document.getElementById("loginOverlay").classList.remove("hidden");
@@ -1208,6 +1192,59 @@ const moduleClients = {
   PRODUCT: [],
   MBI    : [{name:'SELLERBOOKS',desc:'Sistem pembukuan dan manajemen penjualan marketplace',icon:'📊',meta:'Client aktif · Modul MBI'}]
 };
+
+let corePlatformModules = [];
+
+const moduleTheme = {
+  SOSIAL:'social', FOOD:'food', MARKETPLACE:'market', COMPANY:'company',
+  PRODUCT:'product', MBI:'mbi'
+};
+const moduleFallbackIcons = {
+  SOSIAL:'👥', FOOD:'🛒', MARKETPLACE:'🛒', COMPANY:'🏢', PRODUCT:'📦', MBI:'📊'
+};
+function escapeModuleHtml(v){
+  return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+}
+function escModuleValue(v){
+  return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+function getModuleClientCount(slug){
+  return (moduleClients[String(slug||'').toUpperCase()] || []).length;
+}
+function renderPlatformModuleCards(){
+  const grid=document.getElementById('platformModuleGrid');
+  if(!grid) return;
+  const active=corePlatformModules.filter(x=>String(x.status||'').toUpperCase()==='ACTIVE')
+    .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+  if(!active.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#71839a;padding:40px;background:rgba(255,255,255,.7);border-radius:16px">Belum ada modul platform yang aktif.</div>';
+    return;
+  }
+  grid.innerHTML=active.map(x=>{
+    const slug=String(x.module_slug||'').toUpperCase();
+    const theme=moduleTheme[slug] || 'product';
+    const icon=String(x.icon||moduleFallbackIcons[slug]||'▦');
+    const count=getModuleClientCount(slug);
+    const desc=String(x.description||'Modul platform.');
+    return '<button class="module-card '+theme+'" onclick="openModule(\''+escModuleValue(slug)+'\')">'+
+      '<div class="card-top"><span class="module-icon-big">'+escapeModuleHtml(icon)+'</span><h3>'+escapeModuleHtml(x.name||slug)+'</h3><p>'+escapeModuleHtml(desc)+'</p><span class="arrow-round">›</span></div>'+
+      '<div class="card-footer"><span>♟ &nbsp; '+count+' Client</span><span>→</span></div></button>';
+  }).join('');
+}
+async function loadCorePlatformModules(){
+  const grid=document.getElementById('platformModuleGrid');
+  if(!grid) return;
+  if(!coreAccessToken) return;
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?select=*&order=sort_order.asc',{headers:authHeaders(),cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    corePlatformModules=await r.json();
+    renderPlatformModuleCards();
+  }catch(e){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#a52b2b;padding:30px">Gagal memuat modul platform.</div>';
+    console.error('Gagal memuat modul Core:',e);
+  }
+}
 
 function activateNav(id){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
@@ -6841,10 +6878,10 @@ document.addEventListener(
  const msg=(s,ok=false)=>{const e=document.getElementById('platformModuleManagementMessage');if(e){e.textContent=s||'';e.style.color=ok?'#19733b':'#687b90';}};
  async function load(){const b=document.getElementById('platformModuleManagementBody');if(!b)return;if(!coreAccessToken){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">Sesi Core Admin tidak tersedia.</td></tr>';return}b.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Memuat modul...</td></tr>';try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?select=*&order=sort_order.asc',{headers:authHeaders(),cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());modules=await r.json();render();msg(modules.length+' modul terdaftar.',true)}catch(e){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:#a52b2b;padding:35px">Gagal memuat modul.</td></tr>';msg('Gagal memuat modul: '+e.message)}}
  function render(){const b=document.getElementById('platformModuleManagementBody');if(!b)return;if(!modules.length){b.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada modul.</td></tr>';return}b.innerHTML=modules.map(x=>'<tr><td><b>'+esc(x.icon||'')+' '+esc(x.name)+'</b></td><td>'+esc(x.module_slug)+'</td><td>'+esc(x.description||'-')+'</td><td>'+esc(x.sort_order)+'</td><td><span class="platform-module-status '+(x.status==='ACTIVE'?'active':'inactive')+'">'+esc(x.status)+'</span></td><td><div class="platform-module-actions"><button class="platform-module-action" data-pm-edit="'+esc(x.id)+'">Edit</button><button class="platform-module-action warn" data-pm-toggle="'+esc(x.id)+'">'+(x.status==='ACTIVE'?'Nonaktifkan':'Aktifkan')+'</button><button class="platform-module-action danger" data-pm-delete="'+esc(x.id)+'">Hapus</button></div></td></tr>').join('')}
- async function add(){const name=document.getElementById('platformModuleNameInput').value.trim(),slug=document.getElementById('platformModuleSlugInput').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''),icon=document.getElementById('platformModuleIconInput').value.trim(),desc=document.getElementById('platformModuleDescInput').value.trim(),order=Number(document.getElementById('platformModuleOrderInput').value||0);if(!name||!slug){msg('Nama dan slug modul wajib diisi.');return}try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules',{method:'POST',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name,module_slug:slug,icon,description:desc,sort_order:order,status:'ACTIVE'})});if(!r.ok)throw new Error(await r.text());document.getElementById('platformModuleNameInput').value='';document.getElementById('platformModuleSlugInput').value='';document.getElementById('platformModuleIconInput').value='';document.getElementById('platformModuleDescInput').value='';await load();msg('Modul berhasil ditambahkan.',true)}catch(e){msg('Gagal menambahkan modul: '+e.message)}}
- async function edit(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;const name=prompt('Nama modul:',x.name||'');if(name===null)return;const desc=prompt('Deskripsi modul:',x.description||'');if(desc===null)return;const order=prompt('Urutan:',x.sort_order);if(order===null)return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name:String(name).trim(),description:String(desc).trim(),sort_order:Number(order)||0,updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengedit modul: '+await r.text());return}await load();msg('Modul berhasil diperbarui.',true)}
- async function toggle(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm((x.status==='ACTIVE'?'Nonaktifkan ':'Aktifkan ')+x.name+'?','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({status:x.status==='ACTIVE'?'INACTIVE':'ACTIVE',updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengubah status: '+await r.text());return}await load()}
- async function del(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm('Hapus modul '+x.name+'? Data client tidak otomatis dihapus.','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok){msg('Gagal menghapus: '+await r.text());return}await load();msg('Modul berhasil dihapus.',true)}
+ async function add(){const name=document.getElementById('platformModuleNameInput').value.trim(),slug=document.getElementById('platformModuleSlugInput').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''),icon=document.getElementById('platformModuleIconInput').value.trim(),desc=document.getElementById('platformModuleDescInput').value.trim(),order=Number(document.getElementById('platformModuleOrderInput').value||0);if(!name||!slug){msg('Nama dan slug modul wajib diisi.');return}try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules',{method:'POST',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name,module_slug:slug,icon,description:desc,sort_order:order,status:'ACTIVE'})});if(!r.ok)throw new Error(await r.text());document.getElementById('platformModuleNameInput').value='';document.getElementById('platformModuleSlugInput').value='';document.getElementById('platformModuleIconInput').value='';document.getElementById('platformModuleDescInput').value='';await load();await loadCorePlatformModules();msg('Modul berhasil ditambahkan.',true)}catch(e){msg('Gagal menambahkan modul: '+e.message)}}
+ async function edit(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;const name=prompt('Nama modul:',x.name||'');if(name===null)return;const desc=prompt('Deskripsi modul:',x.description||'');if(desc===null)return;const order=prompt('Urutan:',x.sort_order);if(order===null)return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name:String(name).trim(),description:String(desc).trim(),sort_order:Number(order)||0,updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengedit modul: '+await r.text());return}await load();await loadCorePlatformModules();msg('Modul berhasil diperbarui.',true)}
+ async function toggle(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm((x.status==='ACTIVE'?'Nonaktifkan ':'Aktifkan ')+x.name+'?','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({status:x.status==='ACTIVE'?'INACTIVE':'ACTIVE',updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengubah status: '+await r.text());return}await load();await loadCorePlatformModules()}
+ async function del(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm('Hapus modul '+x.name+'? Data client tidak otomatis dihapus.','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok){msg('Gagal menghapus: '+await r.text());return}await load();await loadCorePlatformModules();msg('Modul berhasil dihapus.',true)}
  document.addEventListener('DOMContentLoaded',()=>{document.getElementById('openPlatformModuleManagementBtn')?.addEventListener('click',()=>{const p=document.getElementById('platformModuleManagementPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});load()});document.getElementById('refreshPlatformModulesBtn')?.addEventListener('click',load);document.getElementById('addPlatformModuleBtn')?.addEventListener('click',add);document.getElementById('platformModuleManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-pm-edit]'),t=e.target.closest('[data-pm-toggle]'),d=e.target.closest('[data-pm-delete]');if(a)edit(a.dataset.pmEdit);else if(t)toggle(t.dataset.pmToggle);else if(d)del(d.dataset.pmDelete)})});
 })();
 </script>
