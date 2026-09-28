@@ -7044,7 +7044,7 @@ document.addEventListener(
 .admin-management-panel[hidden]{display:none!important}.admin-management-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.admin-management-head h2{margin:0 0 5px}.admin-management-form{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:12px;align-items:end;margin:18px 0 14px}.admin-form-field{min-width:0}.admin-form-field label{display:block;font-size:13px;font-weight:700;color:#536980;margin-bottom:7px}.admin-form-field input{width:100%;padding:12px 13px;border:1px solid #d5e0ea;border-radius:11px;background:#fff;color:#243447;font-size:14px;outline:none}.admin-form-field input:focus{border-color:#2784e7;box-shadow:0 0 0 3px rgba(39,132,231,.1)}.admin-primary-btn{border:0;border-radius:11px;padding:12px 16px;background:linear-gradient(135deg,#2784e7,#175fc7);color:#fff;font-weight:800;cursor:pointer;white-space:nowrap}.admin-primary-btn:disabled{opacity:.6;cursor:not-allowed}.admin-management-note{padding:12px 14px;border-radius:12px;background:#f4f8fc;color:#687b90;font-size:12px;line-height:1.55;margin-bottom:18px}.admin-management-table-wrap{width:100%;overflow-x:auto}.admin-management-table-wrap .log-table{min-width:720px}.core-admin-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.core-admin-status.active{background:#e8f7ed;color:#19733b}.core-admin-status.inactive{background:#fff0f0;color:#a52b2b}.core-admin-actions{display:flex;gap:7px;flex-wrap:wrap}.core-admin-action{border:1px solid #d5e0ea;background:#fff;color:#29435e;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}.core-admin-action.warn{color:#9a5b00;background:#fff8e8;border-color:#f0d99d}.core-admin-action.danger{color:#a52b2b;background:#fff3f3;border-color:#eccccc}.core-admin-action:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.admin-management-panel{padding:18px;border-radius:18px}.admin-management-head{display:block}.admin-management-head .overview-refresh{margin-top:10px}.admin-management-form{grid-template-columns:1fr}.admin-primary-btn{width:100%}}
 
 <style>
-.platform-module-form{display:grid;grid-template-columns:1fr 1fr 90px 1.5fr 90px auto;gap:10px;align-items:center;margin:18px 0 14px}.platform-module-form input{width:100%;padding:11px 12px;border:1px solid #d5e0ea;border-radius:11px;background:#fff;color:#243447;font-size:14px;outline:none}.platform-module-form input:focus{border-color:#2784e7;box-shadow:0 0 0 3px rgba(39,132,231,.1)}.platform-module-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.platform-module-status.active{background:#e8f7ed;color:#19733b}.platform-module-status.inactive{background:#fff0f0;color:#a52b2b}.platform-module-actions{display:flex;gap:7px;flex-wrap:wrap}.platform-module-action{border:1px solid #d5e0ea;background:#fff;color:#29435e;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}.platform-module-action.warn{color:#9a5b00;background:#fff8e8;border-color:#f0d99d}.platform-module-action.danger{color:#a52b2b;background:#fff3f3;border-color:#eccccc}@media(max-width:900px){.platform-module-form{grid-template-columns:1fr 1fr}.platform-module-form button{grid-column:1/-1;width:100%}}@media(max-width:700px){.platform-module-form{grid-template-columns:1fr}.platform-module-form button{grid-column:auto}}
+.platform-module-form{display:grid;grid-template-columns:1fr 1fr 90px 1.5fr 90px auto;gap:10px;align-items:center;margin:18px 0 14px}.platform-module-form input{width:100%;padding:11px 12px;border:1px solid #d5e0ea;border-radius:11px;background:#fff;color:#243447;font-size:14px;outline:none}.platform-module-form input:focus{border-color:#2784e7;box-shadow:0 0 0 3px rgba(39,132,231,.1)}.platform-module-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.platform-module-status.active{background:#e8f7ed;color:#19733b}.platform-module-status.inactive{background:#fff0f0;color:#a52b2b}.platform-module-actions{display:flex;gap:7px;flex-wrap:wrap}.platform-module-action{border:1px solid #d5e0ea;background:#fff;color:#29435e;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}.platform-module-action.warn{color:#9a5b00;background:#fff8e8;border-color:#f0d99d}.platform-module-action.danger{color:#a52b2b;background:#fff3f3;border-color:#eccccc}@media(max-width:900px){.platform-module-form{grid-template-columns:1fr 1fr}.platform-module-form button{grid-column:1/-1;width:100%}}@media(max-width:700px){.platform-module-form{grid-template-columns:1fr}.platform-module-form button{grid-column:auto}.admin-management-form[style]{grid-template-columns:1fr!important}.admin-management-form[style] .admin-primary-btn{width:100%}}
 </style>
 </style>
 
@@ -7083,13 +7083,26 @@ document.addEventListener(
     body.innerHTML=systemRows.map(x=>'<tr><td><b>'+esc(x.setting_key)+'</b></td><td>'+esc(x.setting_value||'-')+'</td><td>'+esc(x.description||'-')+'</td><td><span class="platform-module-status '+(x.is_active?'active':'inactive')+'">'+(x.is_active?'AKTIF':'NONAKTIF')+'</span></td><td>'+esc(date(x.updated_at))+'</td><td><div class="platform-module-actions"><button type="button" class="platform-module-action" data-sedit="'+esc(x.id)+'">Edit</button><button type="button" class="platform-module-action warn" data-stoggle="'+esc(x.id)+'">'+(x.is_active?'Nonaktifkan':'Aktifkan')+'</button><button type="button" class="platform-module-action danger" data-sdelete="'+esc(x.id)+'">Hapus</button></div></td></tr>').join('');
   }
   async function addSystemSetting(){
-    const k=document.getElementById('systemSettingKeyInput'),v=document.getElementById('systemSettingValueInput'),d=document.getElementById('systemSettingDescInput');
-    const key=String(k.value||'').trim().toLowerCase().replace(/[^a-z0-9_.-]/g,'_'),value=String(v.value||'').trim(),desc=String(d.value||'').trim();
-    if(!key){msg('Key pengaturan wajib diisi.');k.focus();return}
-    if(!value){msg('Nilai pengaturan wajib diisi.');v.focus();return}
-    if(systemRows.some(x=>x.setting_key===key)){msg('Key tersebut sudah ada. Gunakan Edit.');return}
-    const b=document.getElementById('addSystemSettingBtn');b.disabled=true;
-    try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings',{method:'POST',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({setting_key:key,setting_value:value,description:desc,is_active:true})});if(!r.ok)throw new Error(await r.text());k.value='';v.value='';d.value='';await loadSystemSettings();msg('Pengaturan berhasil ditambahkan.',true)}catch(e){msg('Gagal menambahkan: '+e.message)}finally{b.disabled=false}
+    const k=document.getElementById('systemSettingKeyInput'),v=document.getElementById('systemSettingValueInput'),d=document.getElementById('systemSettingDescInput'),b=document.getElementById('addSystemSettingBtn');
+    const key=String(k?.value||'').trim().toLowerCase().replace(/[^a-z0-9_.-]/g,'_'),value=String(v?.value||'').trim(),desc=String(d?.value||'').trim();
+    if(!key){msg('⚠️ Key pengaturan wajib diisi.');k?.focus();return}
+    if(!value){msg('⚠️ Nilai pengaturan wajib diisi.');v?.focus();return}
+    if(systemRows.some(x=>x.setting_key===key)){msg('⚠️ Key "'+key+'" sudah ada. Gunakan Edit.');return}
+    b.disabled=true; msg('Menyimpan pengaturan "'+key+'"...');
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings',{
+        method:'POST',
+        headers:{...authHeaders(),Prefer:'return=representation'},
+        body:JSON.stringify({setting_key:key,setting_value:value,description:desc,is_active:true})
+      });
+      const body=await r.text();
+      if(!r.ok)throw new Error(body||('HTTP '+r.status));
+      k.value='';v.value='';d.value='';
+      await loadSystemSettings();
+      msg('✓ Pengaturan "'+key+'" berhasil ditambahkan dan langsung tampil di daftar.',true);
+      document.getElementById('systemConfigurationPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }catch(e){msg('✕ Gagal menambahkan pengaturan: '+e.message)}
+    finally{b.disabled=false}
   }
   async function editSystemSetting(id){
     const x=systemRows.find(a=>String(a.id)===String(id));if(!x)return;
@@ -7107,12 +7120,13 @@ document.addEventListener(
     if(!await coreAdiimasaConfirm('Hapus pengaturan '+x.setting_key+'?','Konfigurasi Sistem'))return;
     try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok)throw new Error(await r.text());await loadSystemSettings();msg('Pengaturan berhasil dihapus.',true)}catch(e){msg('Gagal menghapus: '+e.message)}
   }
-  document.addEventListener('DOMContentLoaded',()=>{
+  function bindSystemConfiguration(){
     document.getElementById('openSystemConfigurationBtn')?.addEventListener('click',()=>{const p=document.getElementById('systemConfigurationPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});loadSystemSettings()});
     document.getElementById('refreshSystemSettingsBtn')?.addEventListener('click',loadSystemSettings);
     document.getElementById('addSystemSettingBtn')?.addEventListener('click',addSystemSetting);
     document.getElementById('systemSettingsBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-sedit]'),t=e.target.closest('[data-stoggle]'),d=e.target.closest('[data-sdelete]');if(a)editSystemSetting(a.dataset.sedit);else if(t)toggleSystemSetting(t.dataset.stoggle);else if(d)deleteSystemSetting(d.dataset.sdelete)});
-  });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindSystemConfiguration,{once:true}); else bindSystemConfiguration();
   window.loadSystemSettings=loadSystemSettings;
 })();
 </script>
