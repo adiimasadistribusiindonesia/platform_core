@@ -795,6 +795,26 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
 #platformModuleManagementPanel .log-table{min-width:760px}
 #platformModuleGrid .module-card p{white-space:normal;overflow-wrap:anywhere}
 </style>
+<style>
+.client-management-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  background:#fff;border:1px solid #d8e4f0;border-radius:18px;padding:18px 20px;margin:0 0 22px;
+  box-shadow:0 8px 22px rgba(44,80,120,.05)
+}
+.client-management-toolbar strong{display:block;font-size:17px;color:#29415d;margin-bottom:4px}
+.client-management-toolbar span{display:block;color:#71839a;font-size:13px;line-height:1.45}
+.client-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.client-action{border:1px solid #d7e2ed;background:#f8fbfe;color:#294866;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.client-action:hover{background:#edf5fc}
+.client-action.delete{color:#a52b2b;border-color:#eccccc;background:#fff7f7}
+.client-action.toggle{color:#8a5a00}
+@media(max-width:600px){
+  .client-management-toolbar{align-items:stretch;flex-direction:column}
+  .client-management-toolbar .admin-primary-btn{width:100%}
+  .client-actions{flex-direction:column}
+  .client-action{width:100%}
+}
+</style>
 </head>
 
 <body>
@@ -923,6 +943,13 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
       <h1 id="clientTitle">Pilih Client</h1>
       <p class="lead">Pilih client terlebih dahulu. Setelah client dipilih, baru tersedia Overview, Approval Akses, Activity Log, dan Platform Analysis.</p>
 
+      <div class="client-management-toolbar" id="clientManagementToolbar">
+        <div>
+          <strong>Kelola Client</strong>
+          <span>Tambah, edit, aktif/nonaktifkan, atau hapus client pada modul ini.</span>
+        </div>
+        <button type="button" class="admin-primary-btn" id="addClientBtn">＋ Tambah Client</button>
+      </div>
       <h2 class="section-title" id="clientListTitle">Client Modul SOSIAL</h2>
       <div class="client-grid" id="clientGrid"></div>
     </section>
@@ -1156,6 +1183,7 @@ async function bootCoreAuth(){
     }
     document.getElementById("adminEmail").textContent=user.email;
     document.getElementById("loginOverlay").classList.add("hidden");
+    await loadCorePlatformClients();
     loadCorePlatformModules();
   }catch(err){
     clearCoreSession();
@@ -1175,6 +1203,7 @@ async function logoutCore(){
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("addClientBtn")?.addEventListener("click",addPlatformClient);
   document.getElementById("googleLoginBtn").addEventListener("click",startGoogleLogin);
   document.getElementById("logoutBtn").addEventListener("click",logoutCore);
   bootCoreAuth();
@@ -1184,14 +1213,145 @@ document.addEventListener("DOMContentLoaded",()=>{
 <script>
 let currentModule = 'SOSIAL';
 
-const moduleClients = {
-  SOSIAL: [{name:'GEPARU',desc:'Generasi Padjajaran Baru',icon:'🤝',meta:'Client aktif · Platform Sosial'}],
-  FOOD: [],
-  MARKETPLACE: [],
-  COMPANY: [],
-  PRODUCT: [],
-  MBI    : [{name:'SELLERBOOKS',desc:'Sistem pembukuan dan manajemen penjualan marketplace',icon:'📊',meta:'Client aktif · Modul MBI'}]
+let moduleClients = {
+  SOSIAL: [], FOOD: [], MARKETPLACE: [], COMPANY: [], PRODUCT: [], MBI: []
 };
+let corePlatformClients = [];
+
+async function loadCorePlatformClients(){
+  if(!coreAccessToken) return;
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_clients?select=*&order=module_slug.asc,sort_order.asc,name.asc',{
+      headers:authHeaders(),cache:'no-store'
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    corePlatformClients=await r.json();
+    moduleClients={SOSIAL:[],FOOD:[],MARKETPLACE:[],COMPANY:[],PRODUCT:[],MBI:[]};
+    corePlatformClients.forEach(x=>{
+      const slug=String(x.module_slug||'').toUpperCase();
+      if(!moduleClients[slug]) moduleClients[slug]=[];
+      moduleClients[slug].push({
+        id:x.id,name:x.name,desc:x.description||'',icon:x.icon||'👤',
+        meta:(String(x.status).toUpperCase()==='ACTIVE'?'Client aktif':'Client nonaktif')+' · '+slug,
+        status:String(x.status||'ACTIVE').toUpperCase(),sort_order:Number(x.sort_order)||0
+      });
+    });
+    renderPlatformModuleCards();
+    if(currentModule) renderClientList(currentModule);
+  }catch(e){
+    console.error('Gagal memuat client Core:',e);
+  }
+}
+
+function getModuleClientCount(slug){
+  return (moduleClients[String(slug||'').toUpperCase()] || [])
+    .filter(x=>String(x.status||'ACTIVE').toUpperCase()==='ACTIVE').length;
+}
+
+function renderClientList(module){
+  const grid=document.getElementById('clientGrid');
+  if(!grid) return;
+  const clients=(moduleClients[module]||[])
+    .filter(c=>String(c.status||'ACTIVE').toUpperCase()==='ACTIVE')
+    .sort((a,b)=>(a.sort_order-b.sort_order)||a.name.localeCompare(b.name));
+
+  if(!clients.length){
+    grid.innerHTML='<div class="client-card empty-client"><div class="client-logo">＋</div><h3>Belum Ada Client</h3><p>Client aktif untuk modul '+escapeModuleHtml(module)+' belum ditambahkan.</p><div class="client-meta">Siap untuk ekspansi</div></div>';
+    return;
+  }
+
+  grid.innerHTML=clients.map(c=>{
+    const id=escapeModuleHtml(c.id);
+    return '<div class="client-card" onclick="openClientById(\''+escModuleValue(c.id)+'\')">'+
+      '<div class="client-logo">'+escapeModuleHtml(c.icon)+'</div>'+
+      '<h3>'+escapeModuleHtml(c.name)+'</h3>'+
+      '<p>'+escapeModuleHtml(c.desc)+'</p>'+
+      '<div class="client-meta">'+escapeModuleHtml(c.meta)+' &nbsp; →</div>'+
+      '<div class="client-actions">'+
+        '<button type="button" class="client-action edit" onclick="event.stopPropagation();editPlatformClient(\''+escModuleValue(c.id)+'\')">✏ Edit</button>'+
+        '<button type="button" class="client-action toggle" onclick="event.stopPropagation();togglePlatformClient(\''+escModuleValue(c.id)+'\')">⏸ Nonaktifkan</button>'+
+        '<button type="button" class="client-action delete" onclick="event.stopPropagation();deletePlatformClient(\''+escModuleValue(c.id)+'\')">🗑 Hapus</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+async function addPlatformClient(){
+  if(!currentModule) return;
+  const name=prompt('Nama client:', '');
+  if(name===null || !String(name).trim()) return;
+  const desc=prompt('Deskripsi client:', '');
+  if(desc===null) return;
+  const icon=prompt('Ikon client (emoji/simbol):','👤');
+  if(icon===null) return;
+  const order=prompt('Urutan client:','1');
+  if(order===null) return;
+  const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_clients',{
+    method:'POST',
+    headers:{...authHeaders(),Prefer:'return=minimal'},
+    body:JSON.stringify({module_slug:currentModule,name:String(name).trim(),description:String(desc).trim(),icon:String(icon).trim()||'👤',status:'ACTIVE',sort_order:Number(order)||0})
+  });
+  if(!r.ok){coreAdiimasaAlert('Gagal menambahkan client: '+await r.text(),'Client Platform');return;}
+  await loadCorePlatformClients();
+  coreAdiimasaAlert('Client '+String(name).trim()+' berhasil ditambahkan.','Client Platform');
+}
+
+async function editPlatformClient(id){
+  const x=corePlatformClients.find(a=>String(a.id)===String(id));
+  if(!x) return;
+  const name=prompt('Nama client:',x.name||'');
+  if(name===null) return;
+  const desc=prompt('Deskripsi client:',x.description||'');
+  if(desc===null) return;
+  const icon=prompt('Ikon client:',x.icon||'👤');
+  if(icon===null) return;
+  const order=prompt('Urutan:',String(x.sort_order??0));
+  if(order===null) return;
+  const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_clients?id=eq.'+encodeURIComponent(id),{
+    method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},
+    body:JSON.stringify({name:String(name).trim(),description:String(desc).trim(),icon:String(icon).trim()||'👤',sort_order:Number(order)||0,updated_at:new Date().toISOString()})
+  });
+  if(!r.ok){coreAdiimasaAlert('Gagal mengedit client: '+await r.text(),'Client Platform');return;}
+  await loadCorePlatformClients();
+  coreAdiimasaAlert('Client berhasil diperbarui.','Client Platform');
+}
+
+async function togglePlatformClient(id){
+  const x=corePlatformClients.find(a=>String(a.id)===String(id));
+  if(!x) return;
+  const active=String(x.status||'ACTIVE').toUpperCase()==='ACTIVE';
+  if(!await coreAdiimasaConfirm((active?'Nonaktifkan ':'Aktifkan ')+x.name+'?','Client Platform')) return;
+  const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_clients?id=eq.'+encodeURIComponent(id),{
+    method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},
+    body:JSON.stringify({status:active?'INACTIVE':'ACTIVE',updated_at:new Date().toISOString()})
+  });
+  if(!r.ok){coreAdiimasaAlert('Gagal mengubah status client: '+await r.text(),'Client Platform');return;}
+  await loadCorePlatformClients();
+  coreAdiimasaAlert('Status client berhasil diubah.','Client Platform');
+}
+
+async function deletePlatformClient(id){
+  const x=corePlatformClients.find(a=>String(a.id)===String(id));
+  if(!x) return;
+  if(!await coreAdiimasaConfirm('Hapus client '+x.name+'? Data modul lain tidak otomatis dihapus.','Client Platform')) return;
+  const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_clients?id=eq.'+encodeURIComponent(id),{
+    method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}
+  });
+  if(!r.ok){coreAdiimasaAlert('Gagal menghapus client: '+await r.text(),'Client Platform');return;}
+  await loadCorePlatformClients();
+  coreAdiimasaAlert('Client berhasil dihapus.','Client Platform');
+}
+
+function openClientById(id){
+  const c=corePlatformClients.find(x=>String(x.id)===String(id));
+  if(!c || String(c.status||'ACTIVE').toUpperCase()!=='ACTIVE') return;
+  document.getElementById('dashClient').textContent=c.name;
+  document.getElementById('dashModule').textContent=currentModule+' · '+(c.description||'');
+  document.getElementById('dashHeading').textContent='Dashboard '+c.name;
+  document.getElementById('dashIcon').textContent=c.icon||'👤';
+  showView('dashboardView');
+  openPanel('overview',document.querySelector('.feature-tab[data-panel="overview"]'));
+  loadClientOverview();
+}
 
 let corePlatformModules = [];
 
@@ -1258,32 +1418,23 @@ function showView(id){
 function showHome(){activateNav('navHome');showView('homeView')}
 function showSettings(){activateNav('navSettings');showView('settingsView')}
 
-function openModule(module){
-  currentModule = module;
+async function openModule(module){
+  currentModule = String(module||'').toUpperCase();
   activateNav('navHome');
-  document.getElementById('crumbModule').textContent = module;
-  document.getElementById('clientTitle').textContent = 'Pilih Client ' + module;
-  document.getElementById('clientListTitle').textContent = 'Client Modul ' + module;
-  const grid = document.getElementById('clientGrid');
-  const clients = moduleClients[module] || [];
-  if(!clients.length){
-    grid.innerHTML = `<div class="client-card empty-client"><div class="client-logo">＋</div><h3>Belum Ada Client</h3><p>Client untuk modul ${module} belum ditambahkan.</p><div class="client-meta">Siap untuk ekspansi</div></div>`;
-  }else{
-    grid.innerHTML = clients.map((c,i)=>`<button class="client-card" onclick="openClient('${module}',${i})"><div class="client-logo">${c.icon}</div><h3>${c.name}</h3><p>${c.desc}</p><div class="client-meta">${c.meta} &nbsp; →</div></button>`).join('');
-  }
+  document.getElementById('crumbModule').textContent = currentModule;
+  document.getElementById('clientTitle').textContent = 'Pilih Client ' + currentModule;
+  document.getElementById('clientListTitle').textContent = 'Client Modul ' + currentModule;
   showView('clientView');
+  await loadCorePlatformClients();
+  renderClientList(currentModule);
 }
 
 function openClient(module,index){
-  const c = moduleClients[module][index];
-  document.getElementById('dashClient').textContent = c.name;
-  document.getElementById('dashModule').textContent = module + ' · ' + c.desc;
-  document.getElementById('dashHeading').textContent = 'Dashboard ' + c.name;
-  document.getElementById('dashIcon').textContent = c.icon;
-  showView('dashboardView');
-  openPanel('overview',document.querySelector('.feature-tab[data-panel="overview"]'));
-  loadClientOverview();
+  const clients=moduleClients[module]||[];
+  const c=clients[index];
+  if(c && c.id) openClientById(c.id);
 }
+
 async function loadClientOverview(){
   const client = document.getElementById('dashClient').textContent.trim();
   document.getElementById('overviewTitle').textContent = 'Overview ' + client;
