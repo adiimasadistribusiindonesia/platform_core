@@ -6062,12 +6062,14 @@ document.addEventListener(
 
             /* ==========================================
                UPDATE GRAFIK
+            ==========================================
+               Grafik periode sekarang dikendalikan oleh
+               Platform Analysis v2 agar Hari Ini selalu
+               menggunakan 24 jam (00–23), sedangkan
+               Minggu/Bulan menggunakan label hari.
+               Jangan render grafik 7-hari di sini karena
+               dapat menimpa grafik periode aktif.
             ========================================== */
-
-            renderRealAnalyticsChart(
-                pageviews
-            );
-
 
 
             /* ==========================================
