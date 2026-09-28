@@ -1614,11 +1614,12 @@ openPanel=function(panel,el){originalOpenPanel(panel,el);if(panel==='approval') 
 
   function updateClock(){
     const now = new Date();
+    const tz = window.coreAdiimasaSystemTimezone || 'Asia/Jakarta';
     const dateText = new Intl.DateTimeFormat('id-ID',{
-      weekday:'long', day:'2-digit', month:'long', year:'numeric'
+      weekday:'long', day:'2-digit', month:'long', year:'numeric', timeZone:tz
     }).format(now);
     const timeText = new Intl.DateTimeFormat('id-ID',{
-      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:tz
     }).format(now);
 
     el.innerHTML = '▣ &nbsp; ' + dateText + '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + timeText;
@@ -1752,7 +1753,7 @@ function activityActor(log){
   return '<b>Tidak diketahui</b>';
 }
 
-function activityDate(v){if(!v)return '-';try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium'}).format(new Date(v));}catch(e){return v;}}
+function activityDate(v){if(!v)return '-';try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'medium',timeZone:window.coreAdiimasaSystemTimezone||'Asia/Jakarta'}).format(new Date(v));}catch(e){return v;}}
 function activityStatusClass(v){return String(v||'SUCCESS').toLowerCase().replace(/[^a-z0-9_-]/g,'');}
 async function loadMasterActivity(){
 
@@ -7145,6 +7146,28 @@ document.addEventListener(
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindSystemConfiguration,{once:true}); else bindSystemConfiguration();
   window.loadSystemSettings=loadSystemSettings;
+})();
+</script>
+<script>
+/* CORE SYSTEM TIMEZONE BRIDGE — dipakai lintas fitur Core */
+(function(){
+  window.coreAdiimasaSystemTimezone = 'Asia/Jakarta';
+  async function loadCoreSystemTimezone(){
+    try{
+      const token = window.coreAccessToken;
+      if(!token || !window.SUPABASE_URL || !window.SUPABASE_KEY) return;
+      const headers = {apikey:window.SUPABASE_KEY,Authorization:'Bearer '+token};
+      const r = await fetch(window.SUPABASE_URL+'/rest/v1/core_system_settings?select=setting_value&setting_key=eq.timezone&is_active=eq.true&limit=1',{headers,cache:'no-store'});
+      if(!r.ok) return;
+      const rows = await r.json();
+      const value = String(rows?.[0]?.setting_value||'').trim();
+      if(!value) return;
+      new Intl.DateTimeFormat('id-ID',{timeZone:value}).format(new Date());
+      window.coreAdiimasaSystemTimezone = value;
+    }catch(e){ console.warn('Core timezone bridge:',e); }
+  }
+  loadCoreSystemTimezone();
+  setInterval(loadCoreSystemTimezone,60000);
 })();
 </script>
 </body>
