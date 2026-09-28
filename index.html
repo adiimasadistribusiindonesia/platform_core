@@ -1274,15 +1274,15 @@ function renderClientList(module){
     const active=String(c.status||'ACTIVE').toUpperCase()==='ACTIVE';
     const cls=active?'client-card':'client-card client-card-inactive';
     const meta=active?'Client aktif · Platform '+escapeModuleHtml(module):'Client nonaktif · Platform '+escapeModuleHtml(module);
-    return '<div class="'+cls+'"'+(active?' onclick="openClientById(\\''+escModuleValue(c.id)+'\\')"':'')+'>'+
+    return '<div class="'+cls+'"'+(active?' onclick="openClientById(\''+escModuleValue(c.id)+'\')"':'')+'>'+
       '<div class="client-logo">'+escapeModuleHtml(c.icon)+'</div>'+
       '<h3>'+escapeModuleHtml(c.name)+'</h3>'+
       '<p>'+escapeModuleHtml(c.desc)+'</p>'+
       '<div class="client-meta">'+meta+'</div>'+
       '<div class="client-actions">'+
-        '<button type="button" class="client-action edit" onclick="event.stopPropagation();editPlatformClient(\\''+escModuleValue(c.id)+'\\')">✏ Edit</button>'+
-        '<button type="button" class="client-action toggle" onclick="event.stopPropagation();togglePlatformClient(\\''+escModuleValue(c.id)+'\\')">'+(active?'⏸ Nonaktifkan':'▶ Aktifkan')+'</button>'+
-        '<button type="button" class="client-action delete" onclick="event.stopPropagation();deletePlatformClient(\\''+escModuleValue(c.id)+'\\')">🗑 Hapus</button>'+
+        '<button type="button" class="client-action edit" onclick="event.stopPropagation();editPlatformClient(\''+escModuleValue(c.id)+'\')">✏ Edit</button>'+
+        '<button type="button" class="client-action toggle" onclick="event.stopPropagation();togglePlatformClient(\''+escModuleValue(c.id)+'\')">'+(active?'⏸ Nonaktifkan':'▶ Aktifkan')+'</button>'+
+        '<button type="button" class="client-action delete" onclick="event.stopPropagation();deletePlatformClient(\''+escModuleValue(c.id)+'\')">🗑 Hapus</button>'+
       '</div></div>';
   }).join('');
 }
