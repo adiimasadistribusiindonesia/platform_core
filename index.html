@@ -815,6 +815,16 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
   .client-action{width:100%}
 }
 </style>
+<style>
+.client-card-inactive{
+  opacity:.72;
+  border:1px dashed #b9c8d8;
+  background:#f4f7fa;
+}
+.client-card-inactive h3{color:#687b90}
+.client-card-inactive .client-meta{color:#a15c00}
+.client-card .client-actions{position:relative;z-index:3}
+</style>
 </head>
 
 <body>
@@ -1251,30 +1261,31 @@ function getModuleClientCount(slug){
 function renderClientList(module){
   const grid=document.getElementById('clientGrid');
   if(!grid) return;
+
   const clients=(moduleClients[module]||[])
-    .filter(c=>String(c.status||'ACTIVE').toUpperCase()==='ACTIVE')
     .sort((a,b)=>(a.sort_order-b.sort_order)||a.name.localeCompare(b.name));
 
   if(!clients.length){
-    grid.innerHTML='<div class="client-card empty-client"><div class="client-logo">＋</div><h3>Belum Ada Client</h3><p>Client aktif untuk modul '+escapeModuleHtml(module)+' belum ditambahkan.</p><div class="client-meta">Siap untuk ekspansi</div></div>';
+    grid.innerHTML='';
     return;
   }
 
   grid.innerHTML=clients.map(c=>{
-    const id=escapeModuleHtml(c.id);
-    return '<div class="client-card" onclick="openClientById(\''+escModuleValue(c.id)+'\')">'+
+    const active=String(c.status||'ACTIVE').toUpperCase()==='ACTIVE';
+    const cls=active?'client-card':'client-card client-card-inactive';
+    const meta=active?'Client aktif · Platform '+escapeModuleHtml(module):'Client nonaktif · Platform '+escapeModuleHtml(module);
+    return '<div class="'+cls+'"'+(active?' onclick="openClientById(\\''+escModuleValue(c.id)+'\\')"':'')+'>'+
       '<div class="client-logo">'+escapeModuleHtml(c.icon)+'</div>'+
       '<h3>'+escapeModuleHtml(c.name)+'</h3>'+
       '<p>'+escapeModuleHtml(c.desc)+'</p>'+
-      '<div class="client-meta">'+escapeModuleHtml(c.meta)+' &nbsp; →</div>'+
+      '<div class="client-meta">'+meta+'</div>'+
       '<div class="client-actions">'+
-        '<button type="button" class="client-action edit" onclick="event.stopPropagation();editPlatformClient(\''+escModuleValue(c.id)+'\')">✏ Edit</button>'+
-        '<button type="button" class="client-action toggle" onclick="event.stopPropagation();togglePlatformClient(\''+escModuleValue(c.id)+'\')">⏸ Nonaktifkan</button>'+
-        '<button type="button" class="client-action delete" onclick="event.stopPropagation();deletePlatformClient(\''+escModuleValue(c.id)+'\')">🗑 Hapus</button>'+
+        '<button type="button" class="client-action edit" onclick="event.stopPropagation();editPlatformClient(\\''+escModuleValue(c.id)+'\\')">✏ Edit</button>'+
+        '<button type="button" class="client-action toggle" onclick="event.stopPropagation();togglePlatformClient(\\''+escModuleValue(c.id)+'\\')">'+(active?'⏸ Nonaktifkan':'▶ Aktifkan')+'</button>'+
+        '<button type="button" class="client-action delete" onclick="event.stopPropagation();deletePlatformClient(\\''+escModuleValue(c.id)+'\\')">🗑 Hapus</button>'+
       '</div></div>';
   }).join('');
 }
-
 async function addPlatformClient(){
   if(!currentModule) return;
   const name=prompt('Nama client:', '');
