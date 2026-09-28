@@ -1032,10 +1032,21 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
       <h1>Pengaturan Core</h1>
       <p class="lead">Pusat konfigurasi utama CORE ADIIMASA.</p>
       <div class="settings-box" style="margin-top:28px">
-        <div class="setting-row"><div><h3>Manajemen Admin</h3><p>Kelola akun administrator dan hak akses Core.</p></div><button class="setting-btn">Kelola →</button></div>
-        <div class="setting-row"><div><h3>Modul Platform</h3><p>Kelola struktur dan konfigurasi lima modul utama.</p></div><button class="setting-btn">Kelola →</button></div>
-        <div class="setting-row"><div><h3>Konfigurasi Sistem</h3><p>Pengaturan integrasi dan konfigurasi platform.</p></div><button class="setting-btn">Kelola →</button></div>
+        <div class="setting-row"><div><h3>Manajemen Admin</h3><p>Kelola akun administrator dan hak akses Core.</p></div><button class="setting-btn" id="openAdminManagementBtn" type="button">Kelola →</button></div>
+        <div class="setting-row"><div><h3>Modul Platform</h3><p>Kelola struktur dan konfigurasi lima modul utama.</p></div><button class="setting-btn" type="button" disabled style="opacity:.55;cursor:not-allowed">Segera →</button></div>
+        <div class="setting-row"><div><h3>Konfigurasi Sistem</h3><p>Pengaturan integrasi dan konfigurasi platform.</p></div><button class="setting-btn" type="button" disabled style="opacity:.55;cursor:not-allowed">Segera →</button></div>
       </div>
+      <section class="admin-management-panel" id="adminManagementPanel" hidden>
+        <div class="admin-management-head"><div><div class="eyebrow">MANAJEMEN AKSES CORE</div><h2>Administrator Core</h2><p class="section-sub">Kelola daftar email yang diizinkan masuk sebagai Core Admin.</p></div><button type="button" class="overview-refresh" id="refreshAdminManagementBtn">↻ Perbarui</button></div>
+        <div class="admin-management-form">
+          <div class="admin-form-field"><label for="coreAdminEmailInput">Email Google Admin</label><input id="coreAdminEmailInput" type="email" autocomplete="off" placeholder="admin@contoh.com"></div>
+          <div class="admin-form-field"><label for="coreAdminNameInput">Nama Admin</label><input id="coreAdminNameInput" type="text" autocomplete="off" placeholder="Nama / identitas admin"></div>
+          <button type="button" class="admin-primary-btn" id="addCoreAdminBtn">＋ Tambah Admin</button>
+        </div>
+        <div class="admin-management-note"><b>Catatan:</b> menambahkan email di sini memberikan hak akses Core setelah pemilik email berhasil login dengan Google. Sistem tidak membuat akun Google baru dari halaman ini.</div>
+        <div class="admin-management-table-wrap"><table class="log-table"><thead><tr><th>Email</th><th>Nama</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead><tbody id="coreAdminManagementBody"><tr><td colspan="5" style="text-align:center;color:#8190a0;padding:35px">Memuat daftar admin...</td></tr></tbody></table></div>
+        <div id="coreAdminManagementMessage" class="overview-message"></div>
+      </section>
     </section>
 
   </main>
@@ -6770,5 +6781,35 @@ document.addEventListener(
 })();
 </script>
 
+
+<script>
+(function(){
+ let rows=[];
+ const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+ const msg=(s,ok=false)=>{const e=document.getElementById('coreAdminManagementMessage');if(e){e.textContent=s||'';e.style.color=ok?'#19733b':'#687b90';}};
+ const date=v=>{try{return new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v));}catch(e){return v||'-';}};
+ async function load(){
+  const body=document.getElementById('coreAdminManagementBody');if(!body)return;
+  if(!coreAccessToken){body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#a52b2b;padding:35px">Sesi Core Admin tidak tersedia.</td></tr>';return;}
+  body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8190a0;padding:35px">Memuat daftar admin...</td></tr>';
+  try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?select=id,email,name,is_active,created_at,updated_at&order=created_at.asc',{headers:authHeaders(),cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());rows=await r.json();render();msg(rows.length+' admin terdaftar.',true);}catch(e){body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#a52b2b;padding:35px">Gagal memuat daftar admin.</td></tr>';msg('Gagal memuat admin: '+e.message);}
+ }
+ function render(){
+  const body=document.getElementById('coreAdminManagementBody');if(!body)return;const self=String(document.getElementById('adminEmail')?.textContent||'').trim().toLowerCase();
+  if(!rows.length){body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8190a0;padding:35px">Belum ada Core Admin.</td></tr>';return;}
+  body.innerHTML=rows.map(x=>{const me=String(x.email||'').toLowerCase()===self;return '<tr><td><b>'+esc(x.email)+'</b>'+(me?' <small style="color:#2784e7">(Anda)</small>':'')+'</td><td>'+esc(x.name||'-')+'</td><td><span class="core-admin-status '+(x.is_active?'active':'inactive')+'">'+(x.is_active?'AKTIF':'NONAKTIF')+'</span></td><td>'+esc(date(x.created_at))+'</td><td><div class="core-admin-actions"><button type="button" class="core-admin-action" data-edit="'+esc(x.id)+'">Edit</button><button type="button" class="core-admin-action warn" data-toggle="'+esc(x.id)+'" '+(me?'disabled':'')+'>'+(x.is_active?'Nonaktifkan':'Aktifkan')+'</button><button type="button" class="core-admin-action danger" data-delete="'+esc(x.id)+'" '+(me?'disabled':'')+'>Hapus</button></div></td></tr>';}).join('');
+ }
+ async function add(){const e=document.getElementById('coreAdminEmailInput'),n=document.getElementById('coreAdminNameInput'),b=document.getElementById('addCoreAdminBtn');const email=String(e.value||'').trim().toLowerCase(),name=String(n.value||'').trim();if(!email||!email.includes('@')){msg('Masukkan email Google yang valid.');e.focus();return}if(!name){msg('Nama admin wajib diisi.');n.focus();return}if(rows.some(x=>String(x.email||'').toLowerCase()===email)){msg('Email tersebut sudah terdaftar.');return}b.disabled=true;try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins',{method:'POST',headers:{...authHeaders(),Prefer:'return=representation'},body:JSON.stringify({email,name,is_active:true})});if(!r.ok)throw new Error(await r.text());e.value='';n.value='';await load();msg('Admin berhasil ditambahkan.',true)}catch(x){msg('Gagal menambahkan admin: '+x.message)}finally{b.disabled=false}}
+ async function edit(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const name=window.prompt('Nama admin:',x.name||'');if(name===null)return;if(!String(name).trim()){msg('Nama admin tidak boleh kosong.');return}try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name:String(name).trim(),updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());await load();msg('Nama admin berhasil diperbarui.',true)}catch(e){msg('Gagal memperbarui: '+e.message)}}
+ async function toggle(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const self=String(x.email||'').toLowerCase()===String(document.getElementById('adminEmail')?.textContent||'').trim().toLowerCase();if(self)return;if(!await coreAdiimasaConfirm((x.is_active?'Nonaktifkan ':'Aktifkan ')+x.email+'?','Manajemen Admin'))return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({is_active:!x.is_active,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());await load()}catch(e){msg('Gagal mengubah status: '+e.message)}}
+ async function del(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const self=String(x.email||'').toLowerCase()===String(document.getElementById('adminEmail')?.textContent||'').trim().toLowerCase();if(self)return;if(!await coreAdiimasaConfirm('Hapus '+x.email+' dari daftar Core Admin?','Manajemen Admin'))return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok)throw new Error(await r.text());await load();msg('Admin berhasil dihapus.',true)}catch(e){msg('Gagal menghapus: '+e.message)}}
+ document.addEventListener('DOMContentLoaded',()=>{document.getElementById('openAdminManagementBtn')?.addEventListener('click',()=>{const p=document.getElementById('adminManagementPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});load()});document.getElementById('refreshAdminManagementBtn')?.addEventListener('click',load);document.getElementById('addCoreAdminBtn')?.addEventListener('click',add);document.getElementById('coreAdminManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-edit]'),t=e.target.closest('[data-toggle]'),d=e.target.closest('[data-delete]');if(a)edit(a.dataset.edit);else if(t)toggle(t.dataset.toggle);else if(d)del(d.dataset.delete)})});window.loadCoreAdmins=load;
+})();
+</script>
+
+<style>
+.admin-management-panel{margin-top:24px;background:#fff;border:1px solid #dbe5ef;border-radius:22px;padding:24px;box-shadow:0 10px 28px rgba(44,80,120,.07)}
+.admin-management-panel[hidden]{display:none!important}.admin-management-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.admin-management-head h2{margin:0 0 5px}.admin-management-form{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:12px;align-items:end;margin:18px 0 14px}.admin-form-field{min-width:0}.admin-form-field label{display:block;font-size:13px;font-weight:700;color:#536980;margin-bottom:7px}.admin-form-field input{width:100%;padding:12px 13px;border:1px solid #d5e0ea;border-radius:11px;background:#fff;color:#243447;font-size:14px;outline:none}.admin-form-field input:focus{border-color:#2784e7;box-shadow:0 0 0 3px rgba(39,132,231,.1)}.admin-primary-btn{border:0;border-radius:11px;padding:12px 16px;background:linear-gradient(135deg,#2784e7,#175fc7);color:#fff;font-weight:800;cursor:pointer;white-space:nowrap}.admin-primary-btn:disabled{opacity:.6;cursor:not-allowed}.admin-management-note{padding:12px 14px;border-radius:12px;background:#f4f8fc;color:#687b90;font-size:12px;line-height:1.55;margin-bottom:18px}.admin-management-table-wrap{width:100%;overflow-x:auto}.admin-management-table-wrap .log-table{min-width:720px}.core-admin-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.core-admin-status.active{background:#e8f7ed;color:#19733b}.core-admin-status.inactive{background:#fff0f0;color:#a52b2b}.core-admin-actions{display:flex;gap:7px;flex-wrap:wrap}.core-admin-action{border:1px solid #d5e0ea;background:#fff;color:#29435e;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}.core-admin-action.warn{color:#9a5b00;background:#fff8e8;border-color:#f0d99d}.core-admin-action.danger{color:#a52b2b;background:#fff3f3;border-color:#eccccc}.core-admin-action:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.admin-management-panel{padding:18px;border-radius:18px}.admin-management-head{display:block}.admin-management-head .overview-refresh{margin-top:10px}.admin-management-form{grid-template-columns:1fr}.admin-primary-btn{width:100%}}
+</style>
 </body>
 </html>
