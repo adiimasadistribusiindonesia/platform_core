@@ -1059,7 +1059,7 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
       <section class="admin-management-panel" id="platformModuleManagementPanel" hidden>
         <div class="admin-management-head">
           <div><div class="eyebrow">KONFIGURASI MODUL PLATFORM</div><h2>Modul Platform</h2><p class="section-sub">Kelola nama, deskripsi, urutan, ikon, dan status modul yang tersedia di Core Adiimasa.</p></div>
-          <button type="button" class="overview-refresh" id="refreshPlatformModulesBtn">↻ Perbarui</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="overview-refresh" id="backPlatformModulesBtn">← Kembali</button><button type="button" class="overview-refresh" id="refreshPlatformModulesBtn">↻ Perbarui</button></div>
         </div>
         <div class="platform-module-form">
           <input id="platformModuleNameInput" placeholder="Nama modul">
@@ -1107,7 +1107,7 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
   <div id="systemSettingsMessage" class="overview-message"></div>
 </section>
 <section class="admin-management-panel" id="adminManagementPanel" hidden>
-        <div class="admin-management-head"><div><div class="eyebrow">MANAJEMEN AKSES CORE</div><h2>Administrator Core</h2><p class="section-sub">Kelola daftar email yang diizinkan masuk sebagai Core Admin.</p></div><button type="button" class="overview-refresh" id="refreshAdminManagementBtn">↻ Perbarui</button></div>
+        <div class="admin-management-head"><div><div class="eyebrow">MANAJEMEN AKSES CORE</div><h2>Administrator Core</h2><p class="section-sub">Kelola daftar email yang diizinkan masuk sebagai Core Admin.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="overview-refresh" id="backAdminManagementBtn">← Kembali</button><button type="button" class="overview-refresh" id="refreshAdminManagementBtn">↻ Perbarui</button></div></div>
         <div class="admin-management-form">
           <div class="admin-form-field"><label for="coreAdminEmailInput">Email Google Admin</label><input id="coreAdminEmailInput" type="email" autocomplete="off" placeholder="admin@contoh.com"></div>
           <div class="admin-form-field"><label for="coreAdminNameInput">Nama Admin</label><input id="coreAdminNameInput" type="text" autocomplete="off" placeholder="Nama / identitas admin"></div>
@@ -7073,7 +7073,20 @@ document.addEventListener(
  async function edit(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const name=window.prompt('Nama admin:',x.name||'');if(name===null)return;if(!String(name).trim()){msg('Nama admin tidak boleh kosong.');return}try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name:String(name).trim(),updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());await load();msg('Nama admin berhasil diperbarui.',true)}catch(e){msg('Gagal memperbarui: '+e.message)}}
  async function toggle(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const self=String(x.email||'').toLowerCase()===String(document.getElementById('adminEmail')?.textContent||'').trim().toLowerCase();if(self)return;if(!await coreAdiimasaConfirm((x.is_active?'Nonaktifkan ':'Aktifkan ')+x.email+'?','Manajemen Admin'))return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({is_active:!x.is_active,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());await load()}catch(e){msg('Gagal mengubah status: '+e.message)}}
  async function del(id){const x=rows.find(a=>String(a.id)===String(id));if(!x)return;const self=String(x.email||'').toLowerCase()===String(document.getElementById('adminEmail')?.textContent||'').trim().toLowerCase();if(self)return;if(!await coreAdiimasaConfirm('Hapus '+x.email+' dari daftar Core Admin?','Manajemen Admin'))return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/core_adiimasa_admins?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok)throw new Error(await r.text());await load();msg('Admin berhasil dihapus.',true)}catch(e){msg('Gagal menghapus: '+e.message)}}
- document.addEventListener('DOMContentLoaded',()=>{document.getElementById('openAdminManagementBtn')?.addEventListener('click',()=>{const p=document.getElementById('adminManagementPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});load()});document.getElementById('refreshAdminManagementBtn')?.addEventListener('click',load);document.getElementById('addCoreAdminBtn')?.addEventListener('click',add);document.getElementById('coreAdminManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-edit]'),t=e.target.closest('[data-toggle]'),d=e.target.closest('[data-delete]');if(a)edit(a.dataset.edit);else if(t)toggle(t.dataset.toggle);else if(d)del(d.dataset.delete)})});window.loadCoreAdmins=load;
+ document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('openAdminManagementBtn')?.addEventListener('click',()=>{
+    const menu=document.getElementById('settingsMenuBox'), p=document.getElementById('adminManagementPanel');
+    const modules=document.getElementById('platformModuleManagementPanel'), system=document.getElementById('systemConfigurationPanel');
+    if(menu)menu.hidden=true;if(modules)modules.hidden=true;if(system)system.hidden=true;
+    if(p){p.hidden=false;p.classList.add('settings-detail-active');}
+    document.getElementById('settingsView')?.scrollIntoView({behavior:'smooth',block:'start'});load();
+  });
+  document.getElementById('backAdminManagementBtn')?.addEventListener('click',()=>{
+    const p=document.getElementById('adminManagementPanel'), menu=document.getElementById('settingsMenuBox');
+    if(p)p.hidden=true;if(menu)menu.hidden=false;
+    document.getElementById('settingsView')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  document.getElementById('refreshAdminManagementBtn')?.addEventListener('click',load);document.getElementById('addCoreAdminBtn')?.addEventListener('click',add);document.getElementById('coreAdminManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-edit]'),t=e.target.closest('[data-toggle]'),d=e.target.closest('[data-delete]');if(a)edit(a.dataset.edit);else if(t)toggle(t.dataset.toggle);else if(d)del(d.dataset.delete)})});window.loadCoreAdmins=load;
 })();
 </script>
 
@@ -7112,7 +7125,20 @@ document.addEventListener(
  async function edit(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;const name=prompt('Nama modul:',x.name||'');if(name===null)return;const desc=prompt('Deskripsi modul:',x.description||'');if(desc===null)return;const order=prompt('Urutan:',x.sort_order);if(order===null)return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({name:String(name).trim(),description:String(desc).trim(),sort_order:Number(order)||0,updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengedit modul: '+await r.text());return}await load();await loadCorePlatformModules();msg('Modul berhasil diperbarui.',true)}
  async function toggle(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm((x.status==='ACTIVE'?'Nonaktifkan ':'Aktifkan ')+x.name+'?','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify({status:x.status==='ACTIVE'?'INACTIVE':'ACTIVE',updated_at:new Date().toISOString()})});if(!r.ok){msg('Gagal mengubah status: '+await r.text());return}await load();await loadCorePlatformModules()}
  async function del(id){const x=modules.find(a=>String(a.id)===String(id));if(!x)return;if(!await coreAdiimasaConfirm('Hapus modul '+x.name+'? Data client tidak otomatis dihapus.','Modul Platform'))return;const r=await fetch(SUPABASE_URL+'/rest/v1/core_platform_modules?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{...authHeaders(),Prefer:'return=minimal'}});if(!r.ok){msg('Gagal menghapus: '+await r.text());return}await load();await loadCorePlatformModules();msg('Modul berhasil dihapus.',true)}
- document.addEventListener('DOMContentLoaded',()=>{document.getElementById('openPlatformModuleManagementBtn')?.addEventListener('click',()=>{const p=document.getElementById('platformModuleManagementPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});load()});document.getElementById('refreshPlatformModulesBtn')?.addEventListener('click',load);document.getElementById('addPlatformModuleBtn')?.addEventListener('click',add);document.getElementById('platformModuleManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-pm-edit]'),t=e.target.closest('[data-pm-toggle]'),d=e.target.closest('[data-pm-delete]');if(a)edit(a.dataset.pmEdit);else if(t)toggle(t.dataset.pmToggle);else if(d)del(d.dataset.pmDelete)})});
+ document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('openPlatformModuleManagementBtn')?.addEventListener('click',()=>{
+    const menu=document.getElementById('settingsMenuBox'), p=document.getElementById('platformModuleManagementPanel');
+    const admin=document.getElementById('adminManagementPanel'), system=document.getElementById('systemConfigurationPanel');
+    if(menu)menu.hidden=true;if(admin)admin.hidden=true;if(system)system.hidden=true;
+    if(p){p.hidden=false;p.classList.add('settings-detail-active');}
+    document.getElementById('settingsView')?.scrollIntoView({behavior:'smooth',block:'start'});load();
+  });
+  document.getElementById('backPlatformModulesBtn')?.addEventListener('click',()=>{
+    const p=document.getElementById('platformModuleManagementPanel'), menu=document.getElementById('settingsMenuBox');
+    if(p)p.hidden=true;if(menu)menu.hidden=false;
+    document.getElementById('settingsView')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  document.getElementById('refreshPlatformModulesBtn')?.addEventListener('click',load);document.getElementById('addPlatformModuleBtn')?.addEventListener('click',add);document.getElementById('platformModuleManagementBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-pm-edit]'),t=e.target.closest('[data-pm-toggle]'),d=e.target.closest('[data-pm-delete]');if(a)edit(a.dataset.pmEdit);else if(t)toggle(t.dataset.pmToggle);else if(d)del(d.dataset.pmDelete)})});
 })();
 </script>
 <script>
