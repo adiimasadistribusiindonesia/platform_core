@@ -1087,8 +1087,17 @@ box-shadow:0 18px 35px rgba(67,56,202,.25);
   </div>
   <div id="systemTimezoneStatus" style="margin:0 0 18px;padding:16px 18px;border:1px solid #d8e2ec;border-radius:14px;background:#f7fafc">
     <div style="font-weight:700;color:#203b57">Zona Waktu Core</div>
-    <div id="systemTimezoneValue" style="margin-top:5px;color:#687b90">Belum dikonfigurasi — gunakan Key <b>timezone</b>, misalnya <b>Asia/Jakarta</b>.</div>
-    <div id="systemTimezoneClock" style="margin-top:8px;font-size:20px;font-weight:700;color:#203b57">—</div>
+    <div id="systemTimezoneValue" style="margin-top:5px;color:#687b90">Belum dikonfigurasi — pilih zona waktu di bawah.</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px">
+      <div style="flex:1 1 320px;min-width:240px">
+        <label for="systemTimezoneSelect" style="display:block;font-size:12px;font-weight:700;color:#52677d;margin-bottom:6px">Pilih Zona Waktu Dunia</label>
+        <select id="systemTimezoneSelect" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #cbd8e5;border-radius:10px;background:#fff;color:#203b57;font-weight:600">
+          <option value="">Memuat daftar zona waktu...</option>
+        </select>
+      </div>
+      <button type="button" class="admin-primary-btn" id="saveSystemTimezoneBtn">Simpan Zona Waktu</button>
+    </div>
+    <div id="systemTimezoneClock" style="margin-top:12px;font-size:20px;font-weight:700;color:#203b57">—</div>
   </div>
   <div class="admin-management-note"><b>Catatan:</b> pengaturan yang dinonaktifkan tetap tersimpan dan tidak digunakan sebagai konfigurasi aktif. Jangan menyimpan secret/API key privat di tabel ini.</div>
   <div class="admin-management-table-wrap"><table class="log-table"><thead><tr><th>Key</th><th>Nilai</th><th>Deskripsi</th><th>Status</th><th>Diperbarui</th><th>Aksi</th></tr></thead><tbody id="systemSettingsBody"><tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Memuat konfigurasi...</td></tr></tbody></table></div>
@@ -7099,9 +7108,11 @@ document.addEventListener(
     const el=document.getElementById('systemTimezoneValue'),clock=document.getElementById('systemTimezoneClock');
     if(!el||!clock)return;
     if(row){
-      try{new Intl.DateTimeFormat('id-ID',{timeZone:row.setting_value}).format(new Date());systemTimezone=row.setting_value;el.textContent='Aktif: '+row.setting_value+' (dibaca langsung dari Konfigurasi Sistem).';}
-      catch(e){systemTimezone='Asia/Jakarta';el.textContent='Nilai timezone tidak valid: '+row.setting_value+'. Contoh yang benar: Asia/Jakarta';}
-    }else{systemTimezone='Asia/Jakarta';el.textContent='Belum dikonfigurasi — gunakan Key timezone, misalnya Asia/Jakarta.';}
+      try{new Intl.DateTimeFormat('id-ID',{timeZone:row.setting_value}).format(new Date());systemTimezone=row.setting_value;window.coreAdiimasaSystemTimezone=row.setting_value;el.textContent='Aktif: '+row.setting_value+' (dibaca langsung dari Konfigurasi Sistem).';}
+      catch(e){systemTimezone='Asia/Jakarta';window.coreAdiimasaSystemTimezone=systemTimezone;el.textContent='Nilai timezone tidak valid: '+row.setting_value+'. Pilih zona waktu yang tersedia.';}
+    }else{systemTimezone='Asia/Jakarta';window.coreAdiimasaSystemTimezone=systemTimezone;el.textContent='Belum dikonfigurasi — pilih zona waktu di bawah.';}
+    const select=document.getElementById('systemTimezoneSelect');
+    if(select && [...select.options].some(o=>o.value===systemTimezone)) select.value=systemTimezone;
     const tick=()=>{clock.textContent=new Intl.DateTimeFormat('id-ID',{dateStyle:'full',timeStyle:'medium',timeZone:systemTimezone}).format(new Date());};
     tick(); if(timezoneClockTimer)clearInterval(timezoneClockTimer); timezoneClockTimer=setInterval(tick,1000);
   }
@@ -7119,6 +7130,46 @@ document.addEventListener(
     const body=document.getElementById('systemSettingsBody'); if(!body)return;
     if(!systemRows.length){renderTimezoneStatus();body.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Belum ada konfigurasi sistem.</td></tr>';return;}
     body.innerHTML=systemRows.map(x=>'<tr><td><b>'+esc(x.setting_key)+'</b></td><td>'+esc(x.setting_value||'-')+'</td><td>'+esc(x.description||'-')+'</td><td><span class="platform-module-status '+(x.is_active?'active':'inactive')+'">'+(x.is_active?'AKTIF':'NONAKTIF')+'</span></td><td>'+esc(date(x.updated_at))+'</td><td><div class="platform-module-actions"><button type="button" class="platform-module-action" data-sedit="'+esc(x.id)+'">Edit</button><button type="button" class="platform-module-action warn" data-stoggle="'+esc(x.id)+'">'+(x.is_active?'Nonaktifkan':'Aktifkan')+'</button><button type="button" class="platform-module-action danger" data-sdelete="'+esc(x.id)+'">Hapus</button></div></td></tr>').join('');
+  }
+  function initSystemTimezoneSelect(){
+    const select=document.getElementById('systemTimezoneSelect'); if(!select)return;
+    let zones=[];
+    try{
+      zones=typeof Intl.supportedValuesOf==='function'
+        ? Intl.supportedValuesOf('timeZone')
+        : ['Asia/Jakarta','Asia/Makassar','Asia/Jayapura','Asia/Singapore','Asia/Tokyo','Europe/London','Europe/Paris','America/New_York','America/Los_Angeles','Australia/Sydney','UTC'];
+    }catch(e){zones=['Asia/Jakarta','Asia/Makassar','Asia/Jayapura','Asia/Singapore','Asia/Tokyo','Europe/London','Europe/Paris','America/New_York','America/Los_Angeles','Australia/Sydney','UTC'];}
+    const preferred=['Asia/Jakarta','Asia/Makassar','Asia/Jayapura','Asia/Singapore','Asia/Kuala_Lumpur','Asia/Bangkok','Asia/Tokyo','Asia/Seoul','Asia/Shanghai','Asia/Dubai','Europe/London','Europe/Paris','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Australia/Sydney','Pacific/Auckland','UTC'];
+    const ordered=[...new Set([...preferred,...zones])];
+    const label=z=>z==='UTC'?'UTC — Universal Time':z.replace(/^([A-Za-z]+)\\//,'$1 — ').replace(/_/g,' ');
+    select.innerHTML=ordered.map(z=>'<option value="'+esc(z)+'">'+esc(label(z))+'</option>').join('');
+    const current=systemRows.find(x=>String(x.setting_key).toLowerCase()==='timezone'&&x.is_active)?.setting_value||systemTimezone;
+    if([...select.options].some(o=>o.value===current)) select.value=current;
+  }
+  async function saveSystemTimezone(){
+    const select=document.getElementById('systemTimezoneSelect'), value=String(select?.value||'').trim();
+    if(!value){msg('⚠️ Pilih zona waktu terlebih dahulu.');return}
+    try{new Intl.DateTimeFormat('id-ID',{timeZone:value}).format(new Date());}catch(e){msg('⚠️ Zona waktu tidak valid.');return}
+    const row=systemRows.find(x=>String(x.setting_key).toLowerCase()==='timezone');
+    try{
+      if(row){
+        const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings?id=eq.'+encodeURIComponent(row.id),{
+          method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},
+          body:JSON.stringify({setting_value:value,description:'Timezone sistem CORE ADIIMASA',is_active:true,updated_at:new Date().toISOString()})
+        });
+        if(!r.ok)throw new Error(await r.text());
+      }else{
+        const r=await fetch(SUPABASE_URL+'/rest/v1/core_system_settings',{
+          method:'POST',headers:{...authHeaders(),Prefer:'return=minimal'},
+          body:JSON.stringify({setting_key:'timezone',setting_value:value,description:'Timezone sistem CORE ADIIMASA',is_active:true})
+        });
+        if(!r.ok)throw new Error(await r.text());
+      }
+      window.coreAdiimasaSystemTimezone=value;
+      systemTimezone=value;
+      await loadSystemSettings();
+      msg('✓ Zona waktu Core diubah ke '+value+'. Activity Log akan menggunakan zona ini.',true);
+    }catch(e){msg('✕ Gagal menyimpan zona waktu: '+e.message);}
   }
   async function addSystemSetting(){
     const k=document.getElementById('systemSettingKeyInput'),v=document.getElementById('systemSettingValueInput'),d=document.getElementById('systemSettingDescInput'),b=document.getElementById('addSystemSettingBtn');
@@ -7161,6 +7212,8 @@ document.addEventListener(
   function bindSystemConfiguration(){
     document.getElementById('openSystemConfigurationBtn')?.addEventListener('click',()=>{const p=document.getElementById('systemConfigurationPanel');p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'});loadSystemSettings()});
     document.getElementById('refreshSystemSettingsBtn')?.addEventListener('click',loadSystemSettings);
+    document.getElementById('saveSystemTimezoneBtn')?.addEventListener('click',saveSystemTimezone);
+    initSystemTimezoneSelect();
     document.getElementById('addSystemSettingBtn')?.addEventListener('click',addSystemSetting);
     document.getElementById('systemSettingsBody')?.addEventListener('click',e=>{const a=e.target.closest('[data-sedit]'),t=e.target.closest('[data-stoggle]'),d=e.target.closest('[data-sdelete]');if(a)editSystemSetting(a.dataset.sedit);else if(t)toggleSystemSetting(t.dataset.stoggle);else if(d)deleteSystemSetting(d.dataset.sdelete)});
   }
