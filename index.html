@@ -7141,7 +7141,7 @@ document.addEventListener(
     }catch(e){zones=['Asia/Jakarta','Asia/Makassar','Asia/Jayapura','Asia/Singapore','Asia/Tokyo','Europe/London','Europe/Paris','America/New_York','America/Los_Angeles','Australia/Sydney','UTC'];}
     const preferred=['Asia/Jakarta','Asia/Makassar','Asia/Jayapura','Asia/Singapore','Asia/Kuala_Lumpur','Asia/Bangkok','Asia/Tokyo','Asia/Seoul','Asia/Shanghai','Asia/Dubai','Europe/London','Europe/Paris','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Australia/Sydney','Pacific/Auckland','UTC'];
     const ordered=[...new Set([...preferred,...zones])];
-    const label=z=>z==='UTC'?'UTC — Universal Time':z.replace(/^([A-Za-z]+)\\//,'$1 — ').replace(/_/g,' ');
+    const label=z=>z==='UTC'?'UTC — Universal Time':z.split('/').join(' — ').replace(/_/g,' ');
     select.innerHTML=ordered.map(z=>'<option value="'+esc(z)+'">'+esc(label(z))+'</option>').join('');
     const current=systemRows.find(x=>String(x.setting_key).toLowerCase()==='timezone'&&x.is_active)?.setting_value||systemTimezone;
     if([...select.options].some(o=>o.value===current)) select.value=current;
