@@ -1868,9 +1868,31 @@ async function loadMasterActivity(){
      * Mengikuti pola Activity Log GEPARU.
      */
     if(
-      module==='MBI' &&
-      client.toUpperCase()==='SELLERBOOKS'
+      module==='PRODUCT' &&
+      client.toUpperCase()==='AMASA'
     ){
+
+      /* AMASA / PRODUCT: batasi log berdasarkan client CORE dan module_slug. */
+      const clientResponse=await fetch(
+        SUPABASE_URL+
+        '/rest/v1/core_platform_clients?select=id&name=eq.AMASA&module_slug=eq.PRODUCT&limit=1',
+        {headers:activityHeaders(),cache:'no-store'}
+      );
+      if(!clientResponse.ok){
+        const errorText=await clientResponse.text().catch(()=> '');
+        throw new Error('HTTP '+clientResponse.status+' saat membaca client AMASA'+(errorText ? ' — '+errorText : ''));
+      }
+      const clientRows=await clientResponse.json();
+      const clientId=clientRows[0]?.id;
+      if(!clientId){
+        tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8190a0;padding:35px">Client AMASA belum terdaftar pada sistem Activity Log.</td></tr>';
+        msg.textContent='Client AMASA belum memiliki konfigurasi Activity Log.';
+        return;
+      }
+      url=base+'&client_id=eq.'+encodeURIComponent(clientId)+'&module_slug=eq.PRODUCT&order=created_at.desc';
+      response=await fetch(url,{headers:activityHeaders(),cache:'no-store'});
+
+    }else
 
       const clientResponse=await fetch(
 
