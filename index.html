@@ -1487,7 +1487,12 @@ async function loadClientOverview(){
     msg.textContent='Memuat data overview...';
     let rows=[];
 
-    if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+    if(currentModule==='PRODUCT' && client.toUpperCase()==='AMASA'){
+      const url = SUPABASE_URL + '/rest/v1/amasa_core_access?select=approval_status,client_name&client_name=eq.AMASA&module_slug=eq.PRODUCT';
+      const r = await fetch(url,{headers:authHeaders(),cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      rows = await r.json();
+    }else if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
       const url = SUPABASE_URL + '/rest/v1/sellerbooks_profiles?select=user_id,email,owner_name,status,approved_at,created_at,updated_at&order=created_at.desc';
       const r = await fetch(url,{headers:authHeaders(),cache:'no-store'});
       if(!r.ok) throw new Error('HTTP '+r.status);
@@ -1540,7 +1545,12 @@ async function loadApprovalData(){
     msg.textContent='Memuat permintaan akses...';
     body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px">Memuat...</td></tr>';
 
-    if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
+    if(currentModule==='PRODUCT' && client.toUpperCase()==='AMASA'){
+      const url=SUPABASE_URL+'/rest/v1/amasa_core_access?select=id,user_id,email,owner_name,core_name,module_slug,client_name,role,approval_status,is_active,created_at,approved_at,rejected_at,approval_note&client_name=eq.AMASA&module_slug=eq.PRODUCT&order=created_at.desc';
+      const r=await fetch(url,{headers:authHeaders(),cache:'no-store'});
+      if(!r.ok) throw new Error(await r.text());
+      approvalData=await r.json();
+    }else if(currentModule==='MBI' && client.toUpperCase()==='SELLERBOOKS'){
       const url=SUPABASE_URL+'/rest/v1/sellerbooks_profiles?select=user_id,email,owner_name,status,approved_at,created_at,updated_at&order=created_at.desc';
       const r=await fetch(url,{headers:authHeaders(),cache:'no-store'});
       if(!r.ok) throw new Error(await r.text());
@@ -1582,7 +1592,14 @@ function renderApproval(){
 async function changeApproval(id,status){
  if(!await coreAdiimasaConfirm('Yakin mengubah status menjadi '+status+'?')) return;
 
- if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
+ if(currentModule==='PRODUCT' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='AMASA'){
+   const body={approval_status:status,is_active:status==='APPROVED',updated_at:new Date().toISOString()};
+   if(status==='APPROVED'){body.approved_at=new Date().toISOString();body.rejected_at=null;}
+   if(status==='REJECTED'){body.rejected_at=new Date().toISOString();body.approved_at=null;}
+   if(status==='SUSPENDED') body.approved_at=null;
+   const r=await fetch(SUPABASE_URL+'/rest/v1/amasa_core_access?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...authHeaders(),Prefer:'return=minimal'},body:JSON.stringify(body)});
+   if(!r.ok){coreAdiimasaAlert('Gagal mengubah status AMASA: '+await r.text());return;}
+ }else if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
    const body={status:String(status||'').toLowerCase()};
    if(status==='APPROVED') body.approved_at=new Date().toISOString();
    const r=await fetch(SUPABASE_URL+'/rest/v1/sellerbooks_profiles?user_id=eq.'+encodeURIComponent(id),{
@@ -1604,7 +1621,13 @@ async function changeApproval(id,status){
 async function deleteApproval(id){
  if(!await coreAdiimasaConfirm('Yakin ingin menghapus data akses ini?')) return;
 
- if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
+ if(currentModule==='PRODUCT' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='AMASA'){
+   const r=await fetch(SUPABASE_URL+'/rest/v1/amasa_core_access?id=eq.'+encodeURIComponent(id),{
+     method:'DELETE',
+     headers:{...authHeaders(),Prefer:'return=minimal'}
+   });
+   if(!r.ok){coreAdiimasaAlert('Gagal menghapus akses AMASA: '+await r.text());return;}
+ }else if(currentModule==='MBI' && document.getElementById('dashClient').textContent.trim().toUpperCase()==='SELLERBOOKS'){
    const r=await fetch(SUPABASE_URL+'/rest/v1/sellerbooks_profiles?user_id=eq.'+encodeURIComponent(id),{
      method:'DELETE',
      headers:{...authHeaders(),Prefer:'return=minimal'}
