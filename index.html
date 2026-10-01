@@ -6639,9 +6639,12 @@ document.addEventListener(
         const topPanel=document.getElementById("analysisTopNews")?.closest(".analysis-panel");
         const client=(document.getElementById("analysisClientName")?.textContent||"").trim().toUpperCase();
         const seller=client==="SELLERBOOKS";
-        if(newsCard) newsCard.style.display=seller?"none":"";
-        if(topCard) topCard.style.display=seller?"none":"";
-        if(topPanel) topPanel.style.display=seller?"none":"";
+        const amasa=client==="AMASA";
+        if(newsCard) newsCard.style.display=(seller||amasa)?"none":"";
+        if(topCard) topCard.style.display=(seller||amasa)?"none":"";
+        if(topPanel) topPanel.style.display=(seller||amasa)?"none":"";
+        const sellerAccess=document.getElementById("sellerbooksAccessAnalysis");
+        if(sellerAccess) sellerAccess.style.display=amasa?"none":"";
 
         if(seller){
             let apk=0,web=0,other=0,apkU=new Set(),webU=new Set();
