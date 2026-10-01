@@ -4210,6 +4210,51 @@ async function loadPlatformAnalysisData(clientName){
         const pageviews =
             await pageviewsResponse.json();
 
+        /* ============================================
+           FILTER PERIODE ANALYTICS — WIB
+           Day / Week / Month / Year / All
+        ============================================ */
+        const activePeriod =
+            document.querySelector(".analysis-period-btn.active")?.dataset.period || "day";
+
+        function analysisWibDate(value){
+            if(!value) return "";
+            try{
+                return new Intl.DateTimeFormat("en-CA",{
+                    timeZone:"Asia/Jakarta",
+                    year:"numeric",month:"2-digit",day:"2-digit"
+                }).format(new Date(value));
+            }catch(e){ return ""; }
+        }
+
+        function analysisDateCutoff(period){
+            const now = new Date();
+            const today = analysisWibDate(now);
+            if(!today) return null;
+            const parts = today.split("-").map(Number);
+            const d = new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));
+            if(period==="week") d.setUTCDate(d.getUTCDate()-6);
+            if(period==="month") d.setUTCDate(1);
+            if(period==="year") d.setUTCMonth(0,1);
+            return d.toISOString().slice(0,10);
+        }
+
+        function filterAnalyticsPageviews(rows){
+            if(activePeriod==="all") return Array.isArray(rows) ? rows : [];
+            const today = analysisWibDate(new Date());
+            const cutoff = analysisDateCutoff(activePeriod);
+            return (Array.isArray(rows) ? rows : []).filter(row=>{
+                const day = analysisWibDate(row.viewed_at);
+                if(!day) return false;
+                if(activePeriod==="day") return day===today;
+                return day>=cutoff && day<=today;
+            });
+        }
+
+        const filteredPageviews = filterAnalyticsPageviews(pageviews);
+        const filteredVisitorIds = new Set(filteredPageviews.map(item=>item.visitor_id).filter(Boolean));
+
+
 
         /* ============================================
            SELLERBOOKS — APK vs WEBSITE KOMPUTER
@@ -4235,16 +4280,17 @@ async function loadPlatformAnalysisData(clientName){
                 "analysisTotalVisitors"
             );
 
-
         if(totalVisitors){
-
             totalVisitors.textContent =
-                new Set(
-                    visitors.map(
-                        item => item.visitor_id
-                    )
-                ).size;
+                activePeriod === "all"
+                    ? new Set(visitors.map(item=>item.visitor_id).filter(Boolean)).size
+                    : filteredVisitorIds.size;
+        }
 
+        const periodNote=document.getElementById("analysisPeriodNote");
+        if(periodNote){
+            const labels={day:"hari ini (WIB)",week:"7 hari terakhir (WIB)",month:"bulan berjalan (WIB)",year:"tahun berjalan (WIB)",all:"seluruh periode"};
+            periodNote.textContent="Pengunjung unik "+(labels[activePeriod]||labels.day);
         }
 
 
@@ -4253,79 +4299,26 @@ async function loadPlatformAnalysisData(clientName){
            PENGUNJUNG HARI INI
         ============================================ */
 
-        const todayStart =
-            new Date();
-
-
-        todayStart.setHours(
-            0,
-            0,
-            0,
-            0
+        const todayVisitorIDs = new Set(
+            filteredPageviews.map(page=>page.visitor_id).filter(Boolean)
         );
-
-
-        const tomorrowStart =
-            new Date(todayStart);
-
-
-        tomorrowStart.setDate(
-            tomorrowStart.getDate() + 1
-        );
-
-
-        const todayVisitorIDs =
-            new Set();
-
-
-        pageviews.forEach(page => {
-
-            if(!page.viewed_at) return;
-
-
-            const viewedAt =
-                new Date(
-                    page.viewed_at
-                );
-
-
-            if(
-                viewedAt >= todayStart &&
-                viewedAt < tomorrowStart
-            ){
-
-                todayVisitorIDs.add(
-                    page.visitor_id
-                );
-
-            }
-
-        });
-
 
         const todayVisitors =
             document.getElementById(
                 "analysisTodayVisitors"
             );
 
-
         if(todayVisitors){
-
-            todayVisitors.textContent =
-                todayVisitorIDs.size;
-
+            const todayRows=pageviews.filter(page=>analysisWibDate(page.viewed_at)===analysisWibDate(new Date()));
+            todayVisitors.textContent=new Set(todayRows.map(page=>page.visitor_id).filter(Boolean)).size;
         }
 
 
-
-        /* ============================================
-           DETEKSI PEMBACA BERITA
-
-           Detail berita menggunakan ?slug=
-        ============================================ */
+        /* Data berikut mengikuti periode yang dipilih. */
+        const analysisPageviews = filteredPageviews;
 
         const newsPageviews =
-            pageviews.filter(page => {
+            analysisPageviews.filter(page => {
 
                 const path =
                     String(
@@ -4608,7 +4601,7 @@ async function loadPlatformAnalysisData(clientName){
         const pageCounter = {};
 
 
-        pageviews.forEach(page => {
+        analysisPageviews.forEach(page => {
 
 
             let pageName =
@@ -4827,7 +4820,7 @@ async function loadPlatformAnalysisData(clientName){
                     new Set();
 
 
-                pageviews.forEach(page => {
+                analysisPageviews.forEach(page => {
 
 
                     if(!page.viewed_at) return;
@@ -5023,7 +5016,7 @@ async function loadPlatformAnalysisData(clientName){
                     sessions.length,
 
                 pageviews:
-                    pageviews.length,
+                    analysisPageviews.length,
 
                 news:
                     newsPageviews.length
@@ -5963,7 +5956,7 @@ document.addEventListener(
             let totalViews = 0;
 
 
-            pageviews.forEach(page => {
+            analysisPageviews.forEach(page => {
 
                 if(!page.viewed_at) return;
 
@@ -6140,7 +6133,7 @@ document.addEventListener(
         const webPages = [];
         const otherPages = [];
 
-        pageviews.forEach(page => {
+        analysisPageviews.forEach(page => {
 
             const browser =
                 String(page.browser || "");
@@ -6397,7 +6390,7 @@ document.addEventListener(
                 new Set();
 
 
-            pageviews.forEach(page => {
+            analysisPageviews.forEach(page => {
 
                 if(page.visitor_id){
 
@@ -6431,7 +6424,7 @@ document.addEventListener(
 
                 true,
 
-                pageviews.length,
+                analysisPageviews.length,
 
                 uniqueVisitors.size
 
