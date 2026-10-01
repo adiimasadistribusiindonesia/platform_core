@@ -3559,6 +3559,9 @@ function openPlatformAnalysis(clientName){
     const isSellerBooks =
         analysisClient.toUpperCase() === "SELLERBOOKS";
 
+    const isAmasa =
+        analysisClient.toUpperCase() === "AMASA";
+
     document.getElementById(
         "analysisClientName"
     ).textContent = analysisClient;
@@ -3575,7 +3578,9 @@ function openPlatformAnalysis(clientName){
         analysisClientDesc.textContent =
             isSellerBooks
                 ? "Sistem pembukuan dan manajemen penjualan marketplace"
-                : "Generasi Padjajaran Baru";
+                : isAmasa
+                    ? "Website AMASA dan statistik pengunjung"
+                    : "Generasi Padjajaran Baru";
     }
 
     /* SELLERBOOKS tidak menggunakan komponen berita GEPARU. */
@@ -3592,13 +3597,19 @@ function openPlatformAnalysis(clientName){
         ?.closest(".analysis-panel");
 
     if(newsStatCard)
-        newsStatCard.style.display = isSellerBooks ? "none" : "";
+        newsStatCard.style.display = (isSellerBooks || isAmasa) ? "none" : "";
 
     if(topContentCard)
-        topContentCard.style.display = isSellerBooks ? "none" : "";
+        topContentCard.style.display = (isSellerBooks || isAmasa) ? "none" : "";
 
     if(topNewsPanel)
-        topNewsPanel.style.display = isSellerBooks ? "none" : "";
+        topNewsPanel.style.display = (isSellerBooks || isAmasa) ? "none" : "";
+
+    const sellerBooksAccessPanel =
+        document.getElementById("sellerbooksAccessAnalysis");
+
+    if(sellerBooksAccessPanel)
+        sellerBooksAccessPanel.style.display = isAmasa ? "none" : "";
 
     const activitySubtitle =
         Array.from(
@@ -3962,8 +3973,14 @@ async function loadPlatformAnalysisData(clientName){
     }
 
     /* Pastikan UI SellerBooks tetap bersih setelah refresh. */
+    const clientType =
+        String(clientName || "").trim().toUpperCase();
+
     const isSellerBooksClient =
-        String(clientName || "").trim().toUpperCase() === "SELLERBOOKS";
+        clientType === "SELLERBOOKS";
+
+    const isAmasaClient =
+        clientType === "AMASA";
 
     const newsStatCard =
         document.getElementById("analysisNewsViews")
@@ -3978,13 +3995,19 @@ async function loadPlatformAnalysisData(clientName){
         ?.closest(".analysis-panel");
 
     if(newsStatCard)
-        newsStatCard.style.display = isSellerBooksClient ? "none" : "";
+        newsStatCard.style.display = (isSellerBooksClient || isAmasaClient) ? "none" : "";
 
     if(topContentCard)
-        topContentCard.style.display = isSellerBooksClient ? "none" : "";
+        topContentCard.style.display = (isSellerBooksClient || isAmasaClient) ? "none" : "";
 
     if(topNewsPanel)
-        topNewsPanel.style.display = isSellerBooksClient ? "none" : "";
+        topNewsPanel.style.display = (isSellerBooksClient || isAmasaClient) ? "none" : "";
+
+    const sellerBooksAccessPanel =
+        document.getElementById("sellerbooksAccessAnalysis");
+
+    if(sellerBooksAccessPanel)
+        sellerBooksAccessPanel.style.display = isAmasaClient ? "none" : "";
 
     const analysisClientDesc =
         document.querySelector("#analysisClientName + p");
@@ -3993,7 +4016,9 @@ async function loadPlatformAnalysisData(clientName){
         analysisClientDesc.textContent =
             isSellerBooksClient
                 ? "Sistem pembukuan dan manajemen penjualan marketplace"
-                : "Generasi Padjajaran Baru";
+                : isAmasaClient
+                    ? "Website AMASA dan statistik pengunjung"
+                    : "Generasi Padjajaran Baru";
     }
 
     const activitySubtitle =
