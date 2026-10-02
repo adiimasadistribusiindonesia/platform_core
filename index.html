@@ -3970,10 +3970,15 @@ async function loadPlatformAnalysisData(clientName){
            SELLERBOOKS memakai module_slug = SELLERBOOKS.
            Client lain tetap memakai module_slug masing-masing.
         ===================================================== */
+        const analyticsClientType =
+            String(clientName || "").trim().toUpperCase();
+
         const analyticsModule =
-            String(clientName || "").trim().toUpperCase() === "SELLERBOOKS"
+            analyticsClientType === "SELLERBOOKS"
                 ? "SELLERBOOKS"
-                : module;
+                : analyticsClientType === "AMASA"
+                    ? "AMASA"
+                    : module;
 
         const moduleFilter =
             "&module_slug=eq." +
