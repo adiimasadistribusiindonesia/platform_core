@@ -4899,15 +4899,13 @@ async function loadPlatformAnalysisData(clientName){
 
 
                     /*
-                       Untuk tahap pertama,
-                       semua data tetap dibaca
-                       dari database asli.
-
-                       Filter periode akan
-                       kita sempurnakan setelah
-                       tampilan utama dipastikan
-                       normal.
-                    */
+                     * Muat ulang data ketika periode berubah.
+                     * Sebelumnya tombol hanya mengganti class active,
+                     * sehingga angka tetap memakai hasil periode
+                     * sebelumnya (misalnya Hari Ini = 0) walaupun
+                     * label sudah berubah menjadi Minggu Ini.
+                     */
+                    loadPlatformAnalysisData(clientName);
 
                 }
             );
