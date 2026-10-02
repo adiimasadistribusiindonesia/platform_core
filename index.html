@@ -4160,12 +4160,36 @@ async function loadPlatformAnalysisData(clientName){
         function analysisWibDate(value){
             if(!value) return "";
             try{
+                /*
+                 * Supabase/Postgres dapat mengirim timestamptz dengan
+                 * fractional seconds lebih dari 3 digit, misalnya:
+                 * 2026-10-02T17:17:48.574499+00:00
+                 * Browser Date parser tidak konsisten untuk bentuk ini.
+                 * Normalisasi ke ISO yang aman sebelum konversi WIB.
+                 */
+                let raw = String(value).trim();
+
+                if(raw.includes(" ") && !raw.includes("T")){
+                    raw = raw.replace(" ", "T");
+                }
+
+                raw = raw.replace(
+                    /\.(\d{3})\d+(?=Z|[+-]\d{2}:?\d{2}$)/,
+                    ".$1"
+                );
+
+                const parsed = new Date(raw);
+
+                if(Number.isNaN(parsed.getTime())){
+                    return "";
+                }
+
                 const parts = new Intl.DateTimeFormat("en-US",{
                     timeZone:"Asia/Jakarta",
                     year:"numeric",
                     month:"2-digit",
                     day:"2-digit"
-                }).formatToParts(new Date(value));
+                }).formatToParts(parsed);
 
                 const map = {};
                 parts.forEach(part => {
