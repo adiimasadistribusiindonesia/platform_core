@@ -4003,7 +4003,7 @@ async function loadPlatformAnalysisData(clientName){
             const amasaAnalyticsResponse =
                 await fetch(
                     SUPABASE_URL +
-                    "/rest/v1/rpc/get_amasa_platform_analytics",
+                    "/rest/v1/rpc/get_amasa_platform_analytics_v2",
                     {
                         method: "POST",
                         headers: {
@@ -4039,7 +4039,8 @@ async function loadPlatformAnalysisData(clientName){
                     page_path: event.page_path || "/",
                     page_url: event.page_path || "/",
                     page_title: "",
-                    viewed_at: event.created_at
+                    viewed_at: event.created_at,
+                    analytics_wib_date: event.wib_date || ""
                 }));
 
             const visitorMap = new Map();
@@ -4221,7 +4222,9 @@ async function loadPlatformAnalysisData(clientName){
             const today = analysisWibDate(new Date());
             const cutoff = analysisDateCutoff(activePeriod);
             return (Array.isArray(rows) ? rows : []).filter(row=>{
-                const day = analysisWibDate(row.viewed_at);
+                const day =
+                    row.analytics_wib_date ||
+                    analysisWibDate(row.viewed_at);
                 if(!day) return false;
                 if(activePeriod==="day") return day===today;
                 return day>=cutoff && day<=today;
@@ -4294,7 +4297,10 @@ async function loadPlatformAnalysisData(clientName){
             );
 
         if(todayVisitors){
-            const todayRows=pageviews.filter(page=>analysisWibDate(page.viewed_at)===analysisWibDate(new Date()));
+            const todayWibDate = analysisWibDate(new Date());
+            const todayRows=pageviews.filter(page =>
+                (page.analytics_wib_date || analysisWibDate(page.viewed_at)) === todayWibDate
+            );
             todayVisitors.textContent=new Set(todayRows.map(page=>page.visitor_id).filter(Boolean)).size;
         }
 
