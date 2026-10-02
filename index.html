@@ -4151,25 +4151,6 @@ async function loadPlatformAnalysisData(clientName){
         }
 
         /* ============================================
-           STATUS ANALYTICS — gunakan dataset yang sama
-           dengan Platform Analysis utama.
-        ============================================ */
-        if(typeof window.updateAnalyticsStatus === "function"){
-            const statusVisitorIds =
-                new Set(
-                    pageviews
-                        .map(item => item.visitor_id)
-                        .filter(Boolean)
-                );
-
-            window.updateAnalyticsStatus(
-                true,
-                pageviews.length,
-                statusVisitorIds.size
-            );
-        }
-
-        /* ============================================
            FILTER PERIODE ANALYTICS — WIB
            Day / Week / Month / Year / All
         ============================================ */
@@ -4179,11 +4160,24 @@ async function loadPlatformAnalysisData(clientName){
         function analysisWibDate(value){
             if(!value) return "";
             try{
-                return new Intl.DateTimeFormat("en-CA",{
+                const parts = new Intl.DateTimeFormat("en-US",{
                     timeZone:"Asia/Jakarta",
-                    year:"numeric",month:"2-digit",day:"2-digit"
-                }).format(new Date(value));
-            }catch(e){ return ""; }
+                    year:"numeric",
+                    month:"2-digit",
+                    day:"2-digit"
+                }).formatToParts(new Date(value));
+
+                const map = {};
+                parts.forEach(part => {
+                    if(part.type !== "literal") map[part.type] = part.value;
+                });
+
+                if(!map.year || !map.month || !map.day) return "";
+
+                return map.year + "-" + map.month + "-" + map.day;
+            }catch(e){
+                return "";
+            }
         }
 
         function analysisDateCutoff(period){
@@ -4212,6 +4206,17 @@ async function loadPlatformAnalysisData(clientName){
 
         const filteredPageviews = filterAnalyticsPageviews(pageviews);
         const filteredVisitorIds = new Set(filteredPageviews.map(item=>item.visitor_id).filter(Boolean));
+
+        /* Status memakai periode yang sama dengan kartu/grafik,
+           sehingga tidak lagi menampilkan all-time ketika user
+           sedang memilih Hari/Minggu/Bulan/Tahun. */
+        if(typeof window.updateAnalyticsStatus === "function"){
+            window.updateAnalyticsStatus(
+                true,
+                filteredPageviews.length,
+                filteredVisitorIds.size
+            );
+        }
 
 
 
