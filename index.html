@@ -4151,6 +4151,25 @@ async function loadPlatformAnalysisData(clientName){
         }
 
         /* ============================================
+           STATUS ANALYTICS — gunakan dataset yang sama
+           dengan Platform Analysis utama.
+        ============================================ */
+        if(typeof window.updateAnalyticsStatus === "function"){
+            const statusVisitorIds =
+                new Set(
+                    pageviews
+                        .map(item => item.visitor_id)
+                        .filter(Boolean)
+                );
+
+            window.updateAnalyticsStatus(
+                true,
+                pageviews.length,
+                statusVisitorIds.size
+            );
+        }
+
+        /* ============================================
            FILTER PERIODE ANALYTICS — WIB
            Day / Week / Month / Year / All
         ============================================ */
@@ -4200,11 +4219,8 @@ async function loadPlatformAnalysisData(clientName){
            SELLERBOOKS — APK vs WEBSITE KOMPUTER
         ============================================ */
 
-        if(
-            typeof updateSellerBooksAccessStats ===
-            "function"
-        ){
-            updateSellerBooksAccessStats(
+        if(typeof window.updateSellerBooksAccessStats === "function"){
+            window.updateSellerBooksAccessStats(
                 clientName,
                 pageviews
             );
@@ -5824,6 +5840,11 @@ document.addEventListener(
 
 
 
+    /* Expose shared helpers so the main Platform Analysis loader
+       can update status using the SAME fetched dataset. */
+    window.updateAnalyticsStatus = updateAnalyticsStatus;
+    window.updateSellerBooksAccessStats = updateSellerBooksAccessStats;
+
     /* =====================================================
        BUAT GRAFIK AKTIVITAS REAL
        Berdasarkan jumlah PAGEVIEW sebenarnya
@@ -6208,297 +6229,9 @@ document.addEventListener(
     }
 
 
-    async function refreshRealChartAndStatus(
-        clientName
-    ){
-
-        try{
-
-
-            clientName =
-                String(
-                    clientName || "GEPARU"
-                ).trim();
-
-
-            const module =
-
-                (
-                    typeof currentModule !==
-                    "undefined" &&
-                    currentModule
-                )
-
-                ? String(
-                    currentModule
-                ).toUpperCase()
-
-                : "SOSIAL";
-
-            /* SELLERBOOKS membaca Analytics dengan module_slug SELLERBOOKS.
-               Client lain tetap menggunakan module_slug masing-masing. */
-            const analyticsModule =
-                clientName.toUpperCase() === "SELLERBOOKS"
-                    ? "SELLERBOOKS"
-                    : module;
-
-
-            if(
-                !SUPABASE_URL ||
-                !coreAccessToken
-            ){
-
-                throw new Error(
-                    "Koneksi Core Analytics belum tersedia"
-                );
-
-            }
-
-
-            let pageviews = [];
-
-            if(clientName.toUpperCase() === "AMASA"){
-
-                const response =
-                    await fetch(
-                        SUPABASE_URL +
-                        "/rest/v1/rpc/get_amasa_platform_analytics",
-                        {
-                            method: "POST",
-                            headers: {
-                                ...authHeaders(),
-                                "Content-Type": "application/json"
-                            },
-                            body: "{}",
-                            cache: "no-store"
-                        }
-                    );
-
-                if(!response.ok){
-                    const errorText = await response.text().catch(()=> "");
-                    throw new Error(
-                        "AMASA Analytics HTTP " +
-                        response.status +
-                        (errorText ? " " + errorText : "")
-                    );
-                }
-
-                const events = await response.json();
-
-                pageviews =
-                    (Array.isArray(events) ? events : [])
-                    .map(event => ({
-                        id: event.id,
-                        visitor_id: event.visitor_id,
-                        session_id: event.session_id,
-                        page_path: event.page_path || "/",
-                        page_url: event.page_path || "/",
-                        page_title: "",
-                        viewed_at: event.created_at
-                    }));
-
-            }else{
-
-                const url =
-                    SUPABASE_URL +
-                    "/rest/v1/analytics_pageviews" +
-                    "?select=*" +
-                    "&client_name=eq." +
-                    encodeURIComponent(clientName) +
-                    "&module_slug=eq." +
-                    encodeURIComponent(analyticsModule) +
-                    "&order=viewed_at.desc";
-
-                const response =
-                    await fetch(
-                        url,
-                        {
-                            headers: authHeaders(),
-                            cache: "no-store"
-                        }
-                    );
-
-                if(!response.ok){
-
-                    const errorText =
-                        await response.text();
-
-                    throw new Error(
-                        response.status +
-                        " " +
-                        errorText
-                    );
-
-                }
-
-                pageviews = await response.json();
-
-            }
-
-
-            /* ==========================================
-               SELLERBOOKS — APK vs WEBSITE KOMPUTER
-            ========================================== */
-            updateSellerBooksAccessStats(
-                clientName,
-                pageviews
-            );
-
-
-            /* ==========================================
-               HITUNG PENGUNJUNG UNIK
-            ========================================== */
-
-            const uniqueVisitors =
-                new Set();
-
-
-            pageviews.forEach(page => {
-
-                if(page.visitor_id){
-
-                    uniqueVisitors.add(
-                        page.visitor_id
-                    );
-
-                }
-
-            });
-
-
-
-            /* ==========================================
-               UPDATE GRAFIK
-            ==========================================
-               Grafik periode sekarang dikendalikan oleh
-               Platform Analysis v2 agar Hari Ini selalu
-               menggunakan 24 jam (00–23), sedangkan
-               Minggu/Bulan menggunakan label hari.
-               Jangan render grafik 7-hari di sini karena
-               dapat menimpa grafik periode aktif.
-            ========================================== */
-
-
-            /* ==========================================
-               UPDATE STATUS
-            ========================================== */
-
-            updateAnalyticsStatus(
-
-                true,
-
-                pageviews.length,
-
-                uniqueVisitors.size
-
-            );
-
-
-        }
-
-        catch(error){
-
-
-            console.error(
-                "Real Analytics Status Error:",
-                error
-            );
-
-
-            updateAnalyticsStatus(
-
-                false,
-
-                0,
-
-                0,
-
-                error.message
-
-            );
-
-        }
-
-    }
-
-
-
-    /* =====================================================
-       BUNGKUS FUNGSI LAMA
-       Fungsi lama tetap dijalankan terlebih dahulu
-    ===================================================== */
-
-    if(
-        typeof originalLoadPlatformAnalysisData ===
-        "function"
-    ){
-
-        window.loadPlatformAnalysisData =
-            async function(clientName){
-
-
-                /* Jalankan seluruh sistem lama */
-                const result =
-                    await originalLoadPlatformAnalysisData(
-                        clientName
-                    );
-
-
-                /* Tambahan baru setelah sistem lama selesai */
-                await refreshRealChartAndStatus(
-                    clientName
-                );
-
-
-                return result;
-
-            };
-
-    }
-
-
-
-    /* =====================================================
-       JIKA HALAMAN SUDAH TERBUKA
-       UPDATE STATUS SETIAP 30 DETIK
-    ===================================================== */
-
-    setInterval(function(){
-
-
-        const page =
-            document.getElementById(
-                "platformAnalysisPage"
-            );
-
-
-        if(
-            !page ||
-            !page.classList.contains("show")
-        ){
-
-            return;
-
-        }
-
-
-        const clientName =
-            document.getElementById(
-                "analysisClientName"
-            )
-            ?.textContent
-            ?.trim()
-            || "GEPARU";
-
-
-        refreshRealChartAndStatus(
-            clientName
-        );
-
-
-    }, 30000);
-
-
+    /* Status Analytics sekarang diperbarui langsung oleh
+       loadPlatformAnalysisData(), sehingga tidak ada query
+       analytics kedua yang bisa saling bertabrakan. */
 })();
 
 </script>
