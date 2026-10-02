@@ -3924,7 +3924,9 @@ async function loadPlatformAnalysisData(clientName){
         activitySubtitle.textContent =
             isSellerBooksClient
                 ? "Pergerakan kunjungan platform SELLERBOOKS"
-                : "Pergerakan kunjungan platform GEPARU";
+                : isAmasaClient
+                    ? "Pergerakan kunjungan platform AMASA"
+                    : "Pergerakan kunjungan platform GEPARU";
     }
 
     try{
