@@ -3970,35 +3970,41 @@ async function loadPlatformAnalysisData(clientName){
          */
         if(isAmasaClient){
 
-            const amasaEventsURL =
-                SUPABASE_URL +
-                "/rest/v1/amasa_analytics_events?select=*" +
-                "&module_slug=eq.AMASA" +
-                "&order=created_at.desc";
-
-            const amasaEventsResponse =
+            /*
+             * Gunakan RPC SECURITY DEFINER, bukan REST langsung ke
+             * amasa_analytics_events. Tabel event AMASA memang tidak
+             * dibuka untuk anon/authenticated karena data analytics
+             * dibaca melalui fungsi yang terkontrol.
+             */
+            const amasaAnalyticsResponse =
                 await fetch(
-                    amasaEventsURL,
+                    SUPABASE_URL +
+                    "/rest/v1/rpc/get_amasa_platform_analytics",
                     {
-                        headers: authHeaders(),
+                        method: "POST",
+                        headers: {
+                            ...authHeaders(),
+                            "Content-Type": "application/json"
+                        },
+                        body: "{}",
                         cache: "no-store"
                     }
                 );
 
-            if(!amasaEventsResponse.ok){
+            if(!amasaAnalyticsResponse.ok){
                 const detail =
-                    await amasaEventsResponse.text().catch(()=> "");
+                    await amasaAnalyticsResponse.text().catch(()=> "");
 
                 throw new Error(
                     "Gagal mengambil Analytics AMASA (HTTP " +
-                    amasaEventsResponse.status +
+                    amasaAnalyticsResponse.status +
                     ")" +
                     (detail ? " " + detail : "")
                 );
             }
 
             const amasaEvents =
-                await amasaEventsResponse.json();
+                await amasaAnalyticsResponse.json();
 
             pageviews =
                 (Array.isArray(amasaEvents) ? amasaEvents : [])
