@@ -3402,7 +3402,7 @@ openPanel=function(panel,el){previousOpenPanel(panel,el);if(panel==='activity')l
                                 Sinkronisasi Data
                             </b>
 
-                            <span>
+                            <span id="analysisSyncStatus">
                                 Menunggu koneksi statistik GEPARU
                             </span>
 
@@ -3460,6 +3460,18 @@ function openPlatformAnalysis(clientName){
         "platformAnalysisClientTitle"
     ).textContent =
         "Platform Analysis · " + analysisClient;
+
+    const analysisSyncStatus =
+        document.getElementById("analysisSyncStatus");
+
+    if(analysisSyncStatus){
+        analysisSyncStatus.textContent =
+            isSellerBooks
+                ? "Menunggu koneksi statistik SELLERBOOKS"
+                : isAmasa
+                    ? "Menunggu koneksi statistik AMASA"
+                    : "Menunggu koneksi statistik GEPARU";
+    }
 
     const analysisClientDesc =
         document.querySelector("#analysisClientName + p");
@@ -3898,6 +3910,18 @@ async function loadPlatformAnalysisData(clientName){
 
     if(sellerBooksAccessPanel)
         sellerBooksAccessPanel.style.display = isAmasaClient ? "none" : "";
+
+    const analysisSyncStatus =
+        document.getElementById("analysisSyncStatus");
+
+    if(analysisSyncStatus){
+        analysisSyncStatus.textContent =
+            isSellerBooksClient
+                ? "Menunggu koneksi statistik SELLERBOOKS"
+                : isAmasaClient
+                    ? "Menunggu koneksi statistik AMASA"
+                    : "Menunggu koneksi statistik GEPARU";
+    }
 
     const analysisClientDesc =
         document.querySelector("#analysisClientName + p");
