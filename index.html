@@ -3954,106 +3954,169 @@ async function loadPlatformAnalysisData(clientName){
             encodeURIComponent(analyticsModule);
 
 
-        const visitorsURL =
-            SUPABASE_URL +
-            "/rest/v1/analytics_visitors?select=*" +
-            clientFilter +
-            moduleFilter;
+        let visitors = [];
+        let sessions = [];
+        let pageviews = [];
 
+        /*
+         * AMASA memakai mesin analytics khusus:
+         * track_amasa_visit() -> amasa_analytics_events.
+         *
+         * Event AMASA dipetakan ke bentuk pageview yang sudah
+         * digunakan UI Platform Analysis, sehingga tampilan lama
+         * tetap dipakai tanpa mengubah desain.
+         */
+        if(isAmasaClient){
 
-        const sessionsURL =
-            SUPABASE_URL +
-            "/rest/v1/analytics_sessions?select=*" +
-            clientFilter +
-            moduleFilter +
-            "&order=started_at.desc";
+            const amasaEventsURL =
+                SUPABASE_URL +
+                "/rest/v1/amasa_analytics_events?select=*" +
+                "&module_slug=eq.AMASA" +
+                "&order=created_at.desc";
 
-
-        const pageviewsURL =
-            SUPABASE_URL +
-            "/rest/v1/analytics_pageviews?select=*" +
-            clientFilter +
-            moduleFilter +
-            "&order=viewed_at.desc";
-
-
-        const results =
-            await Promise.all([
-
-                fetch(
-                    visitorsURL,
+            const amasaEventsResponse =
+                await fetch(
+                    amasaEventsURL,
                     {
                         headers: authHeaders(),
                         cache: "no-store"
                     }
-                ),
+                );
 
-                fetch(
-                    sessionsURL,
-                    {
-                        headers: authHeaders(),
-                        cache: "no-store"
-                    }
-                ),
+            if(!amasaEventsResponse.ok){
+                const detail =
+                    await amasaEventsResponse.text().catch(()=> "");
 
-                fetch(
-                    pageviewsURL,
-                    {
-                        headers: authHeaders(),
-                        cache: "no-store"
-                    }
-                )
+                throw new Error(
+                    "Gagal mengambil Analytics AMASA (HTTP " +
+                    amasaEventsResponse.status +
+                    ")" +
+                    (detail ? " " + detail : "")
+                );
+            }
 
-            ]);
+            const amasaEvents =
+                await amasaEventsResponse.json();
 
+            pageviews =
+                (Array.isArray(amasaEvents) ? amasaEvents : [])
+                .map(event => ({
+                    id: event.id,
+                    visitor_id: event.visitor_id,
+                    session_id: event.session_id,
+                    page_path: event.page_path || "/",
+                    page_url: event.page_path || "/",
+                    page_title: "",
+                    viewed_at: event.created_at
+                }));
 
-        const visitorsResponse =
-            results[0];
+            const visitorMap = new Map();
 
-        const sessionsResponse =
-            results[1];
+            pageviews.forEach(item => {
+                if(!item.visitor_id) return;
 
-        const pageviewsResponse =
-            results[2];
-
-
-        if(
-            !visitorsResponse.ok ||
-            !sessionsResponse.ok ||
-            !pageviewsResponse.ok
-        ){
-
-            console.error(
-                "Analytics Response Error",
-                {
-                    visitors:
-                        visitorsResponse.status,
-
-                    sessions:
-                        sessionsResponse.status,
-
-                    pageviews:
-                        pageviewsResponse.status
+                if(!visitorMap.has(item.visitor_id)){
+                    visitorMap.set(
+                        item.visitor_id,
+                        {
+                            visitor_id: item.visitor_id
+                        }
+                    );
                 }
-            );
+            });
 
-            throw new Error(
-                "Gagal mengambil data Analytics"
-            );
+            visitors =
+                Array.from(visitorMap.values());
 
+            const sessionMap = new Map();
+
+            pageviews.forEach(item => {
+                if(!item.session_id) return;
+
+                if(!sessionMap.has(item.session_id)){
+                    sessionMap.set(
+                        item.session_id,
+                        {
+                            session_id: item.session_id,
+                            started_at: item.viewed_at
+                        }
+                    );
+                }
+            });
+
+            sessions =
+                Array.from(sessionMap.values());
+
+        }else{
+
+            const visitorsURL =
+                SUPABASE_URL +
+                "/rest/v1/analytics_visitors?select=*" +
+                clientFilter +
+                moduleFilter;
+
+            const sessionsURL =
+                SUPABASE_URL +
+                "/rest/v1/analytics_sessions?select=*" +
+                clientFilter +
+                moduleFilter +
+                "&order=started_at.desc";
+
+            const pageviewsURL =
+                SUPABASE_URL +
+                "/rest/v1/analytics_pageviews?select=*" +
+                clientFilter +
+                moduleFilter +
+                "&order=viewed_at.desc";
+
+            const results =
+                await Promise.all([
+                    fetch(
+                        visitorsURL,
+                        {
+                            headers: authHeaders(),
+                            cache: "no-store"
+                        }
+                    ),
+                    fetch(
+                        sessionsURL,
+                        {
+                            headers: authHeaders(),
+                            cache: "no-store"
+                        }
+                    ),
+                    fetch(
+                        pageviewsURL,
+                        {
+                            headers: authHeaders(),
+                            cache: "no-store"
+                        }
+                    )
+                ]);
+
+            const visitorsResponse = results[0];
+            const sessionsResponse = results[1];
+            const pageviewsResponse = results[2];
+
+            if(
+                !visitorsResponse.ok ||
+                !sessionsResponse.ok ||
+                !pageviewsResponse.ok
+            ){
+                throw new Error(
+                    "Gagal mengambil data Analytics"
+                );
+            }
+
+            visitors =
+                await visitorsResponse.json();
+
+            sessions =
+                await sessionsResponse.json();
+
+            pageviews =
+                await pageviewsResponse.json();
         }
-
-
-        const visitors =
-            await visitorsResponse.json();
-
-
-        const sessions =
-            await sessionsResponse.json();
-
-
-        const pageviews =
-            await pageviewsResponse.json();
 
         /* ============================================
            FILTER PERIODE ANALYTICS — WIB
