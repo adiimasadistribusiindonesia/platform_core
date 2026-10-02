@@ -6071,7 +6071,7 @@ document.addEventListener(
         const webPages = [];
         const otherPages = [];
 
-        analysisPageviews.forEach(page => {
+        pageviews.forEach(page => {
 
             const browser =
                 String(page.browser || "");
@@ -6255,60 +6255,85 @@ document.addEventListener(
             }
 
 
-            const url =
+            let pageviews = [];
 
-                SUPABASE_URL +
+            if(clientName.toUpperCase() === "AMASA"){
 
-                "/rest/v1/analytics_pageviews" +
+                const response =
+                    await fetch(
+                        SUPABASE_URL +
+                        "/rest/v1/rpc/get_amasa_platform_analytics",
+                        {
+                            method: "POST",
+                            headers: {
+                                ...authHeaders(),
+                                "Content-Type": "application/json"
+                            },
+                            body: "{}",
+                            cache: "no-store"
+                        }
+                    );
 
-                "?select=*" +
+                if(!response.ok){
+                    const errorText = await response.text().catch(()=> "");
+                    throw new Error(
+                        "AMASA Analytics HTTP " +
+                        response.status +
+                        (errorText ? " " + errorText : "")
+                    );
+                }
 
-                "&client_name=eq." +
+                const events = await response.json();
 
-                encodeURIComponent(
-                    clientName
-                ) +
+                pageviews =
+                    (Array.isArray(events) ? events : [])
+                    .map(event => ({
+                        id: event.id,
+                        visitor_id: event.visitor_id,
+                        session_id: event.session_id,
+                        page_path: event.page_path || "/",
+                        page_url: event.page_path || "/",
+                        page_title: "",
+                        viewed_at: event.created_at
+                    }));
 
-                "&module_slug=eq." +
+            }else{
 
-                encodeURIComponent(
-                    analyticsModule
-                ) +
+                const url =
+                    SUPABASE_URL +
+                    "/rest/v1/analytics_pageviews" +
+                    "?select=*" +
+                    "&client_name=eq." +
+                    encodeURIComponent(clientName) +
+                    "&module_slug=eq." +
+                    encodeURIComponent(analyticsModule) +
+                    "&order=viewed_at.desc";
 
-                "&order=viewed_at.desc";
+                const response =
+                    await fetch(
+                        url,
+                        {
+                            headers: authHeaders(),
+                            cache: "no-store"
+                        }
+                    );
 
+                if(!response.ok){
 
-            const response =
-                await fetch(
-                    url,
-                    {
-                        headers:
-                            authHeaders(),
+                    const errorText =
+                        await response.text();
 
-                        cache:
-                            "no-store"
-                    }
-                );
+                    throw new Error(
+                        response.status +
+                        " " +
+                        errorText
+                    );
 
-            if(!response.ok){
+                }
 
-                const errorText =
-                    await response.text();
-
-
-                throw new Error(
-
-                    response.status +
-                    " " +
-                    errorText
-
-                );
+                pageviews = await response.json();
 
             }
-
-
-            const pageviews =
-                await response.json();
 
 
             /* ==========================================
@@ -6328,7 +6353,7 @@ document.addEventListener(
                 new Set();
 
 
-            analysisPageviews.forEach(page => {
+            pageviews.forEach(page => {
 
                 if(page.visitor_id){
 
