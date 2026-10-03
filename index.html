@@ -6310,6 +6310,28 @@ document.addEventListener(
     }
 
     async function fetchAllPageviews(clientName,moduleName){
+        /* AMASA dibaca melalui RPC yang sama dengan loader utama,
+           supaya tidak bergantung pada SELECT langsung/RLS tabel analytics. */
+        if(String(clientName||"").trim().toUpperCase()==="AMASA"){
+            const rpc=await fetch(
+                SUPABASE_URL+"/rest/v1/rpc/get_platform_analytics",
+                {
+                    method:"POST",
+                    headers:authHeaders(),
+                    cache:"no-store",
+                    body:JSON.stringify({
+                        p_client_name:"AMASA",
+                        p_module_slug:"AMASA"
+                    })
+                }
+            );
+            if(!rpc.ok){
+                throw new Error("Gagal mengambil Analytics AMASA (HTTP "+rpc.status+")");
+            }
+            const data=await rpc.json();
+            return Array.isArray(data) ? data : [];
+        }
+
         const rows=[];
         const pageSize=1000;
         let offset=0;
