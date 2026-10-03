@@ -10,7 +10,7 @@ namespace Core.Adiimasa;
 
 public partial class MainWindow : Window
 {
-    private const string AppUrl = "https://adiimasadistribusiindonesia.github.io/platform_core/";
+    private const string AppUrl = "https://adiimasadistribusiindonesia.github.io/platform_core/?core_build=20261003-analytics-amasa";
     private readonly string _userDataFolder;
     private readonly DispatcherTimer _networkTimer;
     private bool _offline;
