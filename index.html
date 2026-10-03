@@ -5056,10 +5056,15 @@ async function resetPlatformAnalytics(){
        SELLERBOOKS harus menghapus module_slug SELLERBOOKS.
        Client lain tetap menggunakan module_slug masing-masing.
     ===================================================== */
+    const analyticsClientType =
+        String(clientName || "").trim().toUpperCase();
+
     const analyticsModule =
-        clientName.toUpperCase() === "SELLERBOOKS"
+        analyticsClientType === "SELLERBOOKS"
             ? "SELLERBOOKS"
-            : module;
+            : analyticsClientType === "AMASA"
+                ? "AMASA"
+                : module;
 
 
     if(!coreAccessToken){
@@ -5229,8 +5234,9 @@ async function resetPlatformAnalytics(){
 
 
         coreAdiimasaAlert(
-            "✓ Data Analytics berhasil direset.\n\n" +
-            "Platform sekarang siap mencatat data pengunjung baru."
+            "✓ Data Analytics " + clientName + " berhasil direset.\n\n" +
+            "Platform sekarang siap mencatat data pengunjung baru.",
+            clientName
         );
 
 
