@@ -6450,7 +6450,7 @@ document.addEventListener(
     async function renderAnalysis(clientName,force=false){
         clientName=String(clientName||"GEPARU").trim();
         const module=(typeof currentModule!=="undefined"&&currentModule)?String(currentModule).toUpperCase():"SOSIAL";
-        const analyticsModule=clientName.toUpperCase()==="SELLERBOOKS"?"SELLERBOOKS":module;
+        const analyticsModule=clientName.toUpperCase()==="SELLERBOOKS"?"SELLERBOOKS":clientName.toUpperCase()==="AMASA"?"AMASA":module;
         if(!force && analysisLoadedClient===clientName && analysisCache.length) return applyAnalysis();
         if(!coreAccessToken) return;
         const page=document.getElementById("platformAnalysisPage");
